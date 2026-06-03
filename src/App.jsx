@@ -183,8 +183,8 @@ const LOCALES = [
     nombre: 'Salitre 372',
     direccion: 'Calle 24a # 69-76, Bogotá',
     detalles: 'Cerca de la zona empresarial y de Salitre Plaza. Perfecto para un almuerzo rápido y cargado de energía real.',
-    horarioSemana: '11:00 AM – 9:00 PM',
-    horarioFinde: '11:00 AM – 8:00 PM',
+    horarioSemana: '11:30 AM – 8:00 PM',
+    horarioFinde: '11:30 AM – 8:00 PM',
     amenidades: ['Pet Friendly', 'Wi-Fi gratis', 'Zona de terraza'],
     mapaUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.6713600984107!2d-74.11326462417742!3d4.652613195321855!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9be4a9efdf87%3A0x6b9ef2df3f486851!2sAv.%20El%20Dorado%20%2369%2C%20Bogot%C3%A1!5e0!3m2!1ses!2sco!4v1715012345678!5m2!1ses!2sco'
   },
@@ -193,8 +193,8 @@ const LOCALES = [
     nombre: 'Av Chile 408b',
     direccion: 'Calle 72 # 10-34, Local 408b, Bogotá',
     detalles: 'En el epicentro financiero de Bogotá. La pausa perfecta y nutritiva para tu jornada laboral diaria.',
-    horarioSemana: '11:00 AM – 8:00 PM',
-    horarioFinde: '11:00 AM – 5:00 PM',
+    horarioSemana: '11:30 AM – 7:00 PM',
+    horarioFinde: '11:30 AM – 6:00 PM',
     amenidades: ['Para llevar', 'Estación de carga', 'Opciones Veganas'],
     mapaUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.54347712391!2d-74.05923162417724!3d4.657538995316499!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9a5be41bb59b%3A0xe744e8ec50672e!2sCl.%2072%20%2310-34%2C%20Bogot%C3%A1!5e0!3m2!1ses!2sco!4v1715012355678!5m2!1ses!2sco'
   },
@@ -495,11 +495,6 @@ const Footer = ({ navigate }) => {
   );
 };
 
-/* =========================================================================
-   VISTAS DE PESTAÑAS
-   ========================================================================= */
-
-// --- 1. HERO INICIO ---
 const HomeView = ({ navigate }) => {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
@@ -639,7 +634,7 @@ const CartaView = ({ onAddToCart }) => {
         </div>
 
         {/* Filtros Light Mode */}
-        <div className="flex gap-4 overflow-x-auto pb-4 mb-12 scrollbar-hide animate-in justify-start md:justify-center" style={{ animationDelay: '200ms' }}>
+        <div className="flex gap-4 overflow-x-auto pb-4 mb-12 scrollbar-hide animate-in justify-start md:justify-center" style={{ scrollbarWidth: 'none' }}>
           {categorias.map((t, i) => (
             <button 
               key={i} 
@@ -664,7 +659,7 @@ const CartaView = ({ onAddToCart }) => {
                   animate={{ opacity: 1, scale: 1 }} 
                   exit={{ opacity: 0, scale: 0.95 }} 
                   transition={{ duration: 0.4 }} 
-                  className={`bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-[#E8F0E8] hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-[550px] relative group cursor-pointer ${item.esMaximo ? 'border-[var(--maximo-amber)] ring-1 ring-[var(--maximo-amber)]/20 shadow-[0_4px_20px_rgba(240,144,48,0.1)]' : ''}`}
+                  className={`bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-[#E8F0E8] hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-[550px] relative group cursor-pointer ${item.esMaximo ? 'border-[var(--maximo-amber)] ring-1 ring-[var(--maximo-amber)]/20 shadow-[0_4px_20px_rgba(240,144,48,0.15)]' : ''}`}
                   onClick={() => onAddToCart(item)}
                 >
                   
@@ -816,6 +811,13 @@ const BuilderView = ({ onAddToCart }) => {
   const [step, setStep] = useState(1);
   const [selections, setSelections] = useState({ base: '', frescuras: [], sabores: [], proteina: '', salsa: '' });
   
+  // Nuevo estado para controlar si es Porción Sencilla o Porción Máxima (Doble) de Proteínas
+  const [proteinMode, setProteinMode] = useState('sencilla'); // 'sencilla' o 'doble'
+  const [selectedProteins, setSelectedProteins] = useState([]); // Arreglo para acumular hasta 2 proteínas
+
+  // Estado para el upsell de bebidas dentro del propio armador
+  const [addedDrinks, setAddedDrinks] = useState([]);
+
   const toggleSelection = (category, item, max) => {
     setSelections(prev => {
       const current = prev[category];
@@ -828,43 +830,109 @@ const BuilderView = ({ onAddToCart }) => {
     });
   };
 
-  const isMaximo = selections.proteina === 'Máximo (Doble)';
-  const totalPrice = 24900 + (isMaximo ? 6000 : 0);
+  // Lógica de proteínas especializadas para Origen Máximo
+  const handleProteinSelect = (prot) => {
+    if (proteinMode === 'sencilla') {
+      setSelectedProteins([prot]);
+      setSelections(prev => ({ ...prev, proteina: prot }));
+    } else {
+      setSelectedProteins(prev => {
+        let next;
+        if (prev.includes(prot)) {
+          next = prev.filter(p => p !== prot);
+        } else {
+          if (prev.length < 2) {
+            next = [...prev, prot];
+          } else {
+            next = prev;
+          }
+        }
+        // Construir string descriptivo para guardar
+        const formatted = next.length === 2 
+          ? `Máximo (${next[0]} + ${next[1]})` 
+          : next.length === 1 ? `Doble ${next[0]}` : '';
+        setSelections(current => ({ ...current, proteina: formatted }));
+        return next;
+      });
+    }
+  };
+
+  const toggleAddedDrink = (drink) => {
+    setAddedDrinks(prev => {
+      if (prev.find(d => d.id === drink.id)) {
+        return prev.filter(d => d.id !== drink.id);
+      } else {
+        return [...prev, drink];
+      }
+    });
+  };
+
+  const isMaximo = proteinMode === 'doble';
+  const basePrice = 24900;
+  const proteinSurcharge = isMaximo ? 6000 : 0;
+  const drinksTotal = addedDrinks.reduce((acc, d) => acc + d.precio, 0);
+  const totalPrice = basePrice + proteinSurcharge + drinksTotal;
 
   const OPTIONS = {
     1: { id: 'base', max: 1, icon: '🌾', title: '¿Cuál es tu base?', sub: 'La fundación de tu bowl', items: ['Arroz Blanco', 'Arroz Integral', 'Quinoa', 'Mix Asiático'] },
     2: { id: 'frescuras', max: 2, icon: '🥦', title: 'Tus frescuras', sub: 'Elige hasta 2 — frescas y crujientes', items: ['Zuquini', 'Pepino', 'Tomate Cherry', 'Zanahoria', 'Repollo Encurtido', 'Cebolla Encurtida', 'Berenjena', 'Brócoli'] },
     3: { id: 'sabores', max: 2, icon: '✨', title: 'Sabores especiales', sub: 'Lo que hace único a tu bowl — elige hasta 2', items: ['Maíz', 'Mango', 'Manzana', 'Parmesano', 'Aguacate', 'Jalapeños', 'Lenteja Crocante', 'Garbanzos'] },
-    4: { id: 'proteina', max: 1, icon: '⚡', title: 'Tu proteína', sub: 'El corazón de tu bowl', items: ['Pechuga de Pollo', 'Huevo Cocido', 'Tofu', 'Carne', 'Lomo de Cerdo', 'Máximo (Doble)'] },
+    4: { id: 'proteina', max: 1, icon: '⚡', title: 'Tu proteína', sub: 'El corazón de tu bowl', items: ['Pechuga de Pollo', 'Huevo Cocido', 'Tofu', 'Carne', 'Lomo de Cerdo'] },
     5: { id: 'salsa', max: 1, icon: '💚', title: 'El toque final', sub: 'La salsa que lo une todo', items: ['Pesto Natural', 'Yogurt de Casa', 'Mango Picante', 'Dulce Balance', 'Vino Mango'] }
   };
 
   const curr = OPTIONS[step];
 
-  // SAFE-GUARD: Solves 'Cannot read properties of undefined (reading id)' when step is 6
   const isStepCompleted = useMemo(() => {
+    if (step === 6) return true; // Paso opcional de bebidas
     if (!curr) return false;
+    if (curr.id === 'proteina') {
+      return selectedProteins.length > 0;
+    }
     const currentSelection = selections[curr.id];
     if (Array.isArray(currentSelection)) {
       return currentSelection.length > 0;
     }
     return currentSelection !== '';
-  }, [selections, curr]);
+  }, [selections, curr, step, selectedProteins]);
+
+  const handleFinishCustomBowl = () => {
+    // Agregar el bowl personalizado al pedido principal
+    onAddToCart({ 
+      id: `custom-${Date.now()}`,
+      nombre: isMaximo ? 'BOWL MÁXIMO PERSONALIZADO' : 'BOWL PERSONALIZADO', 
+      precio: basePrice + proteinSurcharge, 
+      esBuilder: true, 
+      ...selections 
+    });
+
+    // Agregar de forma automática las bebidas elegidas en el upsell del builder
+    addedDrinks.forEach(drink => {
+      onAddToCart(drink);
+    });
+
+    // Reiniciar estados del builder
+    setStep(1);
+    setSelections({ base: '', frescuras: [], sabores: [], proteina: '', salsa: '' });
+    setSelectedProteins([]);
+    setAddedDrinks([]);
+  };
 
   return (
     <div className="pt-24 bg-[var(--fondo-crema)] w-full flex flex-col lg:flex-row min-h-screen pb-16 lg:pb-0">
       <div className="w-full lg:w-1/2 bg-[var(--verde-profundo)] text-white p-6 lg:p-12 lg:min-h-screen flex flex-col justify-between relative z-20">
         <div className="mb-10">
           <h1 className="font-display italic text-4xl md:text-5xl text-white mb-2">Arma tu <span className="text-[var(--verde-main)]">Origen</span></h1>
-          <p className="font-ui text-[var(--verde-palido)] opacity-80">5 pasos. Infinitas combinaciones.</p>
+          <p className="font-ui text-[var(--verde-palido)] opacity-80">Diseño intuitivo para crear tu bowl perfecto.</p>
         </div>
 
+        {/* Indicador de Precio en Vivo Móvil */}
         <div className="lg:hidden sticky top-20 bg-[var(--verde-bosque)]/95 backdrop-blur-md p-4 rounded-[16px] mb-8 flex justify-between items-center border border-[var(--verde-main)]/20 z-[60] shadow-lg">
-           <span className="font-ui text-sm text-[var(--verde-palido)]">Tu Bowl en vivo:</span>
+           <span className="font-ui text-sm text-[var(--verde-palido)]">Total Combo:</span>
            <motion.span key={totalPrice} className={`font-display font-bold text-2xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-white'}`}>{formatPrice(totalPrice)}</motion.span>
         </div>
 
-        {step <= 5 ? (
+        {step <= 5 && (
           <AnimatePresence mode="wait">
             <motion.div key={step} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex-1">
               <div className="flex items-center gap-3 mb-8">
@@ -875,71 +943,170 @@ const BuilderView = ({ onAddToCart }) => {
                 </div>
               </div>
 
-              <div className={`grid gap-4 ${step === 4 || step === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                {curr?.items.map(item => {
-                  const isArray = Array.isArray(selections[curr.id]);
-                  const isSelected = isArray ? selections[curr.id].includes(item) : selections[curr.id] === item;
-                  const isDisabled = isArray && !isSelected && selections[curr.id].length >= curr.max;
-                  const isMaxCard = item === 'Máximo (Doble)';
-
-                  return (
+              {/* LÓGICA ESPECIAL PARA EL PASO 4 (PROTEÍNA) */}
+              {curr?.id === 'proteina' ? (
+                <div className="space-y-6">
+                  {/* Tabs selectores de modalidad de proteína */}
+                  <div className="grid grid-cols-2 gap-2 bg-[var(--verde-bosque)] p-1 rounded-[14px]">
                     <button 
-                      key={item} 
-                      onClick={() => toggleSelection(curr.id, item, curr.max)}
-                      disabled={isDisabled}
-                      className={`text-left p-4 rounded-[16px] transition-all duration-300 font-ui ${
-                        isMaxCard 
-                          ? (isSelected ? 'bg-[var(--maximo-amber)] text-[var(--verde-profundo)] border-[var(--maximo-amber)] shadow-[0_0_20px_rgba(240,144,48,0.4)]' : 'bg-gradient-to-r from-[#1A3D28] to-[#0D2818] border-[#F09030] text-[#F09030] hover:bg-[#F09030]/10')
-                          : (isSelected ? 'bg-[var(--verde-main)] text-[var(--verde-profundo)] border-[var(--verde-main)]' : 'bg-[var(--verde-bosque)]/50 text-[var(--verde-palido)] border-[var(--verde-bosque)] hover:bg-[var(--verde-bosque)]')
-                      } border-2 ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} flex items-center justify-between group`}
+                      onClick={() => { setProteinMode('sencilla'); setSelectedProteins([]); setSelections(p => ({ ...p, proteina: '' })); }}
+                      className={`py-3 rounded-[10px] font-ui text-xs font-bold uppercase transition-all ${proteinMode === 'sencilla' ? 'bg-[var(--verde-main)] text-white' : 'text-[var(--verde-palido)] hover:text-white'}`}
                     >
-                      <div>
-                         <div className={`font-bold text-lg mb-1 ${isMaxCard && !isSelected ? 'text-[#F09030]' : ''}`}>{isMaxCard ? '⚡ MÁXIMO' : item}</div>
-                         {isMaxCard && <div className="text-xs opacity-80">+ $6.000 Doble Proteína</div>}
-                      </div>
-                      <div className={`w-6 h-6 rounded-[6px] border-2 flex items-center justify-center ${isSelected ? 'border-[var(--verde-profundo)] bg-[var(--verde-profundo)] text-[var(--verde-main)]' : 'border-current opacity-30'}`}>
-                        {isSelected && <Check size={14} />}
-                      </div>
+                      Sencilla
                     </button>
-                  );
-                })}
-              </div>
+                    <button 
+                      onClick={() => { setProteinMode('doble'); setSelectedProteins([]); setSelections(p => ({ ...p, proteina: '' })); }}
+                      className={`py-3 rounded-[10px] font-ui text-xs font-bold uppercase transition-all flex items-center justify-center gap-1.5 ${proteinMode === 'doble' ? 'bg-[var(--maximo-amber)] text-[var(--verde-profundo)] font-extrabold' : 'text-[var(--verde-palido)] hover:text-white'}`}
+                    >
+                      ⚡ Máxima (Doble) (+ $6.000)
+                    </button>
+                  </div>
+
+                  <p className="font-ui text-xs text-[var(--verde-palido)] italic">
+                    {proteinMode === 'sencilla' 
+                      ? "Selecciona tu proteína favorita para una porción clásica." 
+                      : "¡Arma tu Origen Máximo! Elige hasta 2 proteínas diferentes (o selecciona solo una para recibir porción doble de la misma)."}
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {curr?.items.map(item => {
+                      const isSelected = selectedProteins.includes(item);
+                      const isLimitReached = proteinMode === 'sencilla' ? selectedProteins.length >= 1 : selectedProteins.length >= 2;
+                      const isDisabled = isLimitReached && !isSelected;
+
+                      return (
+                        <button 
+                          key={item}
+                          onClick={() => handleProteinSelect(item)}
+                          disabled={isDisabled}
+                          className={`text-left p-4 rounded-[16px] transition-all duration-300 font-ui border-2 flex items-center justify-between ${
+                            isSelected 
+                              ? (proteinMode === 'doble' ? 'bg-[var(--maximo-amber)] text-[var(--verde-profundo)] border-[var(--maximo-amber)]' : 'bg-[var(--verde-main)] text-white border-[var(--verde-main)]')
+                              : 'bg-[var(--verde-bosque)]/50 text-[var(--verde-palido)] border-[var(--verde-bosque)] hover:bg-[var(--verde-bosque)]'
+                          } ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                        >
+                          <div>
+                            <span className="font-bold text-lg block">{item}</span>
+                            {isSelected && proteinMode === 'doble' && (
+                              <span className="text-[10px] uppercase font-bold tracking-wider opacity-90">Sugerida en combo Máximo</span>
+                            )}
+                          </div>
+                          <div className={`w-6 h-6 rounded-[6px] border-2 flex items-center justify-center ${isSelected ? 'border-current' : 'border-current opacity-30'}`}>
+                            {isSelected && <Check size={14} />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* RENDERIZADO GENERAL DE LOS DEMÁS PASOS */
+                <div className={`grid gap-4 ${step === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {curr?.items.map(item => {
+                    const isArray = Array.isArray(selections[curr.id]);
+                    const isSelected = isArray ? selections[curr.id].includes(item) : selections[curr.id] === item;
+                    const isDisabled = isArray && !isSelected && selections[curr.id].length >= curr.max;
+
+                    return (
+                      <button 
+                        key={item} 
+                        onClick={() => toggleSelection(curr.id, item, curr.max)}
+                        disabled={isDisabled}
+                        className={`text-left p-4 rounded-[16px] transition-all duration-300 font-ui border-2 ${
+                          isSelected ? 'bg-[var(--verde-main)] text-white border-[var(--verde-main)] shadow-md' : 'bg-[var(--verde-bosque)]/50 text-[var(--verde-palido)] border-[var(--verde-bosque)] hover:bg-[var(--verde-bosque)]'
+                        } ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} flex items-center justify-between group`}
+                      >
+                        <span className="font-bold text-lg">{item}</span>
+                        <div className={`w-6 h-6 rounded-[6px] border-2 flex items-center justify-center ${isSelected ? 'border-current bg-white/10 text-white' : 'border-current opacity-30'}`}>
+                          {isSelected && <Check size={14} />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
-        ) : (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 bg-[var(--verde-bosque)] p-8 rounded-[24px] border border-[var(--verde-main)]/20">
-            <h2 className="font-display italic text-3xl mb-6 text-[var(--verde-main)]">🎉 Tu Origen está listo</h2>
-            <div className="space-y-3 font-ui text-[var(--verde-palido)] mb-8">
+        )}
+
+        {/* PASO 6: PROMO/UPSELL DE BEBIDAS */}
+        {step === 6 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl">🍹</span>
+              <div>
+                <h2 className="font-ui font-bold text-2xl">¿Algo para tomar?</h2>
+                <p className="font-accent text-lg text-[var(--verde-palido)]">Combina tu bowl con bebidas naturales de la casa</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {BEBIDAS.map((drink) => {
+                const isSelected = !!addedDrinks.find(d => d.id === drink.id);
+                return (
+                  <div 
+                    key={drink.id}
+                    onClick={() => toggleAddedDrink(drink)}
+                    className={`p-4 rounded-[20px] border-2 cursor-pointer transition-all flex items-center justify-between ${isSelected ? 'bg-[var(--verde-main)] border-[var(--verde-main)] text-white' : 'bg-[var(--verde-bosque)]/50 border-transparent text-[var(--verde-palido)] hover:bg-[var(--verde-bosque)]'}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-4xl">{drink.emoji}</span>
+                      <div>
+                        <h4 className="font-ui font-bold text-base">{drink.nombre}</h4>
+                        <p className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-400'} max-w-[220px]`}>{drink.desc}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-ui font-bold block mb-1">{formatPrice(drink.precio)}</span>
+                      <button className={`px-4 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase transition-all ${isSelected ? 'bg-white text-[var(--verde-profundo)]' : 'bg-[var(--verde-main)] text-white'}`}>
+                        {isSelected ? 'Agregado' : 'Añadir'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* PASO 7: RESUMEN Y AGREGAR AL PEDIDO */}
+        {step === 7 && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 bg-[var(--verde-bosque)] p-8 rounded-[24px] border border-[var(--verde-main)]/20">
+            <h2 className="font-display italic text-3xl mb-6 text-[var(--verde-main)]">🎉 Tu combo está listo</h2>
+            <div className="space-y-3 font-ui text-[var(--verde-palido)] mb-6 text-sm">
               <p>• <strong className="text-white">Base:</strong> {selections.base}</p>
               <p>• <strong className="text-white">Frescuras:</strong> {selections.frescuras.join(' + ')}</p>
               <p>• <strong className="text-white">Sabores:</strong> {selections.sabores.join(' + ')}</p>
-              <p>• <strong className="text-white">Proteína:</strong> {selections.proteina}</p>
+              <p>• <strong className="text-white">Proteína:</strong> {selections.proteina || 'Sin proteína'}</p>
               <p>• <strong className="text-white">Salsa:</strong> {selections.salsa}</p>
+              {addedDrinks.length > 0 && (
+                <p>• <strong className="text-white">Bebidas:</strong> {addedDrinks.map(d => d.nombre).join(', ')}</p>
+              )}
             </div>
             <div className="border-t border-white/10 pt-6 mb-8 flex justify-between items-center">
               <span className="font-ui text-lg">Total a pagar:</span>
               <span className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-main)]'}`}>{formatPrice(totalPrice)}</span>
             </div>
             <div className="flex gap-4">
-               <Button onClick={() => onAddToCart({ nombre: 'BOWL PERSONALIZADO', precio: totalPrice, esBuilder: true, ...selections })} className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white rounded-[16px]">Agregar al Pedido</Button>
+               <Button onClick={handleFinishCustomBowl} className="w-full bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)] text-white rounded-[16px]">Agregar al Pedido</Button>
                <button onClick={() => setStep(1)} className="px-6 py-3 rounded-[16px] border border-white/20 hover:bg-white/10 transition font-ui font-semibold text-sm">Modificar</button>
             </div>
           </motion.div>
         )}
 
-        {step <= 5 && (
+        {step <= 6 && (
           <div className="mt-auto pt-10 pb-4 flex justify-between items-center z-50">
             <button onClick={() => setStep(s => Math.max(1, s - 1))} className={`font-ui font-semibold text-sm text-[var(--verde-palido)] hover:text-white transition ${step === 1 ? 'opacity-0' : ''}`}>← Volver</button>
             <div className="flex gap-2">
-              {[1,2,3,4,5].map(i => <div key={i} className={`h-2 rounded-[4px] transition-all duration-300 ${i === step ? 'w-8 bg-[var(--verde-main)]' : 'w-2 bg-white/20'}`} />)}
+              {[1,2,3,4,5,6].map(i => <div key={i} className={`h-2 rounded-[4px] transition-all duration-300 ${i === step ? 'w-8 bg-[var(--verde-main)]' : 'w-2 bg-white/20'}`} />)}
             </div>
             <Button 
-              onClick={() => isStepCompleted && setStep(s => Math.min(6, s + 1))} 
+              onClick={() => isStepCompleted && setStep(s => Math.min(7, s + 1))} 
               variant="primary" 
               className={`bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] rounded-[16px] transition-all duration-300 ${!isStepCompleted ? 'opacity-40 cursor-not-allowed hover:translate-y-0' : ''}`}
               disabled={!isStepCompleted}
             >
-              {step === 5 ? 'Finalizar' : 'Siguiente'} <ArrowRight size={16} />
+              {step === 6 ? 'Ver Resumen' : 'Siguiente'} <ArrowRight size={16} />
             </Button>
           </div>
         )}
@@ -965,47 +1132,215 @@ const BuilderView = ({ onAddToCart }) => {
 };
 
 const BlogView = ({ navigate }) => {
+  const [activePost, setActivePost] = useState(null);
+
   const posts = [
-    { title: "El poder del aguacate en tu día a día", img: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&q=80&w=600", category: "Nutrición" },
-    { title: "Nuestros agricultores: Conoce a Don Luis", img: "https://images.unsplash.com/photo-1595856320586-30232402b1f8?auto=format&fit=crop&q=80&w=600", category: "Comunidad" },
-    { title: "¿Por qué elegimos salmón de pesca sostenible?", img: "https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&q=80&w=600", category: "Ingredientes" }
+    {
+      id: 'don-luis',
+      title: "Don Luis y la Revolución de la Quinua Real en Boyacá",
+      img: "https://images.unsplash.com/photo-1595856320586-30232402b1f8?auto=format&fit=crop&q=80&w=800",
+      category: "Comunidad",
+      date: "Junio 2026",
+      readTime: "4 min de lectura",
+      subtitle: "Cómo un cultivo ancestral a 2.800 metros de altura está transformando la economía local y la calidad de tu bowl.",
+      content: [
+        "En las laderas de Sogamoso, Boyacá, donde el viento helado de la cordillera roza las hojas púrpuras y doradas, Don Luis Hernando vigila la cosecha de quinua que, en pocas horas, viajará rumbo a nuestros locales de ORIGEN en Bogotá.",
+        "La quinua real no siempre fue un producto de fácil acceso en la capital. Hace cinco años, los pequeños agricultores boyacenses vendían sus tierras debido a la volatilidad de los precios agrícolas y la presencia de intermediarios que se quedaban con el 70% del valor del grano.",
+        "En ORIGEN decidimos trazar una línea directa. Compramos la cosecha completa de la cooperativa de Don Luis de forma directa, sin intermediarios, pagando un precio neto que se sitúa un 35% por encima de las cotizaciones del mercado central. Esto les asegura estabilidad financiera y a nosotros nos garantiza un grano de calidad premium, cosechado con prácticas agrícolas tradicionales libres de pesticidas agresivos.",
+        "Cuando ordenas un bowl Origen Vital o seleccionas quinua orgánica en nuestro Armador de Bowls, estás consumiendo un superalimento vivo, rico en los 9 aminoácidos esenciales, hierro y fibra dietética. Pero lo más importante: estás impulsando de manera activa el sustento de 14 familias en Boyacá que, gracias a tu elección, ven renacer sus campos."
+      ]
+    },
+    {
+      id: 'aguacate',
+      title: "El Aguacate Hass Colombiano: El Oro Verde en tu Plato",
+      img: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&q=80&w=800",
+      category: "Nutrición",
+      date: "Mayo 2026",
+      readTime: "3 min de lectura",
+      subtitle: "La ciencia detrás de los ácidos grasos saludables y cómo actúan como catalizadores de absorción de vitaminas.",
+      content: [
+        "El aguacate Hass es, indiscutiblemente, la joya de la corona en cualquier bowl de nuestra carta. Sin embargo, su valor dentro del menú de ORIGEN trasciende lo delicioso y cremoso de su textura. Detrás de esta fruta se esconde un milagro bioquímico de primer nivel.",
+        "Nuestro aguacate es seleccionado rigurosamente en granjas familiares de Tolima y Antioquia. A diferencia de otras grasas vegetales altamente procesadas, el Hass se consume en su estado más puro y fresco. Está cargado principalmente de ácido oleico (grasas monoinsaturadas), el cual ayuda a mantener a raya el colesterol LDL (malo) mientras eleva el HDL (bueno).",
+        "Pero el verdadero secreto nutricional radica en la sinergia biológica: muchas de las vitaminas presentes en las verduras de tu bowl (como los betacarotenos de la zanahoria o el licopeno de los tomates cherry) son liposolubles. Esto significa que tu cuerpo solo puede absorberlas adecuadamente si se consumen acompañadas de una grasa saludable de alta densidad.",
+        "Al morder una porción de aguacate junto a tus vegetales crujientes, estás multiplicando hasta por cinco veces la absorción real de micronutrientes y antioxidantes. No es solo comer saludable; es diseñar combinaciones científicamente optimizadas para que tu cuerpo aproveche cada gramo de nutrición real."
+      ]
+    },
+    {
+      id: 'pesca-sostenible',
+      title: "Pesca Sostenible: El Viaje Responsable del Salmón y Atún",
+      img: "https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&q=80&w=800",
+      category: "Ingredientes",
+      date: "Abril 2026",
+      readTime: "5 min de lectura",
+      subtitle: "Trazabilidad completa desde las corrientes frías del Pacífico hasta la frescura del plato en minutos.",
+      content: [
+        "Asegurar un pescado fresco, tierno, libre de metales pesados y de origen ético en una ciudad de montaña como Bogotá es uno de los mayores desafíos logísticos que asumimos todos los días en ORIGEN.",
+        "Para lograrlo, trabajamos exclusivamente bajo certificaciones internacionales ASC (Aquaculture Stewardship Council) y MSC (Marine Stewardship Council). Esto garantiza que el atún que disfrutas en Origen Agua y el salmón fresco en Origen Tierra provienen únicamente de pesquerías y cultivos que respetan los límites biológicos de las especies marinas y no dañan los lechos de coral.",
+        "La cadena de frío es implacable: el pescado se limpia, porciona y congela criogénicamente en origen minutos después de la captura. Posteriormente, viaja vía aérea bajo estrictas auditorías térmicas diarias hasta arribar a nuestras cocinas, donde es descongelado lentamente y fileteado en el momento exacto del servicio.",
+        "Este viaje transparente nos permite servirte filetes magros con niveles óptimos de Omega-3 y grasas poliinsaturadas protectoras del sistema cardiovascular. Sin atajos, sin conservantes químicos artificiales. Solo la pureza intacta del mar en tu plato."
+      ]
+    }
   ];
 
   return (
-    <div className="pt-32 pb-32 min-h-screen bg-[var(--fondo-crema)] w-full">
+    <div className="pt-32 pb-32 min-h-screen bg-[var(--fondo-crema)] w-full relative">
       <div className="max-w-7xl mx-auto px-6">
+        
+        {/* Cabecera Editorial */}
         <div className="text-center mb-16 animate-in">
-          <h1 className="font-display italic text-5xl md:text-6xl text-[var(--verde-profundo)] mb-4">Historias de Origen</h1>
-          <p className="font-ui text-lg text-[var(--texto-suave)]">Nutrición, comunidad y el porqué detrás de lo que hacemos.</p>
+          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.25em] uppercase text-xs mb-4 inline-block">Historias de Origen</span>
+          <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Nuestro Blog</h1>
+          <p className="font-ui text-lg text-[var(--texto-suave)] max-w-xl mx-auto">
+            Explora las crónicas de los ingredientes, las vidas de nuestros campesinos aliados y el porqué detrás de una nutrición real y honesta.
+          </p>
         </div>
 
+        {/* Listado de Posts */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in" style={{ animationDelay: '200ms' }}>
-          {posts.map((post, idx) => (
-            <div key={idx} className="bg-white rounded-[24px] overflow-hidden border border-[var(--verde-palido)] shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer">
+          {posts.map((post) => (
+            <div 
+              key={post.id} 
+              onClick={() => setActivePost(post)}
+              className="bg-white rounded-[24px] overflow-hidden border border-[var(--verde-palido)] shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_40px_rgba(18,179,98,0.08)] hover:-translate-y-2 transition-all duration-300 group cursor-pointer flex flex-col h-full"
+            >
+              {/* Contenedor de Imagen */}
               <div className="h-64 overflow-hidden relative">
-                <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1 rounded-[8px] font-ui text-[10px] uppercase font-bold text-[var(--verde-main)]">
+                <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-[10px] font-ui text-[10px] uppercase font-bold text-[var(--verde-main)] tracking-wider shadow-sm">
                   {post.category}
                 </div>
-                <img src={post.img} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={post.img} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               </div>
-              <div className="p-8">
-                <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-4 line-clamp-2">{post.title}</h3>
-                <span className="font-ui text-[var(--verde-main)] font-semibold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">Leer artículo <ArrowRight size={16}/></span>
+              
+              {/* Contenido de la Card */}
+              <div className="p-8 flex flex-col flex-grow">
+                <div className="flex items-center gap-3 text-xs text-[var(--texto-suave)] font-ui mb-3">
+                  <span>{post.date}</span>
+                  <span>•</span>
+                  <span>{post.readTime}</span>
+                </div>
+                <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-3 leading-snug group-hover:text-[var(--verde-main)] transition-colors duration-300">
+                  {post.title}
+                </h3>
+                <p className="font-ui text-sm text-[var(--texto-suave)] leading-relaxed line-clamp-3 mb-6">
+                  {post.subtitle}
+                </p>
+                <span className="font-ui text-[var(--verde-main)] font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all mt-auto pt-4 border-t border-gray-50">
+                  Leer historia completa <ArrowRight size={16}/>
+                </span>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-20 bg-[var(--verde-profundo)] rounded-[24px] p-12 text-center text-white relative overflow-hidden">
+        {/* Sección de Asesor Nutricional Interna */}
+        <div className="mt-24 bg-[var(--verde-profundo)] rounded-[32px] p-10 md:p-16 text-center text-white relative overflow-hidden shadow-xl border border-[var(--verde-bosque)]">
+           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[var(--verde-main)] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
            <div className="relative z-10 max-w-2xl mx-auto">
-             <h2 className="font-display italic text-4xl mb-4">¿Quieres saber más sobre nutrición?</h2>
-             <p className="font-ui text-[var(--verde-palido)] mb-8">Pregúntale a nuestra IA personalizada o únete a nuestro newsletter.</p>
-             <Button onClick={() => {navigate('cuenta'); window.scrollTo(0,0);}} className="mx-auto rounded-[16px] bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)]">
+             <span className="font-ui text-[var(--verde-brillante)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">¿Dudas sobre tu dieta?</span>
+             <h2 className="font-display italic text-4xl md:text-5xl mb-6">Tu nutrición es única y personal.</h2>
+             <p className="font-ui text-[var(--verde-palido)] mb-8 leading-relaxed text-base md:text-lg">
+               Pregúntale a nuestro asesor personalizado Origen AI o agenda un diagnóstico con nuestro equipo para encontrar tu balance idóneo.
+             </p>
+             <Button onClick={() => {navigate('cuenta'); window.scrollTo(0,0);}} className="mx-auto rounded-[16px] bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] border-0">
                <Sparkles size={18}/> Hablar con Asesor Nutricional
              </Button>
            </div>
         </div>
+
       </div>
+
+      {/* Lector de Artículos en Pantalla Completa (Overlay Editorial) */}
+      <AnimatePresence>
+        {activePost && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md flex justify-end overflow-y-auto"
+            onClick={() => setActivePost(null)}
+          >
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+              className="bg-[var(--fondo-crema)] w-full max-w-3xl min-h-screen p-8 md:p-16 flex flex-col relative z-20 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Botón de Cerrar */}
+              <button 
+                onClick={() => setActivePost(null)} 
+                className="absolute top-6 left-6 md:top-10 md:left-10 p-3 bg-white rounded-full text-gray-500 hover:text-black hover:scale-110 shadow-sm border border-gray-100 transition-all"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Botón de Navegación Rápida arriba derecha */}
+              <div className="flex justify-end mb-8">
+                <span className="font-ui text-xs font-bold uppercase tracking-widest text-[var(--verde-main)] bg-[var(--verde-menta)] px-4 py-1.5 rounded-full">
+                  {activePost.category}
+                </span>
+              </div>
+
+              {/* Contenido Principal */}
+              <article className="max-w-2xl mx-auto mt-6">
+                
+                {/* Meta Info */}
+                <div className="flex items-center gap-4 text-sm text-[var(--texto-suave)] font-ui mb-4">
+                  <span>{activePost.date}</span>
+                  <span>•</span>
+                  <span>{activePost.readTime}</span>
+                  <span>•</span>
+                  <span className="font-semibold text-[var(--verde-main)]">Escrito por Origen Editorial</span>
+                </div>
+
+                {/* Título Principal */}
+                <h1 className="font-display font-bold text-4xl md:text-5xl text-[var(--verde-profundo)] leading-tight mb-6">
+                  {activePost.title}
+                </h1>
+
+                {/* Subtítulo Introductorio */}
+                <p className="font-ui text-lg md:text-xl text-[var(--verde-main)] font-medium leading-relaxed mb-10 pb-6 border-b border-gray-100">
+                  {activePost.subtitle}
+                </p>
+
+                {/* Imagen Destacada */}
+                <div className="rounded-[24px] overflow-hidden shadow-md mb-10 aspect-video">
+                  <img src={activePost.img} alt={activePost.title} className="w-full h-full object-cover" />
+                </div>
+
+                {/* Párrafos de Lectura Plena */}
+                <div className="space-y-6 font-ui text-gray-800 text-base md:text-lg leading-relaxed font-light">
+                  {activePost.content.map((paragraph, idx) => (
+                    <p key={idx} className="first-letter:font-display first-letter:text-3xl first-letter:font-bold first-letter:text-[var(--verde-main)] first-letter:mr-1">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Firma de Cierre */}
+                <div className="mt-16 pt-8 border-t border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[var(--verde-main)] text-white font-display font-bold text-lg rounded-full flex items-center justify-center">O</div>
+                    <div>
+                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)]">Comité de Nutrición & Impacto</p>
+                      <p className="font-ui text-xs text-[var(--texto-suave)]">ORIGEN Alimentación Consciente</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => { setActivePost(null); navigate('menu'); }}
+                    className="font-ui font-bold text-sm text-[var(--verde-main)] hover:text-[var(--verde-profundo)] flex items-center gap-2 transition-all group"
+                  >
+                    Ver Menú Asociado <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+
+              </article>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
@@ -1133,7 +1468,7 @@ const CuentaView = ({ onAddToCart }) => {
     { 
       id: 'msg-initial', 
       role: 'ai', 
-      text: '🥦 ¡Hola, Juan! Bienvenido a Origen AI. En lugar de dar vueltas, te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?' 
+      text: '🥦 ¡Hola, Juan! Bienvenido a Origen AI. En lugar de dar vueltas, te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutritional principal hoy?' 
     }
   ]);
 
@@ -1282,7 +1617,7 @@ const CuentaView = ({ onAddToCart }) => {
           <div className="bg-[var(--verde-profundo)] rounded-[24px] p-6 text-white relative overflow-hidden flex flex-col min-h-[500px] shadow-lg">
             <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--verde-main)] rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
             
-            {/* Cabecera del Chat con Botón de Reinicio */}
+            {/* Cabecera del Chat */}
             <div className="relative z-10 flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[var(--verde-main)] animate-pulse"></span>
@@ -1326,7 +1661,7 @@ const CuentaView = ({ onAddToCart }) => {
                           <span className="text-xs bg-[var(--verde-menta)] text-[var(--verde-main)] px-2 py-0.5 rounded-full font-bold font-ui inline-block mt-1">Sugerido</span>
                         </div>
                       </div>
-                      <p className="text-xs text-[var(--texto-suave)] leading-relaxed">Con proteína de {m.recommendation.proteina} fresca, acompañado de ingredientes premium locales.</p>
+                      <p className="text-xs text-[var(--texto-suave)] leading-relaxed font-ui">Con proteína de {m.recommendation.proteina} fresca, acompañado de ingredientes premium locales.</p>
                       <div className="flex items-center justify-between border-t border-gray-100 pt-3 mt-1">
                         <span className="font-display font-bold text-base text-[var(--verde-main)]">{formatPrice(m.recommendation.precio)}</span>
                         <button 
@@ -1352,7 +1687,7 @@ const CuentaView = ({ onAddToCart }) => {
               )}
             </div>
 
-            {/* Opciones del Árbol de Decisiones (Se muestran dinámicamente según el paso) */}
+            {/* Opciones del Árbol de Decisiones */}
             <div className="relative z-10 shrink-0 border-t border-white/5 pt-4">
               <AnimatePresence mode="wait">
                 
@@ -1406,7 +1741,7 @@ const CuentaView = ({ onAddToCart }) => {
               </AnimatePresence>
             </div>
 
-            {/* Input de texto libre con el Parser condicional */}
+            {/* Input de texto libre */}
             <div className="mt-4 flex gap-2 bg-white/5 p-2 rounded-[16px] border border-white/10 focus-within:border-[var(--verde-main)] transition-colors relative z-10 shrink-0">
               <input 
                 type="text" 
@@ -1585,11 +1920,11 @@ export default function App() {
       <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[#05190C]/95 backdrop-blur-xl border-b border-white/10 py-4 shadow-sm' : 'bg-gradient-to-b from-black/70 via-black/30 to-transparent py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative h-16">
           
-          {/* LADO IZQUIERDO: Submenú (Hamburguesa en desktop y celular) */}
+          {/* LADO IZQUIERDO: Submenú hamburguesa */}
           <div className="flex items-center z-10">
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
-              className="text-white hover:text-[var(--verde-main)] transition-colors flex items-center gap-3 group"
+              className="text-white hover:text-[var(--verde-main)] transition-colors flex items-center gap-3 group animate-pulse"
             >
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[var(--verde-main)] transition-all">
                 <MenuIcon size={20} className="text-white" />
