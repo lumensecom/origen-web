@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { Leaf, MapPin, ArrowRight, Instagram, Facebook, User, Menu as MenuIcon, X, Sparkles, MessageCircle, Navigation, Check, Store, ShoppingBag, Wifi, Compass, Award, Clock } from 'lucide-react';
-
-/* =========================================================================
-   SISTEMA DE DISEÑO & DATA OFICIAL (CON EL NUEVO VERDE VIBRANTE)
-   ========================================================================= */
+import { 
+  Leaf, MapPin, ArrowRight, Instagram, Facebook, User, 
+  Menu as MenuIcon, X, Sparkles, MessageCircle, Navigation, 
+  Check, ChevronDown, BookOpen, Store, ShoppingBag, 
+  Plus, Minus, Trash2, ArrowLeft, Clock, Award
+} from 'lucide-react';
 
 const COLORS = {
-  verdeProfundo: '#05190C', // Un tono más oscuro y elegante para contrastar
-  verdeBosque: '#0D2818',
-  verdeMain: '#12B362',     // El color verde vibrante exacto de tu captura de pantalla
-  verdeVivo: '#1EAD61',     // Hover y variaciones dinámicas
-  verdeBrillante: '#3EE087',
+  verdeProfundo: '#0D2818',
+  verdeBosque: '#1A3D28',
+  verdeMain: '#12B362',     // Brand green requested by the user
+  verdeVivo: '#1EAD61',
+  verdeBrillante: '#4CD98A',
   verdePalido: '#C8F0DC',
   verdeMenta: '#E8F9F0',
   doradoFuerte: '#D4A017',
@@ -21,6 +22,16 @@ const COLORS = {
   textoOscuro: '#0D1F0F',
   kraft: '#D4A574',
   maximoAmber: '#F09030'
+};
+
+const HERO_IMAGE = "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780260556/A_hand_with_warm_natural_202605311437_jtu8or.jpg";
+
+const INGREDIENTE_COLORES = {
+  'Arroz Blanco': '#F5F0E8', 'Arroz Integral': '#C8A87A', 'Quinoa': '#D4B896', 'Mix Asiático': '#E8D4B0',
+  'Zuquini': '#7DC67E', 'Pepino': '#A8D87A', 'Tomate Cherry': '#E8584A', 'Zanahoria': '#F08030', 'Repollo Encurtido': '#C870A8', 'Cebolla Encurtida': '#E0A0C8', 'Berenjena': '#6040A0', 'Brócoli': '#40A040',
+  'Maíz': '#FFD040', 'Mango': '#F0A030', 'Manzana': '#E87080', 'Parmesano': '#F0E0A0', 'Aguacate': '#80C060', 'Jalapeños': '#40A040', 'Lenteja Crocante': '#C87820', 'Garbanzos': '#D4A050',
+  'Pechuga de Pollo': '#E0A060', 'Huevo Cocido': '#F8D870', 'Tofu': '#F0E8D0', 'Carne': '#8B4020', 'Lomo de Cerdo': '#A05030', 'Máximo (Doble)': '#E0A060',
+  'Pesto Natural': '#3DB870', 'Yogurt de Casa': '#F8F8F8', 'Mango Picante': '#F08030', 'Dulce Balance': '#F8D040', 'Vino Mango': '#8040A0'
 };
 
 const CARTA = [
@@ -159,23 +170,19 @@ const CARTA = [
   }
 ];
 
-const INGREDIENTE_COLORES = {
-  'Arroz Blanco': '#F5F0E8', 'Arroz Integral': '#C8A87A', 'Quinoa': '#D4B896', 'Mix Asiático': '#E8D4B0',
-  'Zuquini': '#7DC67E', 'Pepino': '#A8D87A', 'Tomate Cherry': '#E8584A', 'Zanahoria': '#F08030', 'Repollo Encurtido': '#C870A8', 'Cebolla Encurtida': '#E0A0C8', 'Berenjena': '#6040A0', 'Brócoli': '#40A040',
-  'Maíz': '#FFD040', 'Mango': '#F0A030', 'Manzana': '#E87080', 'Parmesano': '#F0E0A0', 'Aguacate': '#80C060', 'Jalapeños': '#40A040', 'Lenteja Crocante': '#C87820', 'Garbanzos': '#D4A050',
-  'Pechuga de Pollo': '#E0A060', 'Huevo Cocido': '#F8D870', 'Tofu': '#F0E8D0', 'Carne': '#8B4020', 'Lomo de Cerdo': '#A05030', 'Máximo (Doble)': '#E0A060',
-  'Pesto Natural': '#3DB870', 'Yogurt de Casa': '#F8F8F8', 'Mango Picante': '#F08030', 'Dulce Balance': '#F8D040', 'Vino Mango': '#8040A0'
-};
+const BEBIDAS = [
+  { id: 'limonada-coco', nombre: 'Limonada de Coco Natural', precio: 8900, desc: 'Hecha al instante con coco real rallado y endulzante orgánico.', emoji: '🥥' },
+  { id: 'kombucha-rojos', nombre: 'Kombucha de Frutos Rojos', precio: 11900, desc: 'Probiótica artesanal, refrescante y con gasificación natural.', emoji: '🍹' },
+  { id: 'te-matcha-frio', nombre: 'Matcha Ceremonial Helado', precio: 9900, desc: 'Té verde premium batido con leche de almendras y miel de abejas.', emoji: '🍵' },
+  { id: 'agua-gas-menta', nombre: 'Agua de Manantial con Gas', precio: 5900, desc: 'Saborizada naturalmente con fresas, rodajas de limón y menta.', emoji: '💧' }
+];
 
-const HERO_IMAGE = "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780260556/A_hand_with_warm_natural_202605311437_jtu8or.jpg"; 
-
-// Datos de las ubicaciones reales
 const LOCALES = [
   {
     id: 'salitre',
     nombre: 'Salitre 372',
     direccion: 'Calle 24a # 69-76, Bogotá',
-    detalles: 'Cerca de la zona empresarial y hotelera de Salitre. Perfecto para un almuerzo rápido y cargado de energía real.',
+    detalles: 'Cerca de la zona empresarial y de Salitre Plaza. Perfecto para un almuerzo rápido y cargado de energía real.',
     horarioSemana: '11:00 AM – 9:00 PM',
     horarioFinde: '11:00 AM – 8:00 PM',
     amenidades: ['Pet Friendly', 'Wi-Fi gratis', 'Zona de terraza'],
@@ -185,7 +192,7 @@ const LOCALES = [
     id: 'chile',
     nombre: 'Av Chile 408b',
     direccion: 'Calle 72 # 10-34, Local 408b, Bogotá',
-    detalles: 'En el epicentro financiero de Bogotá. La pausa perfecta y nutritiva para los profesionales más exigentes.',
+    detalles: 'En el epicentro financiero de Bogotá. La pausa perfecta y nutritiva para tu jornada laboral diaria.',
     horarioSemana: '11:00 AM – 8:00 PM',
     horarioFinde: '11:00 AM – 5:00 PM',
     amenidades: ['Para llevar', 'Estación de carga', 'Opciones Veganas'],
@@ -195,7 +202,7 @@ const LOCALES = [
     id: 'nuestro-bogota',
     nombre: 'Nuestro Bogotá L3-127',
     direccion: 'Av. Ciudad de Cali # 52-25, Local L3-127, Bogotá',
-    detalles: 'Ubicados en el Centro Comercial Nuestro Bogotá. El spot ideal para alimentarte sanamente antes o después de tu viaje.',
+    detalles: 'Ubicados en el Centro Comercial Nuestro Bogotá. El spot ideal para alimentarte sanamente.',
     horarioSemana: '11:00 AM – 9:00 PM',
     horarioFinde: '11:00 AM – 9:00 PM',
     amenidades: ['Zona infantil', 'Parqueadero cubierto', 'Pagos digitales'],
@@ -203,20 +210,7 @@ const LOCALES = [
   }
 ];
 
-/* =========================================================================
-   UTILIDADES
-   ========================================================================= */
-
 const formatPrice = (price) => `$${price.toLocaleString('es-CO')}`;
-
-const generarMensajeWhatsApp = (pedido) => {
-  const msg = `🌿 *PEDIDO ORIGEN*\n\n🥣 *${pedido.nombre}* — ${formatPrice(pedido.precio)}\n${pedido.esBuilder ? `📋 *Mi combinación:*\n• Base: ${pedido.base}\n• Frescuras: ${pedido.frescuras.join(', ')}\n• Sabores: ${pedido.sabores.join(', ')}\n• Proteína: ${pedido.proteina}\n• Salsa: ${pedido.salsa}\n` : ''}\n📍 *Modalidad:* ${pedido.modalidad}\n\n¡Gracias! 🌿`;
-  window.open(`https://wa.me/573000000000?text=${encodeURIComponent(msg)}`, '_blank');
-};
-
-/* =========================================================================
-   COMPONENTES UI (Diseño Squircle / Editorial)
-   ========================================================================= */
 
 const Button = ({ children, variant = 'primary', className = '', onClick, disabled }) => {
   const base = "px-8 py-3.5 rounded-[16px] font-ui font-bold tracking-wider text-xs uppercase transition-all duration-300 flex items-center justify-center gap-2";
@@ -228,65 +222,220 @@ const Button = ({ children, variant = 'primary', className = '', onClick, disabl
   return <button onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`}>{children}</button>;
 };
 
-/* =========================================================================
-   MODAL DE SELECCIÓN DE PEDIDO (RECOGER O DOMICILIO)
-   ========================================================================= */
-const OrderModal = ({ pedido, onClose, onConfirm }) => {
-  if (!pedido) return null;
+const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrder }) => {
+  const [step, setStep] = useState('cart'); // cart -> deliveryType -> pickupStore -> deliveryAddress
+  const [selectedStore, setSelectedStore] = useState(null);
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const cartTotal = useMemo(() => {
+    return cart.reduce((acc, item) => acc + (item.precio * item.quantity), 0);
+  }, [cart]);
+
+  if (cart.length === 0) {
+    return (
+      <AnimatePresence>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[var(--fondo-crema)] w-full max-w-md p-8 rounded-[32px] text-center shadow-xl">
+            <span className="text-5xl block mb-4">🥣</span>
+            <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-2">Tu pedido está vacío</h3>
+            <p className="font-ui text-sm text-[var(--texto-suave)] mb-6">Explora nuestra carta Origen para agregar tus favoritos.</p>
+            <Button onClick={onClose} variant="primary" className="w-full">Ir a explorar</Button>
+          </motion.div>
+        </div>
+      </AnimatePresence>
+    );
+  }
 
   return (
     <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-[var(--fondo-crema)] w-full max-w-lg p-8 md:p-10 rounded-[32px] shadow-2xl relative"
+          initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+          animate={{ opacity: 1, scale: 1, y: 0 }} 
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="bg-[var(--fondo-crema)] w-full max-w-xl p-6 md:p-8 rounded-[32px] shadow-2xl relative my-8"
           onClick={(e) => e.stopPropagation()}
         >
-          <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-white rounded-full text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition-colors">
-            <X size={20} />
-          </button>
-          <div className="text-center mb-8">
-            <span className="inline-block bg-[var(--verde-menta)] text-[var(--verde-main)] px-4 py-1.5 rounded-full text-xs font-bold font-ui uppercase tracking-wider mb-4">
-              Paso Final
-            </span>
-            <h2 className="font-display italic text-4xl text-[var(--verde-profundo)] mb-2">Ordena tu Origen</h2>
-            <p className="font-ui text-[var(--texto-suave)]">¿Cómo prefieres recibir tu bowl hoy?</p>
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            <button onClick={() => onConfirm('Recoger en Local')} className="flex items-center gap-5 p-6 bg-white border border-[var(--verde-palido)] rounded-[24px] hover:border-[var(--verde-main)] hover:shadow-[0_10px_30px_rgba(18,179,98,0.15)] group transition-all duration-300 text-left">
-              <div className="bg-[var(--verde-menta)] p-4 rounded-[16px] text-[var(--verde-main)] group-hover:scale-110 group-hover:bg-[var(--verde-main)] group-hover:text-white transition-all">
-                <Store size={28} />
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-1">Recoger en local</h3>
-                <p className="font-ui text-sm text-[var(--texto-suave)]">Pasa por tu bowl sin filas.</p>
-              </div>
-              <ArrowRight size={20} className="ml-auto text-[var(--verde-palido)] group-hover:text-[var(--verde-main)] group-hover:translate-x-1 transition-all" />
-            </button>
-            <button onClick={() => onConfirm('Domicilio')} className="flex items-center gap-5 p-6 bg-white border border-[var(--verde-palido)] rounded-[24px] hover:border-[var(--verde-main)] hover:shadow-[0_10px_30px_rgba(18,179,98,0.15)] group transition-all duration-300 text-left">
-              <div className="bg-[var(--verde-menta)] p-4 rounded-[16px] text-[var(--verde-main)] group-hover:scale-110 group-hover:bg-[var(--verde-main)] group-hover:text-white transition-all">
-                <MapPin size={28} />
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-1">Pedir a domicilio</h3>
-                <p className="font-ui text-sm text-[var(--texto-suave)]">Te lo llevamos fresco y rápido.</p>
-              </div>
-              <ArrowRight size={20} className="ml-auto text-[var(--verde-palido)] group-hover:text-[var(--verde-main)] group-hover:translate-x-1 transition-all" />
+          {/* Header de Checkout */}
+          <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-6">
+            <div className="flex items-center gap-3">
+              {step !== 'cart' && (
+                <button onClick={() => {
+                  if (step === 'deliveryType') setStep('cart');
+                  else if (step === 'pickupStore') setStep('deliveryType');
+                  else if (step === 'deliveryAddress') setStep('deliveryType');
+                }} className="text-gray-400 hover:text-gray-800 transition-colors">
+                  <ArrowLeft size={20} />
+                </button>
+              )}
+              <h2 className="font-display italic text-2xl text-[var(--verde-profundo)]">
+                {step === 'cart' && 'Tu Pedido'}
+                {step === 'deliveryType' && 'Método de Entrega'}
+                {step === 'pickupStore' && 'Selecciona Sede'}
+                {step === 'deliveryAddress' && 'Dirección de Entrega'}
+              </h2>
+            </div>
+            <button onClick={onClose} className="p-1.5 bg-white rounded-full text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition-colors">
+              <X size={18} />
             </button>
           </div>
+
+          {/* PASO 1: RESUMEN Y MODIFICAR COMPRA */}
+          {step === 'cart' && (
+            <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 scrollbar-hide">
+              {cart.map((item, idx) => (
+                <div key={`${item.id}-${idx}`} className="flex items-center gap-4 p-4 bg-white rounded-[20px] border border border-[var(--verde-palido)]">
+                  <div className="w-14 h-14 bg-[var(--verde-menta)] rounded-[14px] flex items-center justify-center text-2xl flex-shrink-0">
+                    {item.imagen ? <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover rounded-[14px]" /> : (item.emoji || '🥣')}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-display font-bold text-base text-[var(--verde-profundo)]">{item.nombre}</h4>
+                    {item.esBuilder && (
+                      <p className="font-ui text-[10px] text-[var(--texto-suave)] leading-tight mt-0.5">
+                        {item.base} • {item.proteina} • {item.salsa}
+                      </p>
+                    )}
+                    <span className="font-ui text-sm font-bold text-[var(--verde-main)] mt-1 block">{formatPrice(item.precio)}</span>
+                  </div>
+                  
+                  {/* Modificar Cantidad */}
+                  <div className="flex items-center gap-2 bg-[var(--verde-menta)] px-2.5 py-1.5 rounded-full">
+                    <button onClick={() => onUpdateQty(item, -1)} className="text-[var(--verde-main)] hover:scale-110 active:scale-95 transition-all">
+                      <Minus size={14} />
+                    </button>
+                    <span className="font-ui text-sm font-bold text-[var(--verde-profundo)] w-4 text-center">{item.quantity}</span>
+                    <button onClick={() => onUpdateQty(item, 1)} className="text-[var(--verde-main)] hover:scale-110 active:scale-95 transition-all">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+
+                  {/* Eliminar de una */}
+                  <button onClick={() => onRemoveItem(item)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* PASO 2: TIPO DE ENTREGA */}
+          {step === 'deliveryType' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button 
+                onClick={() => setStep('pickupStore')}
+                className="flex flex-col items-center justify-center p-8 bg-white border border-[var(--verde-palido)] rounded-[24px] hover:border-[var(--verde-main)] hover:shadow-[0_10px_30px_rgba(18,179,98,0.12)] group transition-all text-center"
+              >
+                <div className="bg-[var(--verde-menta)] p-4 rounded-[16px] text-[var(--verde-main)] group-hover:scale-110 group-hover:bg-[var(--verde-main)] group-hover:text-white transition-all mb-4">
+                  <Store size={32} />
+                </div>
+                <h3 className="font-display font-bold text-xl text-[var(--verde-profundo)] mb-1">Recoger en local</h3>
+                <p className="font-ui text-xs text-[var(--texto-suave)] max-w-[180px]">Pasa por tu bowl sin filas en tu sede favorita.</p>
+              </button>
+
+              <button 
+                onClick={() => setStep('deliveryAddress')}
+                className="flex flex-col items-center justify-center p-8 bg-white border border-[var(--verde-palido)] rounded-[24px] hover:border-[var(--verde-main)] hover:shadow-[0_10px_30px_rgba(18,179,98,0.12)] group transition-all text-center"
+              >
+                <div className="bg-[var(--verde-menta)] p-4 rounded-[16px] text-[var(--verde-main)] group-hover:scale-110 group-hover:bg-[var(--verde-main)] group-hover:text-white transition-all mb-4">
+                  <MapPin size={32} />
+                </div>
+                <h3 className="font-display font-bold text-xl text-[var(--verde-profundo)] mb-1">Pedir a domicilio</h3>
+                <p className="font-ui text-xs text-[var(--texto-suave)] max-w-[180px]">Te lo enviamos con nuestro repartidor de confianza.</p>
+              </button>
+            </div>
+          )}
+
+          {/* PASO 3: SELECCIONAR TIENDA FISICA (PICKUP) */}
+          {step === 'pickupStore' && (
+            <div className="space-y-3">
+              <p className="font-ui text-sm text-[var(--texto-suave)] mb-4">¿En qué local te gustaría recoger hoy?</p>
+              {LOCALES.map((store) => (
+                <button
+                  key={store.id}
+                  onClick={() => setSelectedStore(store)}
+                  className={`w-full flex items-center gap-4 p-4 rounded-[20px] border-2 text-left transition-all ${
+                    selectedStore?.id === store.id 
+                      ? 'border-[var(--verde-main)] bg-white shadow-md' 
+                      : 'border-transparent bg-white hover:border-[var(--verde-palido)]'
+                  }`}
+                >
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedStore?.id === store.id ? 'border-[var(--verde-main)] text-[var(--verde-main)]' : 'border-gray-300'}`}>
+                    {selectedStore?.id === store.id && <div className="w-3 h-3 bg-[var(--verde-main)] rounded-full" />}
+                  </div>
+                  <div>
+                    <h4 className="font-display font-bold text-base text-[var(--verde-profundo)]">{store.nombre}</h4>
+                    <p className="font-ui text-xs text-[var(--texto-suave)]">{store.direccion}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* PASO 4: FORMULARIO DOMICILIO */}
+          {step === 'deliveryAddress' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider mb-2">Dirección de Entrega (En Bogotá)</label>
+                <input 
+                  type="text" 
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Ej: Calle 26 # 68-10, Apto 402"
+                  className="w-full p-4 rounded-[16px] border border-[var(--verde-palido)] bg-white font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)]"
+                />
+              </div>
+              <div>
+                <label className="block font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider mb-2">Barrio o Indicaciones Adicionales</label>
+                <input 
+                  type="text" 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Ej: Frente al parque de Salitre"
+                  className="w-full p-4 rounded-[16px] border border-[var(--verde-palido)] bg-white font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Footer de Checkout */}
+          <div className="mt-8 border-t border-gray-100 pt-6 flex justify-between items-center">
+            <div>
+              <span className="font-ui text-xs text-[var(--texto-suave)] block uppercase tracking-wider">Total Pedido</span>
+              <span className="font-display font-bold text-2xl text-[var(--verde-profundo)]">{formatPrice(cartTotal)}</span>
+            </div>
+            
+            {step === 'cart' && (
+              <Button onClick={() => setStep('deliveryType')} variant="primary">Continuar</Button>
+            )}
+
+            {step === 'pickupStore' && (
+              <Button 
+                onClick={() => onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore })} 
+                disabled={!selectedStore}
+                variant="primary"
+              >
+                Completar en WhatsApp
+              </Button>
+            )}
+
+            {step === 'deliveryAddress' && (
+              <Button 
+                onClick={() => onConfirmOrder({ modalidad: 'Domicilio', direccion: address, detalles: phone })} 
+                disabled={!address.trim()}
+                variant="primary"
+              >
+                Completar en WhatsApp
+              </Button>
+            )}
+          </div>
+
         </motion.div>
-      </motion.div>
+      </div>
     </AnimatePresence>
   );
 };
 
-/* =========================================================================
-   GLOBAL FOOTER
-   ========================================================================= */
 const Footer = ({ navigate }) => {
   const handleNav = (id) => {
     navigate(id);
@@ -401,7 +550,6 @@ const HomeView = ({ navigate }) => {
         </motion.div>
       </div>
 
-      {/* Bloques de Acción */}
       <div className="w-full flex flex-col md:flex-row bg-[var(--fondo-crema)] relative z-20 max-w-7xl mx-auto px-6 py-12 gap-6">
         <div onClick={() => navigate('builder')} className="relative flex-1 bg-[var(--verde-profundo)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-bosque)]">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--verde-main)]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -413,7 +561,7 @@ const HomeView = ({ navigate }) => {
             <Sparkles size={24} />
           </div>
         </div>
-        <div onClick={() => navigate('menu')} className="relative flex-1 bg-[var(--crema-calido)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--dorado-suave)]/20">
+        <div onClick={() => navigate('menu')} className="relative flex-1 bg-[var(--crema-calido)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border border-[var(--dorado-suave)]/20">
           <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
             <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)] mb-4 transition-transform duration-500 group-hover:-translate-y-1">Carta<br/><span className="text-[var(--verde-main)]">Origen</span></h2>
@@ -467,12 +615,12 @@ const HomeView = ({ navigate }) => {
   );
 };
 
-// --- 2. CARTA ORIGEN (DISEÑO PREMIUM MINIMALISTA / LUZ) ---
-const CartaView = ({ onOrderRequest }) => {
+const CartaView = ({ onAddToCart }) => {
   const [filtroActivo, setFiltroActivo] = useState('Todos');
-  const categorias = ['Todos', 'Mariscos', 'Proteína Animal', 'Vegano', 'Premium'];
+  const categorias = ['Todos', 'Mariscos', 'Proteína Animal', 'Vegano', 'Premium', 'Bebidas'];
 
   const bowlsFiltrados = useMemo(() => {
+    if (filtroActivo === 'Bebidas') return BEBIDAS;
     return CARTA.filter(bowl => {
       if (filtroActivo === 'Todos') return true;
       if (filtroActivo === 'Premium') return bowl.badge.texto === 'Premium' || bowl.esMaximo;
@@ -487,7 +635,7 @@ const CartaView = ({ onOrderRequest }) => {
         {/* Header Carta Light Mode */}
         <div className="text-center mb-16 animate-in">
           <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Carta Origen</h1>
-          <p className="font-ui text-lg text-[#2D5A4A]">12 combinaciones perfectas, cada una con su historia.</p>
+          <p className="font-ui text-lg text-[#2D5A4A]">12 combinaciones perfectas y bebidas frescas de la casa.</p>
         </div>
 
         {/* Filtros Light Mode */}
@@ -503,87 +651,100 @@ const CartaView = ({ onOrderRequest }) => {
           ))}
         </div>
 
+        {/* Cards Grid */}
         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           <AnimatePresence mode="popLayout">
-            {bowlsFiltrados.map((bowl, idx) => (
-              <motion.div 
-                layout 
-                key={bowl.id} 
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                exit={{ opacity: 0, scale: 0.95 }} 
-                transition={{ duration: 0.4 }} 
-                className={`bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-[#E8F0E8] hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-[550px] relative group cursor-pointer ${bowl.esMaximo ? 'border-[var(--maximo-amber)] ring-1 ring-[var(--maximo-amber)]/20 shadow-[0_4px_20px_rgba(240,144,48,0.1)]' : ''}`}
-                onClick={() => onOrderRequest(bowl)}
-              >
-                
-                {/* Badge Superior Izquierdo */}
-                <div className="absolute top-6 left-6 z-20">
-                  <span 
-                    className="px-3 py-1.5 rounded-[12px] text-[10px] font-ui font-bold uppercase tracking-wide"
-                    style={{ backgroundColor: bowl.badge.bg, color: bowl.badge.color }}
-                  >
-                    {bowl.badge.texto}
-                  </span>
-                </div>
-
-                {/* Imagen Circular del Bowl */}
-                <div className="w-[200px] h-[200px] mx-auto rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.06)] bg-[#FDFCF8] flex items-center justify-center overflow-hidden mb-6 relative z-10">
-                  {bowl.imagen ? (
-                    <img 
-                      src={bowl.imagen} 
-                      alt={bowl.nombre} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                      style={{ mixBlendMode: 'multiply' }} 
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-[#E8F5E8] flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-105">🥗</div>
-                  )}
-                </div>
-
-                {/* Textos y Etiquetas */}
-                <div className="flex-grow flex flex-col items-center">
-                  <h3 className="font-display font-bold text-[22px] text-[#1A1A1A] leading-[1.2] text-center mb-4">
-                    {bowl.nombre}
-                  </h3>
+            {bowlsFiltrados.map((item) => {
+              const isBebida = filtroActivo === 'Bebidas' || !item.tag;
+              return (
+                <motion.div 
+                  layout 
+                  key={item.id} 
+                  initial={{ opacity: 0, scale: 0.95 }} 
+                  animate={{ opacity: 1, scale: 1 }} 
+                  exit={{ opacity: 0, scale: 0.95 }} 
+                  transition={{ duration: 0.4 }} 
+                  className={`bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-[#E8F0E8] hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-[550px] relative group cursor-pointer ${item.esMaximo ? 'border-[var(--maximo-amber)] ring-1 ring-[var(--maximo-amber)]/20 shadow-[0_4px_20px_rgba(240,144,48,0.1)]' : ''}`}
+                  onClick={() => onAddToCart(item)}
+                >
                   
-                  {/* Ingredientes como "Tags Dietéticos" */}
-                  <div className="flex flex-wrap justify-center gap-2 mb-4">
-                    {bowl.ingredientes.map((ing, i) => (
-                      <span key={i} className="bg-[#F5F5F5] text-[#2D3A2D] text-[10px] font-medium px-2.5 py-1 rounded-[6px]">
-                        {ing}
-                      </span>
-                    ))}
+                  {/* Badge Superior Izquierdo */}
+                  <div className="absolute top-6 left-6 z-20">
+                    <span 
+                      className="px-3 py-1.5 rounded-[12px] text-[10px] font-ui font-bold uppercase tracking-wide"
+                      style={{ 
+                        backgroundColor: isBebida ? '#E8F9F0' : item.badge?.bg, 
+                        color: isBebida ? 'var(--verde-main)' : item.badge?.color 
+                      }}
+                    >
+                      {isBebida ? 'Refrescante' : item.badge?.texto}
+                    </span>
                   </div>
 
-                  {/* Dietary tags en base a la especificación */}
-                  {bowl.dietary && (
-                    <div className="flex flex-wrap justify-center gap-1.5">
-                      {bowl.dietary.map((tag, i) => (
-                        <span key={i} className="bg-[#E8F5E8] text-[var(--verde-main)] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[6px]">
-                          {tag}
-                        </span>
-                      ))}
+                  {/* Imagen Circular */}
+                  <div className="w-[200px] h-[200px] mx-auto rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.06)] bg-[#FDFCF8] flex items-center justify-center overflow-hidden mb-6 relative z-10">
+                    {isBebida ? (
+                      <span className="text-8xl select-none group-hover:scale-110 transition-transform duration-500">{item.emoji}</span>
+                    ) : item.imagen ? (
+                      <img 
+                        src={item.imagen} 
+                        alt={item.nombre} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        style={{ mixBlendMode: 'multiply' }} 
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#E8F5E8] flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-105">🥗</div>
+                    )}
+                  </div>
+
+                  {/* Textos y Etiquetas */}
+                  <div className="flex-grow flex flex-col items-center">
+                    <h3 className="font-display font-bold text-[22px] text-[#1A1A1A] leading-[1.2] text-center mb-4">
+                      {item.nombre}
+                    </h3>
+                    
+                    {/* Ingredientes / Descripción */}
+                    {isBebida ? (
+                      <p className="font-ui text-sm text-[var(--texto-suave)] text-center max-w-[240px]">{item.desc}</p>
+                    ) : (
+                      <div className="flex flex-wrap justify-center gap-2 mb-4">
+                        {item.ingredientes?.map((ing, i) => (
+                          <span key={i} className="bg-[#F5F5F5] text-[#2D3A2D] text-[10px] font-medium px-2.5 py-1 rounded-[6px]">
+                            {ing}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Dietary tags */}
+                    {!isBebida && item.dietary && (
+                      <div className="flex flex-wrap justify-center gap-1.5 mt-auto">
+                        {item.dietary.map((tag, i) => (
+                          <span key={i} className="bg-[#E8F5E8] text-[var(--verde-main)] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[6px]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Precio y Botón (Footer de la tarjeta) */}
+                  <div className="mt-6 flex flex-col items-center w-full">
+                    <div className="font-display font-bold text-[26px] text-[var(--verde-main)] mb-4">
+                      {formatPrice(item.precio)}
                     </div>
-                  )}
-                </div>
-
-                {/* Precio y Botón (Footer de la tarjeta) */}
-                <div className="mt-6 flex flex-col items-center w-full">
-                  <div className="font-display font-bold text-[26px] text-[var(--verde-main)] mb-4">
-                    {formatPrice(bowl.precio)}
+                    
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onAddToCart(item); }} 
+                      className="w-full rounded-[24px] border-2 border-[#1A1A1A] text-[#1A1A1A] bg-white text-[13px] font-bold uppercase tracking-wide py-3 hover:bg-[var(--verde-main)] hover:border-[var(--verde-main)] hover:text-white transition-all duration-300 shadow-none hover:shadow-[0_8px_20px_rgba(18,179,98,0.25)] flex justify-center items-center gap-2 group-hover:-translate-y-0.5"
+                    >
+                      Añadir al pedido <ShoppingBag size={16} />
+                    </button>
                   </div>
-                  
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onOrderRequest(bowl); }} 
-                    className="w-full rounded-[24px] border-2 border-[#1A1A1A] text-[#1A1A1A] bg-white text-[13px] font-bold uppercase tracking-wide py-3 hover:bg-[var(--verde-main)] hover:border-[var(--verde-main)] hover:text-white transition-all duration-300 shadow-none hover:shadow-[0_8px_20px_rgba(18,179,98,0.25)] flex justify-center items-center gap-2 group-hover:-translate-y-0.5"
-                  >
-                    Añadir al pedido <ShoppingBag size={16} />
-                  </button>
-                </div>
 
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </motion.div>
       </div>
@@ -591,7 +752,6 @@ const CartaView = ({ onOrderRequest }) => {
   );
 };
 
-// --- 3. BOWL BUILDER SVG & WIZARD ---
 const BowlSVG = ({ selections }) => {
   const wobble = { scale: [1, 1.02, 1], rotate: [0, 2, -1, 0] };
   return (
@@ -652,7 +812,7 @@ const BowlSVG = ({ selections }) => {
   );
 };
 
-const BuilderView = ({ onOrderRequest }) => {
+const BuilderView = ({ onAddToCart }) => {
   const [step, setStep] = useState(1);
   const [selections, setSelections] = useState({ base: '', frescuras: [], sabores: [], proteina: '', salsa: '' });
   
@@ -681,8 +841,9 @@ const BuilderView = ({ onOrderRequest }) => {
 
   const curr = OPTIONS[step];
 
-  // Validación de paso completado
+  // SAFE-GUARD: Solves 'Cannot read properties of undefined (reading id)' when step is 6
   const isStepCompleted = useMemo(() => {
+    if (!curr) return false;
     const currentSelection = selections[curr.id];
     if (Array.isArray(currentSelection)) {
       return currentSelection.length > 0;
@@ -707,15 +868,15 @@ const BuilderView = ({ onOrderRequest }) => {
           <AnimatePresence mode="wait">
             <motion.div key={step} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex-1">
               <div className="flex items-center gap-3 mb-8">
-                <span className="text-3xl">{curr.icon}</span>
+                <span className="text-3xl">{curr?.icon}</span>
                 <div>
-                  <h2 className="font-ui font-bold text-2xl">{curr.title}</h2>
-                  <p className="font-accent text-lg text-[var(--verde-palido)]">{curr.sub}</p>
+                  <h2 className="font-ui font-bold text-2xl">{curr?.title}</h2>
+                  <p className="font-accent text-lg text-[var(--verde-palido)]">{curr?.sub}</p>
                 </div>
               </div>
 
               <div className={`grid gap-4 ${step === 4 || step === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                {curr.items.map(item => {
+                {curr?.items.map(item => {
                   const isArray = Array.isArray(selections[curr.id]);
                   const isSelected = isArray ? selections[curr.id].includes(item) : selections[curr.id] === item;
                   const isDisabled = isArray && !isSelected && selections[curr.id].length >= curr.max;
@@ -760,7 +921,7 @@ const BuilderView = ({ onOrderRequest }) => {
               <span className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-main)]'}`}>{formatPrice(totalPrice)}</span>
             </div>
             <div className="flex gap-4">
-               <Button onClick={() => onOrderRequest({ nombre: 'BOWL PERSONALIZADO', precio: totalPrice, esBuilder: true, ...selections })} className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white rounded-[16px]">Pedir y Finalizar</Button>
+               <Button onClick={() => onAddToCart({ nombre: 'BOWL PERSONALIZADO', precio: totalPrice, esBuilder: true, ...selections })} className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white rounded-[16px]">Agregar al Pedido</Button>
                <button onClick={() => setStep(1)} className="px-6 py-3 rounded-[16px] border border-white/20 hover:bg-white/10 transition font-ui font-semibold text-sm">Modificar</button>
             </div>
           </motion.div>
@@ -803,7 +964,6 @@ const BuilderView = ({ onOrderRequest }) => {
   );
 };
 
-// --- 4. BLOG / HISTORIAS ---
 const BlogView = ({ navigate }) => {
   const posts = [
     { title: "El poder del aguacate en tu día a día", img: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&q=80&w=600", category: "Nutrición" },
@@ -850,7 +1010,6 @@ const BlogView = ({ navigate }) => {
   );
 };
 
-// --- 5. UBICACIONES ---
 const UbicacionesView = () => {
   const [localSeleccionado, setLocalSeleccionado] = useState(LOCALES[0]);
 
@@ -858,17 +1017,17 @@ const UbicacionesView = () => {
     <div className="pt-32 pb-32 min-h-screen bg-[var(--fondo-crema)] w-full">
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* Cabecera Editorial */}
+        {/* Editorial Header */}
         <div className="text-center mb-16 animate-in">
           <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestros Espacios</span>
           <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Ubicaciones</h1>
           <p className="font-ui text-lg text-[var(--texto-suave)] max-w-lg mx-auto">Encuéntranos en los puntos estratégicos de Bogotá y vive la experiencia real en persona.</p>
         </div>
 
-        {/* Layout de Locaciones */}
+        {/* Locations Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Tarjetas de Selección a la Izquierda (5 columnas) */}
+          {/* Sede Selector list (5 columns) */}
           <div className="lg:col-span-5 space-y-4">
             {LOCALES.map((local) => {
               const estaActivo = localSeleccionado.id === local.id;
@@ -905,7 +1064,7 @@ const UbicacionesView = () => {
             })}
           </div>
 
-          {/* Tarjeta de Detalle del Local Activo con Mapa a la Derecha (7 columnas) */}
+          {/* Active Sede Detail View (7 columns) */}
           <div className="lg:col-span-7">
             <div className="bg-white rounded-[32px] overflow-hidden shadow-lg border border-[var(--verde-palido)] p-6 md:p-8 flex flex-col gap-6">
               
@@ -916,89 +1075,191 @@ const UbicacionesView = () => {
                   </span>
                   <h2 className="font-display font-bold text-3xl text-[var(--verde-profundo)] mt-2">{localSeleccionado.nombre}</h2>
                 </div>
-                <Button 
+                <button 
                   onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(localSeleccionado.direccion)}`, '_blank')}
-                  className="bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)] text-white w-full md:w-auto"
+                  className="bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] font-ui font-semibold text-xs py-3 px-6 rounded-[16px] transition-all duration-300 self-start md:self-auto flex items-center gap-2"
                 >
-                  Cómo llegar <Navigation size={14}/>
-                </Button>
+                  Cómo llegar <Navigation size={14} />
+                </button>
               </div>
 
-              {/* Horarios Estilizados */}
-              <div className="grid grid-cols-2 gap-4 bg-[var(--fondo-crema)] p-4 rounded-[16px] border border-[var(--verde-palido)]/30">
-                <div className="border-r border-gray-200/60 pr-4">
-                  <p className="font-ui text-xs text-[var(--texto-suave)] uppercase font-bold tracking-wider mb-1">Lunes a Viernes</p>
-                  <p className="font-ui font-semibold text-sm text-[var(--verde-profundo)]">{localSeleccionado.horarioSemana}</p>
+              {/* Horarios Grid */}
+              <div className="grid grid-cols-2 gap-4 border-y border-gray-100 py-4 font-ui text-sm">
+                <div>
+                  <span className="text-gray-400 block text-xs uppercase font-bold tracking-wider mb-1">Lunes a Viernes</span>
+                  <span className="text-[var(--texto-oscuro)] font-semibold">{localSeleccionado.horarioSemana}</span>
                 </div>
-                <div className="pl-4">
-                  <p className="font-ui text-xs text-[var(--texto-suave)] uppercase font-bold tracking-wider mb-1">Sábados y Domingos</p>
-                  <p className="font-ui font-semibold text-sm text-[var(--verde-profundo)]">{localSeleccionado.horarioFinde}</p>
+                <div>
+                  <span className="text-gray-400 block text-xs uppercase font-bold tracking-wider mb-1">Sábados y Domingos</span>
+                  <span className="text-[var(--texto-oscuro)] font-semibold">{localSeleccionado.horarioFinde}</span>
                 </div>
               </div>
 
-              {/* Contenedor del Mapa */}
-              <div className="rounded-[20px] overflow-hidden h-[300px] border border-gray-100 shadow-inner bg-gray-100">
+              {/* Google Maps iFrame */}
+              <div className="rounded-[24px] overflow-hidden shadow-inner h-[320px] border border-gray-100 relative bg-gray-100">
                 <iframe 
                   src={localSeleccionado.mapaUrl} 
-                  width="100%" height="100%" style={{border:0}} allowFullScreen="" loading="lazy">
-                </iframe>
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }} 
+                  allowFullScreen="" 
+                  loading="lazy"
+                  title="Sede Map"
+                />
               </div>
 
             </div>
           </div>
 
         </div>
+
       </div>
     </div>
   );
 };
 
-// --- 6. MI CUENTA / IA CHATBOT ---
-const CuentaView = () => {
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: '¡Hola, Juan! Soy Origen AI, tu asesor nutricional personal de ORIGEN. Dime, ¿cuáles son tus objetivos hoy o qué tipo de bowl estás buscando?' }
-  ]);
-  const [inputVal, setInputVal] = useState('');
+const CuentaView = ({ onAddToCart }) => {
+  const [chatStep, setChatStep] = useState('welcome'); // welcome -> diet -> protein -> result
+  const [userChoices, setUserChoices] = useState({ goal: '', diet: '', protein: '' });
   const [isTyping, setIsTyping] = useState(false);
+  const [inputVal, setInputVal] = useState('');
 
-  // Cargar puntos de localStorage
   const [puntos, setPuntos] = useState(() => {
     const guardado = localStorage.getItem('origen_puntos');
     return guardado ? parseInt(guardado, 10) : 240;
   });
 
-  useEffect(() => {
-    localStorage.setItem('origen_puntos', puntos.toString());
-  }, [puntos]);
+  const [messages, setMessages] = useState([
+    { 
+      id: 'msg-initial', 
+      role: 'ai', 
+      text: '🥦 ¡Hola, Juan! Bienvenido a Origen AI. En lugar de dar vueltas, te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?' 
+    }
+  ]);
 
-  const handleSuggestion = (prompt) => {
-    setInputVal(prompt);
+  const addMessage = (role, text, recommendationCard = null) => {
+    const uniqueId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setMessages(prev => [...prev, { id: uniqueId, role, text, recommendation: recommendationCard }]);
   };
 
-  const handleSend = () => {
+  const handleReset = () => {
+    setChatStep('welcome');
+    setUserChoices({ goal: '', diet: '', protein: '' });
+    const uniqueId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setMessages([
+      { 
+        id: uniqueId, 
+        role: 'ai', 
+        text: '🔄 Diagnóstico reiniciado. Vamos a armar otra recomendación perfecta. ¿Cuál es tu meta nutricional principal hoy?' 
+      }
+    ]);
+  };
+
+  const calculateRecommendation = (choices) => {
+    const goal = choices.goal;
+    const diet = choices.diet;
+    const protein = choices.protein;
+
+    if (goal === 'muscle') {
+      if (diet === 'vegan') return CARTA.find(b => b.id === 'vital');
+      if (diet === 'gluten_free') return CARTA.find(b => b.id === 'tierra');
+      if (protein === 'fish') return CARTA.find(b => b.id === 'agua');
+      return CARTA.find(b => b.id === 'maximo');
+    }
+    else if (goal === 'fat_loss') {
+      if (diet === 'vegan') return CARTA.find(b => b.id === 'natural');
+      if (protein === 'fish') return CARTA.find(b => b.id === 'fuego');
+      if (diet === 'gluten_free') return CARTA.find(b => b.id === 'agua');
+      return CARTA.find(b => b.id === 'aire');
+    }
+    else if (goal === 'digestion') {
+      if (diet === 'vegan') return CARTA.find(b => b.id === 'vital');
+      if (diet === 'gluten_free') return CARTA.find(b => b.id === 'cosecha');
+      if (protein === 'fish') return CARTA.find(b => b.id === 'raiz');
+      return CARTA.find(b => b.id === 'paraiso');
+    }
+    else {
+      if (diet === 'vegan') return CARTA.find(b => b.id === 'vital');
+      if (protein === 'fish') return CARTA.find(b => b.id === 'tierra');
+      if (protein === 'meat') return CARTA.find(b => b.id === 'brasa');
+      return CARTA.find(b => b.id === 'dulce');
+    }
+  };
+
+  const handleOptionClick = (stepCategory, value, label) => {
+    addMessage('user', label);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const updatedChoices = { ...userChoices, [stepCategory]: value };
+      setUserChoices(updatedChoices);
+
+      if (stepCategory === 'goal') {
+        setChatStep('diet');
+        addMessage('ai', `¡Excelente meta! 🎯 Para ajustar los ingredientes, ¿tienes alguna restricción alimentaria o preferencia dietética hoy?`);
+      } 
+      else if (stepCategory === 'diet') {
+        setChatStep('protein');
+        addMessage('ai', `Entendido. Por último, ¿qué tipo de proteína o perfil de sabor te gustaría degustar hoy en tu almuerzo?`);
+      } 
+      else if (stepCategory === 'protein') {
+        setChatStep('result');
+        const recommendedBowl = calculateRecommendation(updatedChoices);
+        addMessage('ai', `¡Hecho! He procesado tus metas con nuestro algoritmo de nutrición. El bowl que mejor se adapta a lo que tu cuerpo necesita hoy es:`);
+        addMessage('ai', `Te sugiero disfrutar de un espectacular *${recommendedBowl.nombre}*.`, recommendedBowl);
+      }
+      setIsTyping(false);
+    }, 850);
+  };
+
+  const handleFreeTextSend = () => {
     if (!inputVal.trim()) return;
 
-    const userMsg = inputVal;
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    const query = inputVal.toLowerCase().trim();
+    addMessage('user', inputVal);
     setInputVal('');
     setIsTyping(true);
 
-    // Simular respuesta inteligente basada en palabras clave
     setTimeout(() => {
-      let aiText = "Me encanta tu elección. Para ese objetivo, te sugiero crear un bowl personalizado en 'Arma tu Bowl' usando Quinoa como base, Pechuga de Pollo doble como proteína y aderezado con nuestro Pesto Natural. ¡Es una bomba nutritiva!";
-      
-      const lower = userMsg.toLowerCase();
-      if (lower.includes('proteína') || lower.includes('entreno')) {
-        aiText = "¡Excelente! Para ganar músculo o post-entreno, el *ORIGEN MÁXIMO* es ideal. Tiene doble proteína de pollo y arroz integral. Si prefieres personalizarlo, no olvides agregar garbanzos y semillas de calabaza.";
-      } else if (lower.includes('dulce') || lower.includes('miel')) {
-        aiText = "Si tienes antojo de algo dulce y balanceado, te recomiendo el *ORIGEN DULCE*. El lomo con aderezo de miel y mostaza, junto con trozos de mango y manzana fresca, te darán esa explosión dulce sin remordimientos.";
-      } else if (lower.includes('sin gluten') || lower.includes('gluten')) {
-        aiText = "Tenemos excelentes opciones Gluten-Free. El *ORIGEN TIERRA* (con salmón premium) o el *ORIGEN AGUA* (con atún) son perfectos y están certificados como libres de gluten. ¡Te van a fascinar!";
+      let matchedBowl = null;
+      let textResponse = '';
+
+      if (query.includes('fuerza') || query.includes('proteina') || query.includes('entren') || query.includes('hipertrofia') || query.includes('musculo') || query.includes('gimnasio') || query.includes('gym')) {
+        matchedBowl = CARTA.find(b => b.id === 'maximo');
+        textResponse = '💪 ¡Perfecto para tu rendimiento! Para reconstruir fibras musculares y reponer glucógeno, necesitas carga masiva de proteína. Te recomiendo de inmediato nuestro *ORIGEN MÁXIMO* con doble porción de pollo.';
+      } 
+      else if (query.includes('bajar') || query.includes('adelgazar') || query.includes('grasa') || query.includes('caloria') || query.includes('dieta') || query.includes('ligero') || query.includes('fitness') || query.includes('definir')) {
+        matchedBowl = CARTA.find(b => b.id === 'agua');
+        textResponse = '🏃‍♀️ ¡Meta: Definición! Para mantener el déficit calórico sintiéndote saciado y feliz, necesitamos grasas saludables de pescado y carbohidratos complejos de absorción lenta. Tu mejor aliado es el *ORIGEN AGUA* (con atún premium).';
+      }
+      else if (query.includes('gluten') || query.includes('sin gluten') || query.includes('celiac') || query.includes('trigo') || query.includes('harina')) {
+        matchedBowl = CARTA.find(b => b.id === 'tierra');
+        textResponse = '🌾 ¡100% Gluten-Free! Todos nuestros ingredientes se manipulan con cuidado, pero el *ORIGEN TIERRA* (con salmón y aguacate) está certificado para darte una digestión ligera y libre de gluten.';
+      }
+      else if (query.includes('vegano') || query.includes('vegetariano') || query.includes('sin carne') || query.includes('planta') || query.includes('tofu')) {
+        matchedBowl = CARTA.find(b => b.id === 'vital');
+        textResponse = '🌱 ¡Poder vegetal al 100%! Nuestro *ORIGEN VITAL* te aporta proteínas limpias y aminoácidos completos combinando quinua orgánica con tofu de la casa marinado en finas hierbas.';
+      }
+      else if (query.includes('pescado') || query.includes('salmon') || query.includes('salmón') || query.includes('atun') || query.includes('atún') || query.includes('camaron') || query.includes('camarón') || query.includes('marisco')) {
+        matchedBowl = CARTA.find(b => b.id === 'tierra');
+        textResponse = '🐟 ¡Amante del mar! Si buscas grasas insaturadas de alta calidad y omega-3, te sugiero el rey de la casa: *ORIGEN TIERRA*, que trae un salmón de pesca sostenible espectacular.';
+      }
+      else if (query.includes('dulce') || query.includes('mango') || query.includes('fruta') || query.includes('aderezo') || query.includes('miel') || query.includes('mostaza')) {
+        matchedBowl = CARTA.find(b => b.id === 'dulce');
+        textResponse = '🍯 ¡Tu paladar pide un toque dulce! El lomo sellado con nuestro aderezo casero de miel y mostaza, acompañado de repollo encurtido y mango fresco, crea un balance perfecto en el *ORIGEN DULCE*.';
+      }
+      else if (query.includes('barato') || query.includes('economico') || query.includes('económico') || query.includes('precio') || query.includes('costo') || query.includes('menor')) {
+        matchedBowl = CARTA.find(b => b.id === 'natural');
+        textResponse = '💰 ¡La opción más inteligente y económica! El *ORIGEN NATURAL* cuesta solo $19.900 y viene cargado de huevos cocidos, tomates cherry y aguacate sobre un mix asiático fresco.';
+      }
+      else {
+        matchedBowl = CARTA.find(b => b.id === 'tierra');
+        textResponse = '✍️ ¡Interesante consulta! Para darte una respuesta certera, te sugiero utilizar nuestros botones interactivos de diagnóstico o probar la carta Origen. Como recomendación general de la casa, te sugiero probar nuestro bowl insignia: *ORIGEN TIERRA*.';
       }
 
-      setMessages(prev => [...prev, { role: 'ai', text: aiText }]);
+      addMessage('ai', textResponse, matchedBowl);
       setIsTyping(false);
-    }, 1500);
+    }, 1200);
   };
 
   return (
@@ -1006,6 +1267,7 @@ const CuentaView = () => {
       <div className="max-w-2xl mx-auto px-6">
         <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm border border-[var(--verde-palido)] animate-in">
           
+          {/* Perfil del Usuario */}
           <div className="flex items-center gap-6 mb-12 border-b border-[var(--verde-palido)] pb-10">
             <div className="w-24 h-24 bg-[var(--verde-menta)] rounded-[20px] flex items-center justify-center text-[var(--verde-main)] font-display text-4xl font-bold">JN</div>
             <div>
@@ -1016,60 +1278,146 @@ const CuentaView = () => {
             </div>
           </div>
 
-          {/* CHATBOT CONTENEDOR */}
-          <div className="bg-[var(--verde-profundo)] rounded-[24px] p-6 text-white relative overflow-hidden flex flex-col min-h-[450px]">
+          {/* CHATBOT REESTRUCTURADO COMO EMBUDO EXPERTO */}
+          <div className="bg-[var(--verde-profundo)] rounded-[24px] p-6 text-white relative overflow-hidden flex flex-col min-h-[500px] shadow-lg">
             <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--verde-main)] rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
             
-            {/* Cabecera del Chat */}
-            <div className="relative z-10 flex items-center gap-2 pb-4 border-b border-white/10 mb-4 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-[var(--verde-main)] animate-pulse"></span>
-              <p className="font-ui text-xs font-bold uppercase tracking-widest text-[var(--verde-palido)]">Asesor Nutricional AI</p>
+            {/* Cabecera del Chat con Botón de Reinicio */}
+            <div className="relative z-10 flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[var(--verde-main)] animate-pulse"></span>
+                <p className="font-ui text-xs font-bold uppercase tracking-widest text-[var(--verde-palido)]">Diagnóstico Nutricional Experto</p>
+              </div>
+              <button 
+                onClick={handleReset}
+                className="flex items-center gap-1.5 text-xs text-[var(--verde-palido)] hover:text-white bg-white/10 px-3 py-1.5 rounded-[10px] transition-colors"
+              >
+                🔄 Reiniciar
+              </button>
             </div>
 
-            {/* Mensajes */}
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 max-h-[260px] scrollbar-hide">
-              {messages.map((m, idx) => (
-                <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`p-3.5 rounded-[16px] font-ui text-sm max-w-[85%] leading-relaxed ${m.role === 'user' ? 'bg-[var(--verde-main)] text-white rounded-tr-none' : 'bg-white/10 text-[var(--verde-menta)] rounded-tl-none'}`}>
+            {/* Ventana de Conversación */}
+            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 max-h-[350px] scrollbar-hide">
+              {messages.map((m) => (
+                <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  
+                  {/* Globo de texto */}
+                  <div className={`p-4 rounded-[16px] font-ui text-sm max-w-[85%] leading-relaxed ${m.role === 'user' ? 'bg-[var(--verde-main)] text-white rounded-tr-none' : 'bg-white/10 text-[var(--verde-menta)] rounded-tl-none'}`}>
                     {m.text}
                   </div>
+
+                  {/* Renderizado especial del Bowl Recomendado dentro de la burbuja */}
+                  {m.recommendation && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 bg-white text-[var(--verde-profundo)] p-4 rounded-[20px] border border-[var(--verde-palido)] w-full max-w-[280px] shadow-lg flex flex-col gap-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--verde-menta)] border border-gray-100 flex-shrink-0">
+                          {m.recommendation.imagen ? (
+                            <img src={m.recommendation.imagen} alt={m.recommendation.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl">🥗</div>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-display font-bold text-lg leading-tight">{m.recommendation.nombre}</h4>
+                          <span className="text-xs bg-[var(--verde-menta)] text-[var(--verde-main)] px-2 py-0.5 rounded-full font-bold font-ui inline-block mt-1">Sugerido</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[var(--texto-suave)] leading-relaxed">Con proteína de {m.recommendation.proteina} fresca, acompañado de ingredientes premium locales.</p>
+                      <div className="flex items-center justify-between border-t border-gray-100 pt-3 mt-1">
+                        <span className="font-display font-bold text-base text-[var(--verde-main)]">{formatPrice(m.recommendation.precio)}</span>
+                        <button 
+                          onClick={() => onAddToCart(m.recommendation)}
+                          className="bg-[var(--verde-main)] text-white font-ui font-bold text-xs px-4 py-2 rounded-[12px] hover:bg-[var(--verde-vivo)] transition-colors flex items-center gap-1"
+                        >
+                          Ordenar <ShoppingBag size={12}/>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
                 </div>
               ))}
+              
               {isTyping && (
                 <div className="flex items-center gap-2 text-white/50 text-xs font-ui pl-2">
                   <span className="animate-bounce">●</span>
                   <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>●</span>
                   <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>●</span>
-                  <span>Origen AI está analizando...</span>
+                  <span>Origen AI está procesando...</span>
                 </div>
               )}
             </div>
 
-            {/* Sugerencias rápidas */}
-            <div className="flex flex-wrap gap-2 mb-4 shrink-0 relative z-10">
-              {['Alto en proteína', 'Antojo de algo dulce', 'Opciones sin gluten'].map(t => (
-                <button 
-                  key={t} 
-                  onClick={() => handleSuggestion(t)}
-                  className="bg-white/10 hover:bg-white/20 active:bg-white/35 cursor-pointer px-3 py-1.5 rounded-[8px] text-[11px] font-ui border border-white/10 transition-all text-[var(--verde-palido)]"
-                >
-                  {t}
-                </button>
-              ))}
+            {/* Opciones del Árbol de Decisiones (Se muestran dinámicamente según el paso) */}
+            <div className="relative z-10 shrink-0 border-t border-white/5 pt-4">
+              <AnimatePresence mode="wait">
+                
+                {chatStep === 'welcome' && !isTyping && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="space-y-2">
+                    <p className="text-[11px] uppercase font-bold text-[var(--verde-palido)] mb-2 tracking-widest">Elige tu Meta Principal:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => handleOptionClick('goal', 'muscle', '💪 Ganar Masa & Rendimiento')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">💪 Ganar Masa</button>
+                      <button onClick={() => handleOptionClick('goal', 'fat_loss', '🏃‍♀️ Definir & Perder Grasa')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🏃‍♀️ Perder Grasa</button>
+                      <button onClick={() => handleOptionClick('goal', 'digestion', '🌿 Digestión & Bienestar')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🌿 Digestión Sana</button>
+                      <button onClick={() => handleOptionClick('goal', 'energy', '⚡ Energía Instantánea')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">⚡ Almuerzo Rápido</button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {chatStep === 'diet' && !isTyping && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="space-y-2">
+                    <p className="text-[11px] uppercase font-bold text-[var(--verde-palido)] mb-2 tracking-widest">¿Prefieres alguna dieta o restricción?</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => handleOptionClick('diet', 'none', '❌ Ninguna restricción')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">❌ Sin restricción</button>
+                      <button onClick={() => handleOptionClick('diet', 'gluten_free', '🌾 Dieta Sin Gluten')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🌾 Sin Gluten</button>
+                      <button onClick={() => handleOptionClick('diet', 'vegan', '🥕 Opción 100% Vegana')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🥕 100% Vegano</button>
+                      <button onClick={() => handleOptionClick('diet', 'dairy_free', '🥛 Sin Lácteos')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🥛 Sin Lácteos</button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {chatStep === 'protein' && !isTyping && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="space-y-2">
+                    <p className="text-[11px] uppercase font-bold text-[var(--verde-palido)] mb-2 tracking-widest">Elige tu proteína o sabor favorito:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => handleOptionClick('protein', 'fish', '🐟 Salmón, Camarón o Atún')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🐟 Pescados</button>
+                      <button onClick={() => handleOptionClick('protein', 'meat', '🍗 Pollo o Lomo de Res/Cerdo')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🍗 Proteína Animal</button>
+                      <button onClick={() => handleOptionClick('protein', 'plant', '🌱 Proteína Vegetal (Tofu/Huevo)')} className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-left px-4 py-3 rounded-[12px] text-xs font-ui font-semibold transition-all hover:translate-x-1">🌱 Tofu o Huevos</button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {chatStep === 'result' && !isTyping && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="p-3 bg-white/5 rounded-[16px] flex items-center justify-between">
+                    <span className="text-xs text-[var(--verde-palido)] font-ui">¿Quieres realizar otro diagnóstico?</span>
+                    <button 
+                      onClick={handleReset}
+                      className="bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] font-ui font-bold text-xs px-4 py-2 rounded-[12px] transition-all flex items-center gap-1.5 shadow-md"
+                    >
+                      Nuevo Diagnóstico <ArrowRight size={14}/>
+                    </button>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
             </div>
 
-            {/* Input Form */}
-            <div className="flex gap-2 bg-white/5 p-2 rounded-[16px] border border-white/10 focus-within:border-[var(--verde-main)] transition-all shrink-0 relative z-10">
+            {/* Input de texto libre con el Parser condicional */}
+            <div className="mt-4 flex gap-2 bg-white/5 p-2 rounded-[16px] border border-white/10 focus-within:border-[var(--verde-main)] transition-colors relative z-10 shrink-0">
               <input 
                 type="text" 
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Pregunta o escribe tu antojo..." 
+                onKeyDown={(e) => e.key === 'Enter' && handleFreeTextSend()}
+                placeholder="Escribe tu antojo o meta (ej: sin gluten, ganar masa...)" 
                 className="flex-1 bg-transparent border-none px-4 font-ui text-sm focus:outline-none text-white placeholder-white/40"
               />
               <button 
-                onClick={handleSend}
+                onClick={handleFreeTextSend}
                 className="w-10 h-10 bg-[var(--verde-main)] text-white rounded-[12px] flex items-center justify-center hover:bg-[var(--verde-vivo)] transition-all"
               >
                 <ArrowRight size={16}/>
@@ -1084,18 +1432,14 @@ const CuentaView = () => {
   );
 };
 
-
-/* =========================================================================
-   APP PRINCIPAL (CON LOGO CENTRADO Y MENÚ DE ACCESO LATERAL DESKTOP)
-   ========================================================================= */
-
 export default function App() {
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Estado para el Modal de Pedidos
-  const [pedidoActivo, setPedidoActivo] = useState(null);
+  // Nuevo Estado Global del Carrito
+  const [cart, setCart] = useState([]);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1107,19 +1451,96 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleOpenOrderModal = (pedido) => {
-    setPedidoActivo(pedido);
+  // Agregar al carrito (Lógica generalizable)
+  const handleAddToCart = (product) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => 
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+    setIsCheckoutOpen(true); // Abre automáticamente el modal para ver el carrito y motivar upselling
   };
 
-  const handleConfirmOrder = (modalidad) => {
-    if (pedidoActivo) {
-      // Registrar puntos (Le sumamos 50 puntos cada vez que hace un pedido)
-      const puntosActuales = localStorage.getItem('origen_puntos') ? parseInt(localStorage.getItem('origen_puntos'), 10) : 240;
-      localStorage.setItem('origen_puntos', (puntosActuales + 50).toString());
+  // Modificar cantidades de artículos en carrito
+  const handleUpdateQty = (product, change) => {
+    setCart(prev => {
+      return prev.map(item => {
+        if (item.id === product.id) {
+          const newQty = item.quantity + change;
+          return newQty > 0 ? { ...item, quantity: newQty } : item;
+        }
+        return item;
+      });
+    });
+  };
 
-      generarMensajeWhatsApp({ ...pedidoActivo, modalidad });
+  // Eliminar artículo completo del pedido
+  const handleRemoveItem = (product) => {
+    setCart(prev => prev.filter(item => item.id !== product.id));
+  };
+
+  // Confirmar y generar mensaje de WhatsApp
+  const handleConfirmOrder = (deliveryData) => {
+    const cartTotal = cart.reduce((acc, item) => acc + (item.precio * item.quantity), 0);
+    
+    // Agregamos puntos de lealtad
+    const nuevosPuntos = (localStorage.getItem('origen_puntos') ? parseInt(localStorage.getItem('origen_puntos'), 10) : 240) + 50;
+    localStorage.setItem('origen_puntos', nuevosPuntos.toString());
+
+    // Generar bloque de texto estructurado para WhatsApp
+    let orderDetailText = `🌿 *NUEVO PEDIDO ORIGEN* 🌿\n`;
+    orderDetailText += `----------------------------------\n`;
+    
+    const bowls = cart.filter(item => !item.desc);
+    const bebidas = cart.filter(item => item.desc);
+
+    if (bowls.length > 0) {
+      orderDetailText += `🥣 *BOWL(S):*\n`;
+      bowls.forEach(b => {
+        orderDetailText += `• ${b.quantity}x ${b.nombre} (${formatPrice(b.precio * b.quantity)})\n`;
+        if (b.esBuilder) {
+          orderDetailText += `  (Base: ${b.base} | Frescuras: ${b.frescuras.join(', ')} | Proteína: ${b.proteina})\n`;
+        }
+      });
+      orderDetailText += `\n`;
     }
-    setPedidoActivo(null);
+
+    if (bebidas.length > 0) {
+      orderDetailText += `🍹 *BEBIDA(S):*\n`;
+      bebidas.forEach(beb => {
+        orderDetailText += `• ${beb.quantity}x ${beb.nombre} (${formatPrice(beb.precio * beb.quantity)})\n`;
+      });
+      orderDetailText += `\n`;
+    }
+
+    orderDetailText += `----------------------------------\n`;
+    orderDetailText += `📍 *MODALIDAD:* ${deliveryData.modalidad}\n`;
+    
+    if (deliveryData.modalidad === 'Recoger en Local') {
+      orderDetailText += `🏪 *SEDE SELECCIONADA:* ${deliveryData.store?.nombre}\n`;
+      orderDetailText += `📍 *DIRECCIÓN SEDE:* ${deliveryData.store?.direccion}\n`;
+    } else {
+      orderDetailText += `🏠 *ENTREGAR EN:* ${deliveryData.direccion}\n`;
+      if (deliveryData.detalles) {
+        orderDetailText += `📝 *INDICACIONES:* ${deliveryData.detalles}\n`;
+      }
+    }
+
+    orderDetailText += `----------------------------------\n`;
+    orderDetailText += `💰 *TOTAL A PAGAR:* ${formatPrice(cartTotal)}\n`;
+    orderDetailText += `----------------------------------\n`;
+    orderDetailText += `¡Preparar al instante con amor real! 🌿`;
+
+    // Abrir WhatsApp con número real o placeholder estándar
+    window.open(`https://wa.me/573000000000?text=${encodeURIComponent(orderDetailText)}`, '_blank');
+    
+    // Limpiar carrito
+    setCart([]);
+    setIsCheckoutOpen(false);
   };
 
   const NAV_LINKS = [
@@ -1151,7 +1572,6 @@ export default function App() {
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Animación premium de respiración glow para la tarjeta Máximo */
         .card-maximo {
           animation: glowRespiration 3s infinite alternate ease-in-out;
         }
@@ -1168,8 +1588,8 @@ export default function App() {
           {/* LADO IZQUIERDO: Submenú (Hamburguesa en desktop y celular) */}
           <div className="flex items-center z-10">
             <button 
-              onClick={() => setIsDrawerOpen(true)} 
-              className="text-white hover:text-[var(--verde-main)] transition-colors flex items-center gap-3 group animate-pulse"
+              onClick={() => setIsMobileMenuOpen(true)} 
+              className="text-white hover:text-[var(--verde-main)] transition-colors flex items-center gap-3 group"
             >
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[var(--verde-main)] transition-all">
                 <MenuIcon size={20} className="text-white" />
@@ -1181,41 +1601,43 @@ export default function App() {
           {/* CENTRO: Logo ORIGEN alineado perfectamente */}
           <div 
             className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer z-10" 
-            onClick={() => { setActiveTab('inicio'); setIsDrawerOpen(false); }}
+            onClick={() => { setActiveTab('inicio'); setIsMobileMenuOpen(false); }}
           >
             <h1 className="font-display font-bold text-2xl md:text-3xl tracking-[0.25em] text-white leading-none">ORIGEN</h1>
             <span className="font-ui text-[8px] md:text-[9px] text-[var(--verde-main)] uppercase tracking-[0.2em] mt-1 font-bold">Comida Saludable</span>
           </div>
 
-          {/* LADO DERECHO: Cuenta + Botón de Acción Rápida con el Verde de tu Imagen */}
+          {/* LADO DERECHO: Cuenta + Botón de Carrito de Compras */}
           <div className="flex items-center gap-4 z-10">
-            <button onClick={() => { setActiveTab('cuenta'); setIsDrawerOpen(false); }} className="text-white hover:text-[var(--verde-main)] transition-colors w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+            <button onClick={() => { setActiveTab('cuenta'); setIsMobileMenuOpen(false); }} className="text-white hover:text-[var(--verde-main)] transition-colors w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
               <User size={18}/>
             </button>
-            <Button 
-              onClick={() => { setActiveTab('builder'); setIsDrawerOpen(false); }} 
-              variant="primary" 
-              className="px-5 py-2.5 rounded-full text-xs font-bold text-white bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)] shadow-md border-0 transition-all duration-300 transform hover:-translate-y-0.5 tracking-wider"
+            <button 
+              onClick={() => setIsCheckoutOpen(true)} 
+              className="relative w-10 h-10 rounded-full bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)] transition-colors flex items-center justify-center text-white"
             >
-              Pedir Ahora
-            </Button>
+              <ShoppingBag size={18} />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center animate-bounce">
+                  {cart.reduce((sum, i) => sum + i.quantity, 0)}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </nav>
 
       {/* --- SUBMENÚ DESLIZANTE DESDE LA IZQUIERDA (SIDE DRAWER) --- */}
       <AnimatePresence>
-        {isDrawerOpen && (
+        {isMobileMenuOpen && (
           <>
-            {/* Fondo opaco del Drawer */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsDrawerOpen(false)}
+              onClick={() => setIsMobileMenuOpen(false)}
               className="fixed inset-0 bg-black/75 z-[150] backdrop-blur-sm"
             />
-            {/* Contenedor del menú */}
             <motion.div 
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
@@ -1230,7 +1652,7 @@ export default function App() {
                     <span className="font-ui text-[8px] text-[var(--verde-main)] uppercase tracking-[0.2em] font-bold">Navegación</span>
                   </div>
                   <button 
-                    onClick={() => setIsDrawerOpen(false)} 
+                    onClick={() => setIsMobileMenuOpen(false)} 
                     className="text-white hover:text-[var(--verde-main)] bg-white/10 p-2.5 rounded-full transition-colors"
                   >
                     <X size={20} />
@@ -1241,19 +1663,18 @@ export default function App() {
                   {NAV_LINKS.map(link => (
                     <button 
                       key={link.id} 
-                      onClick={() => { setActiveTab(link.id); setIsDrawerOpen(false); }}
+                      onClick={() => { setActiveTab(link.id); setIsMobileMenuOpen(false); }}
                       className="text-left font-display italic text-3xl sm:text-4xl transition-all hover:translate-x-2 duration-300 flex items-center justify-between group"
                     >
                       <span className={activeTab === link.id ? 'text-[var(--verde-main)]' : 'text-white group-hover:text-[var(--verde-palido)]'}>
                         {link.label}
                       </span>
-                      <ArrowRight size={20} className={`text-white/40 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 group-hover:text-[var(--verde-main)] transition-all`} />
+                      <ArrowRight size={20} className="text-white/40 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 group-hover:text-[var(--verde-main)] transition-all" />
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Footer de Acceso Rápido */}
               <div className="border-t border-white/10 pt-8 flex flex-col gap-6">
                 <div className="flex gap-4">
                   <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--verde-main)] hover:text-white transition-colors text-white">
@@ -1276,20 +1697,24 @@ export default function App() {
       <main className="relative z-10 flex-grow">
         <AnimatePresence mode="wait">
           {activeTab === 'inicio' && <motion.div key="inicio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><HomeView navigate={setActiveTab}/></motion.div>}
-          {activeTab === 'menu' && <motion.div key="menu" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><CartaView onOrderRequest={handleOpenOrderModal}/></motion.div>}
-          {activeTab === 'builder' && <motion.div key="builder" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><BuilderView onOrderRequest={handleOpenOrderModal}/></motion.div>}
+          {activeTab === 'menu' && <motion.div key="menu" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><CartaView onAddToCart={handleAddToCart}/></motion.div>}
+          {activeTab === 'builder' && <motion.div key="builder" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><BuilderView onAddToCart={handleAddToCart}/></motion.div>}
           {activeTab === 'blog' && <motion.div key="blog" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><BlogView navigate={setActiveTab}/></motion.div>}
           {activeTab === 'ubicaciones' && <motion.div key="ubicaciones" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><UbicacionesView/></motion.div>}
-          {activeTab === 'cuenta' && <motion.div key="cuenta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><CuentaView/></motion.div>}
+          {activeTab === 'cuenta' && <motion.div key="cuenta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><CuentaView onAddToCart={handleAddToCart}/></motion.div>}
         </AnimatePresence>
       </main>
 
-      {/* --- MODAL DE OPCIONES DE PEDIDO --- */}
-      <OrderModal 
-        pedido={pedidoActivo} 
-        onClose={() => setPedidoActivo(null)} 
-        onConfirm={handleConfirmOrder} 
-      />
+      {/* --- MODAL DE CHECKOUT INTEGRADOR --- */}
+      {isCheckoutOpen && (
+        <CheckoutModal 
+          cart={cart}
+          onUpdateQty={handleUpdateQty}
+          onRemoveItem={handleRemoveItem}
+          onClose={() => setIsCheckoutOpen(false)}
+          onConfirmOrder={handleConfirmOrder}
+        />
+      )}
 
       {/* --- GLOBAL FOOTER --- */}
       <Footer navigate={setActiveTab} />
