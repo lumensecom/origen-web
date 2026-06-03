@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 
 const COLORS = {
-  verdeProfundo: '#0D2818',
-  verdeBosque: '#1A3D28',
-  verdeMain: '#12B362',     // Brand green requested by the user
+  verdeProfundo: '#131E14',   // Profundo oliva oscuro
+  verdeBosque: '#2F3E2B',     // Oliva bosque cálido
+  verdeMain: '#12B362',       // Brand green requested by the user
   verdeVivo: '#1EAD61',
   verdeBrillante: '#4CD98A',
   verdePalido: '#C8F0DC',
@@ -18,7 +18,7 @@ const COLORS = {
   doradoFuerte: '#D4A017',
   doradoSuave: '#F0C040',
   cremaCalido: '#FDF5E0',
-  fondoCrema: '#FDFAF4',
+  fondoCrema: '#F1F4EA',       // Fondo crema con matiz oliva orgánico muy suave
   textoOscuro: '#0D1F0F',
   kraft: '#D4A574',
   maximoAmber: '#F09030'
@@ -512,7 +512,6 @@ const HomeView = ({ navigate }) => {
         </motion.div>
 
         <motion.div style={{ y: yText, opacity: opacityText }} className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
-          <p className="font-display italic uppercase tracking-[0.3em] text-[12px] md:text-[14px] text-white/80 mb-6 font-semibold">Bogotá · Nutrición Honesta</p>
           <h1 className="font-display font-bold text-5xl md:text-7.5xl text-white leading-[1.05] mb-6 drop-shadow-2xl">
             Nutrición desde<br/>el origen.
           </h1>
@@ -1892,11 +1891,11 @@ export default function App() {
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap');
         :root {
-          --verde-profundo: #05190C; --verde-bosque: #0D2818; --verde-main: #12B362;
-          --verde-vivo: #1EAD61; --verde-brillante: #3EE087; --verde-palido: #C8F0DC;
+          --verde-profundo: #131E14; --verde-bosque: #2F3E2B; --verde-main: #12B362;
+          --verde-oliva: #4E6047; --verde-vivo: #1EAD61; --verde-brillante: #3EE087; --verde-palido: #C8F0DC;
           --verde-menta: #E8F9F0; --dorado-fuerte: #D4A017; --dorado-suave: #F0C040;
-          --crema-calido: #FDF5E0; --fondo-crema: #FDFAF4; --texto-oscuro: #0D1F0F;
-          --texto-suave: #5A7A60; --kraft: #D4A574; --maximo-amber: #F09030;
+          --crema-calido: #FDF5E0; --fondo-crema: #F1F4EA; --texto-oscuro: #0D1F0F;
+          --texto-suave: #4E5C4E; --kraft: #D4A574; --maximo-amber: #F09030;
         }
         .font-display { font-family: 'Fraunces', serif; }
         .font-ui { font-family: 'Outfit', sans-serif; }
