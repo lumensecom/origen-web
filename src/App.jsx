@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { 
-  Leaf, MapPin, ArrowRight, Instagram, Facebook, User, 
-  Menu as MenuIcon, X, Sparkles, MessageCircle, Navigation, 
-  Check, ChevronDown, BookOpen, Store, ShoppingBag, 
+import {
+  Leaf, MapPin, ArrowRight, Instagram, Facebook, User,
+  Menu as MenuIcon, X, Sparkles, MessageCircle, Navigation,
+  Check, ChevronDown, BookOpen, Store, ShoppingBag,
   Plus, Minus, Trash2, ArrowLeft, Clock, Award
 } from 'lucide-react';
+import { useAuth } from './contexts/AuthContext';
+import AuthModal from './components/AuthModal';
+import { createOrder, addLoyaltyPoints, addPointsHistory } from './lib/database';
 
 const COLORS = {
   verdeProfundo: '#131E14',   // Profundo oliva oscuro
@@ -1453,21 +1456,22 @@ const UbicacionesView = () => {
 };
 
 const CuentaView = ({ onAddToCart }) => {
-  const [chatStep, setChatStep] = useState('welcome'); // welcome -> diet -> protein -> result
+  const { user, profile, isAuthenticated, signOut } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [chatStep, setChatStep] = useState('welcome');
   const [userChoices, setUserChoices] = useState({ goal: '', diet: '', protein: '' });
   const [isTyping, setIsTyping] = useState(false);
   const [inputVal, setInputVal] = useState('');
 
-  const [puntos, setPuntos] = useState(() => {
-    const guardado = localStorage.getItem('origen_puntos');
-    return guardado ? parseInt(guardado, 10) : 240;
-  });
+  const puntos = isAuthenticated ? (profile?.loyalty_points ?? 0) : 0;
+  const nombre = isAuthenticated ? (profile?.full_name ?? 'Amigo') : 'Visitante';
+  const iniciales = nombre.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || 'OR';
 
   const [messages, setMessages] = useState([
-    { 
-      id: 'msg-initial', 
-      role: 'ai', 
-      text: '🥦 ¡Hola, Juan! Bienvenido a Origen AI. En lugar de dar vueltas, te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutritional principal hoy?' 
+    {
+      id: 'msg-initial',
+      role: 'ai',
+      text: '🥦 ¡Hola! Bienvenido a Origen AI. Te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?'
     }
   ]);
 
@@ -1596,20 +1600,62 @@ const CuentaView = ({ onAddToCart }) => {
     }, 1200);
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="pt-32 pb-32 min-h-screen bg-[var(--fondo-crema)] w-full">
+        <div className="max-w-2xl mx-auto px-6 text-center">
+          <div className="bg-white rounded-[32px] p-12 shadow-sm border border-[var(--verde-palido)]">
+            <div className="w-20 h-20 bg-[var(--verde-menta)] rounded-[20px] flex items-center justify-center mx-auto mb-6">
+              <User size={36} className="text-[var(--verde-main)]" />
+            </div>
+            <h2 className="font-display italic text-4xl text-[var(--verde-profundo)] mb-4">Tu Cuenta Origen</h2>
+            <p className="font-ui text-[var(--texto-suave)] mb-8 max-w-sm mx-auto">
+              Inicia sesión para ver tus puntos, historial de pedidos y el asesor nutricional con IA.
+            </p>
+            <div className="flex flex-col gap-3 max-w-xs mx-auto">
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="bg-[var(--verde-main)] text-white font-ui font-bold py-3.5 rounded-[16px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(42,110,72,0.25)] flex items-center justify-center gap-2"
+              >
+                Iniciar sesión <ArrowRight size={16} />
+              </button>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="border-2 border-[var(--verde-profundo)] text-[var(--verde-profundo)] font-ui font-bold py-3.5 rounded-[16px] hover:bg-[var(--verde-profundo)] hover:text-white transition-all"
+              >
+                Crear cuenta gratis
+              </button>
+            </div>
+            <p className="font-ui text-xs text-[var(--texto-suave)] mt-6">Gana 50 puntos con cada compra.</p>
+          </div>
+        </div>
+        {showAuthModal && (
+          <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={() => setShowAuthModal(false)} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="pt-32 pb-32 min-h-screen bg-[var(--fondo-crema)] w-full">
       <div className="max-w-2xl mx-auto px-6">
         <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm border border-[var(--verde-palido)] animate-in">
-          
+
           {/* Perfil del Usuario */}
-          <div className="flex items-center gap-6 mb-12 border-b border-[var(--verde-palido)] pb-10">
-            <div className="w-24 h-24 bg-[var(--verde-menta)] rounded-[20px] flex items-center justify-center text-[var(--verde-main)] font-display text-4xl font-bold">JN</div>
-            <div>
-              <h2 className="font-display font-bold text-4xl text-[var(--verde-profundo)] mb-2">Hola, Juan.</h2>
+          <div className="flex items-center gap-4 mb-12 border-b border-[var(--verde-palido)] pb-10">
+            <div className="w-20 h-20 bg-[var(--verde-menta)] rounded-[20px] flex items-center justify-center text-[var(--verde-main)] font-display text-3xl font-bold flex-shrink-0">{iniciales}</div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-display font-bold text-4xl text-[var(--verde-profundo)] mb-2">Hola, {nombre.split(' ')[0]}.</h2>
               <div className="inline-flex items-center gap-2 bg-[var(--dorado-suave)]/20 text-[var(--dorado-fuerte)] px-4 py-1.5 rounded-[8px] font-ui font-bold text-sm">
                 <Award size={16}/> {puntos} Puntos Origen
               </div>
             </div>
+            <button
+              onClick={signOut}
+              className="font-ui text-xs text-[var(--texto-suave)] hover:text-red-500 transition-colors border border-[var(--verde-palido)] px-3 py-1.5 rounded-[10px] flex-shrink-0"
+            >
+              Salir
+            </button>
           </div>
 
           {/* CHATBOT REESTRUCTURADO COMO EMBUDO EXPERTO */}
@@ -1767,11 +1813,12 @@ const CuentaView = ({ onAddToCart }) => {
 };
 
 export default function App() {
+  const { user, isAuthenticated, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // Nuevo Estado Global del Carrito
+
+  // Estado Global del Carrito
   const [cart, setCart] = useState([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
@@ -1818,12 +1865,34 @@ export default function App() {
   };
 
   // Confirmar y generar mensaje de WhatsApp
-  const handleConfirmOrder = (deliveryData) => {
+  const handleConfirmOrder = async (deliveryData) => {
     const cartTotal = cart.reduce((acc, item) => acc + (item.precio * item.quantity), 0);
-    
-    // Agregamos puntos de lealtad
-    const nuevosPuntos = (localStorage.getItem('origen_puntos') ? parseInt(localStorage.getItem('origen_puntos'), 10) : 240) + 50;
-    localStorage.setItem('origen_puntos', nuevosPuntos.toString());
+
+    // Guardar pedido y sumar puntos en Supabase si el usuario está autenticado
+    if (isAuthenticated && user) {
+      try {
+        const itemsData = cart.map(item => ({
+          nombre: item.nombre,
+          precio: item.precio,
+          quantity: item.quantity,
+          ...(item.esBuilder ? { base: item.base, proteina: item.proteina } : {}),
+        }));
+        await createOrder({
+          user_id: user.id,
+          items: itemsData,
+          total_price: cartTotal,
+          delivery_type: deliveryData.modalidad,
+          store_location: deliveryData.modalidad === 'Recoger en Local' ? deliveryData.store?.nombre : null,
+          delivery_address: deliveryData.modalidad === 'Domicilio' ? deliveryData.direccion : null,
+          delivery_details: deliveryData.detalles ?? null,
+        });
+        await addLoyaltyPoints(user.id, 50);
+        await addPointsHistory(user.id, 50, `Compra por ${formatPrice(cartTotal)}`);
+        await refreshProfile();
+      } catch (err) {
+        console.error('Error guardando pedido en Supabase:', err);
+      }
+    }
 
     // Generar bloque de texto estructurado para WhatsApp
     let orderDetailText = `🌿 *NUEVO PEDIDO ORIGEN* 🌿\n`;
