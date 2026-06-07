@@ -498,11 +498,22 @@ const Footer = ({ navigate }) => {
   );
 };
 
+const FEELINGS = [
+  { key: 'energy', emoji: '⚡', label: 'Sin energía', bowlId: 'maximo', msg: 'Necesitas potencia real hoy.' },
+  { key: 'active', emoji: '💪', label: 'Activo', bowlId: 'tierra', msg: 'Proteína premium para tu rendimiento.' },
+  { key: 'light', emoji: '🌿', label: 'Liviano', bowlId: 'natural', msg: 'Fresco, suave y sin culpa.' },
+  { key: 'craving', emoji: '🔥', label: 'Antojado', bowlId: 'fuego', msg: 'Sabor intenso con camarón fresco.' },
+  { key: 'fast', emoji: '🏃', label: 'Con prisa', bowlId: 'dulce', msg: 'Rápido, rico y sin complicaciones.' },
+  { key: 'brain', emoji: '🧠', label: 'Enfocado', bowlId: 'raiz', msg: 'Omega-3 y nutrientes para tu mente.' },
+];
+
 const HomeView = ({ navigate }) => {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const yText = useTransform(scrollYProgress, [0, 1], [0, 200]);
   const opacityText = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const [feeling, setFeeling] = useState(null);
+  const selectedBowl = useMemo(() => feeling ? CARTA.find(b => b.id === feeling.bowlId) : null, [feeling]);
 
   return (
     <div ref={containerRef} className="w-full relative bg-[var(--fondo-crema)] pb-32">
@@ -531,6 +542,60 @@ const HomeView = ({ navigate }) => {
             </Button>
           </div>
         </motion.div>
+      </div>
+
+      {/* Widget "¿Cómo te sientes hoy?" */}
+      <div className="max-w-5xl mx-auto px-4 relative z-30 -mt-10">
+        <div className="bg-white rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.1)] border border-[#E8F0E8] p-5 md:p-7">
+          <p className="font-ui text-xs font-bold uppercase tracking-[0.2em] text-[var(--texto-suave)] mb-4 text-center">¿Cómo te sientes hoy?</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {FEELINGS.map(f => (
+              <button
+                key={f.key}
+                onClick={() => setFeeling(feeling?.key === f.key ? null : f)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-ui text-sm font-semibold transition-all duration-300 active:scale-95 ${
+                  feeling?.key === f.key
+                    ? 'bg-[var(--verde-main)] text-white shadow-lg scale-105'
+                    : 'bg-[var(--fondo-crema)] text-[var(--verde-profundo)] hover:bg-[var(--verde-menta)] hover:scale-105'
+                }`}
+              >
+                <span className="text-base">{f.emoji}</span>
+                <span>{f.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <AnimatePresence>
+            {feeling && selectedBowl && (
+              <motion.div
+                key={feeling.key}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-5 pt-5 border-t border-gray-100 flex flex-col sm:flex-row items-center gap-4">
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--verde-menta)] flex-shrink-0 border border-gray-100">
+                    {selectedBowl.imagen
+                      ? <img src={selectedBowl.imagen} alt={selectedBowl.nombre} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-3xl">🥗</div>}
+                  </div>
+                  <div className="flex-1 text-center sm:text-left">
+                    <p className="font-ui text-xs text-[var(--texto-suave)] mb-1">{feeling.msg}</p>
+                    <h4 className="font-display font-bold text-xl text-[var(--verde-profundo)]">{selectedBowl.nombre}</h4>
+                    <p className="font-ui text-sm text-[var(--verde-main)] font-semibold">{formatPrice(selectedBowl.precio)}</p>
+                  </div>
+                  <button
+                    onClick={() => navigate('menu')}
+                    className="bg-[var(--verde-main)] text-white font-ui font-bold text-sm px-6 py-3 rounded-[16px] hover:bg-[var(--verde-vivo)] transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
+                  >
+                    Ver en Carta <ArrowRight size={16} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <div className="w-full flex flex-col md:flex-row bg-[var(--fondo-crema)] relative z-20 max-w-7xl mx-auto px-6 py-12 gap-6">
@@ -931,20 +996,24 @@ const BuilderView = ({ onAddToCart }) => {
   };
 
   return (
-    <div className="pt-24 bg-[var(--fondo-crema)] w-full flex flex-col lg:flex-row min-h-screen pb-16 lg:pb-0">
-      <div className="w-full lg:w-1/2 bg-[var(--verde-profundo)] text-white p-6 lg:p-12 lg:min-h-screen flex flex-col justify-between relative z-20">
-        <div className="mb-10">
-          <h1 className="font-display italic text-4xl md:text-5xl text-white mb-2">Arma tu <span className="text-[var(--verde-main)]">Origen</span></h1>
-          <p className="font-ui text-[var(--verde-palido)] opacity-80">Diseño intuitivo para crear tu bowl perfecto.</p>
-        </div>
+    <div className="bg-[var(--fondo-crema)] w-full flex flex-col lg:flex-row">
+      {/* LEFT PANEL — viewport height, content scrolls internally, nav always visible */}
+      <div className="w-full lg:w-1/2 bg-[var(--verde-profundo)] text-white flex flex-col h-[100svh] sticky top-0 z-20 overflow-hidden">
 
-        {/* Indicador de Precio en Vivo Móvil */}
-        <div className="lg:hidden sticky top-20 bg-[var(--verde-bosque)]/95 backdrop-blur-md p-4 rounded-[16px] mb-8 flex justify-between items-center border border-[var(--verde-main)]/20 z-[60] shadow-lg">
-           <span className="font-ui text-sm text-[var(--verde-palido)]">Total Combo:</span>
-           <motion.span key={totalPrice} className={`font-display font-bold text-2xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-white'}`}>{formatPrice(totalPrice)}</motion.span>
-        </div>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-6 pt-24 pb-4 lg:px-12 lg:pt-12">
+          <div className="mb-8">
+            <h1 className="font-display italic text-4xl md:text-5xl text-white mb-2">Arma tu <span className="text-[var(--verde-main)]">Origen</span></h1>
+            <p className="font-ui text-[var(--verde-palido)] opacity-80">Diseño intuitivo para crear tu bowl perfecto.</p>
+          </div>
 
-        {step <= 5 && (
+          {/* Indicador de Precio en Vivo Móvil */}
+          <div className="lg:hidden bg-[var(--verde-bosque)]/95 backdrop-blur-md p-4 rounded-[16px] mb-8 flex justify-between items-center border border-[var(--verde-main)]/20 shadow-lg">
+            <span className="font-ui text-sm text-[var(--verde-palido)]">Total Combo:</span>
+            <motion.span key={totalPrice} className={`font-display font-bold text-2xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-white'}`}>{formatPrice(totalPrice)}</motion.span>
+          </div>
+
+          {step <= 5 && (
           <AnimatePresence mode="wait">
             <motion.div key={step} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex-1">
               <div className="flex items-center gap-3 mb-8">
@@ -1095,46 +1164,56 @@ const BuilderView = ({ onAddToCart }) => {
                 <p>• <strong className="text-white">Bebidas:</strong> {addedDrinks.map(d => d.nombre).join(', ')}</p>
               )}
             </div>
-            <div className="border-t border-white/10 pt-6 mb-8 flex justify-between items-center">
+            <div className="border-t border-white/10 pt-4 flex justify-between items-center">
               <span className="font-ui text-lg">Total a pagar:</span>
               <span className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-main)]'}`}>{formatPrice(totalPrice)}</span>
             </div>
-            <div className="flex gap-4">
-               <Button onClick={handleFinishCustomBowl} className="w-full bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)] text-white rounded-[16px]">Agregar al Pedido</Button>
-               <button onClick={() => setStep(1)} className="px-6 py-3 rounded-[16px] border border-white/20 hover:bg-white/10 transition font-ui font-semibold text-sm">Modificar</button>
-            </div>
           </motion.div>
         )}
+        </div>
 
-        {step <= 6 && (
-          <div className="mt-auto pt-10 pb-4 flex justify-between items-center z-50">
-            <button onClick={() => setStep(s => Math.max(1, s - 1))} className={`font-ui font-semibold text-sm text-[var(--verde-palido)] hover:text-white transition ${step === 1 ? 'opacity-0' : ''}`}>← Volver</button>
-            <div className="flex gap-2">
-              {[1,2,3,4,5,6].map(i => <div key={i} className={`h-2 rounded-[4px] transition-all duration-300 ${i === step ? 'w-8 bg-[var(--verde-main)]' : 'w-2 bg-white/20'}`} />)}
+        {/* Bottom navigation — always visible, never scrolls away */}
+        <div className="shrink-0 bg-[var(--verde-profundo)] border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.35)] px-6 py-4 lg:px-12">
+          {step <= 6 && (
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => setStep(s => Math.max(1, s - 1))}
+                className={`font-ui font-semibold text-sm text-[var(--verde-palido)] hover:text-white transition-colors ${step === 1 ? 'opacity-0 pointer-events-none' : ''}`}
+              >← Volver</button>
+              <div className="flex gap-2">
+                {[1,2,3,4,5,6].map(i => <div key={i} className={`h-2 rounded-[4px] transition-all duration-300 ${i === step ? 'w-8 bg-[var(--verde-main)]' : 'w-2 bg-white/20'}`} />)}
+              </div>
+              <Button
+                onClick={() => isStepCompleted && setStep(s => Math.min(7, s + 1))}
+                variant="primary"
+                disabled={!isStepCompleted}
+                className={`bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] rounded-[16px] transition-all duration-300 ${!isStepCompleted ? 'opacity-40 cursor-not-allowed hover:translate-y-0' : ''}`}
+              >
+                {step === 6 ? 'Ver Resumen' : 'Siguiente'} <ArrowRight size={16} />
+              </Button>
             </div>
-            <Button 
-              onClick={() => isStepCompleted && setStep(s => Math.min(7, s + 1))} 
-              variant="primary" 
-              className={`bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] rounded-[16px] transition-all duration-300 ${!isStepCompleted ? 'opacity-40 cursor-not-allowed hover:translate-y-0' : ''}`}
-              disabled={!isStepCompleted}
-            >
-              {step === 6 ? 'Ver Resumen' : 'Siguiente'} <ArrowRight size={16} />
-            </Button>
-          </div>
-        )}
+          )}
+          {step === 7 && (
+            <div className="flex gap-3">
+              <Button onClick={handleFinishCustomBowl} className="flex-1 bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)] text-white rounded-[16px]">Agregar al Pedido</Button>
+              <button onClick={() => setStep(1)} className="px-5 py-3 rounded-[16px] border border-white/20 hover:bg-white/10 transition font-ui font-semibold text-sm text-white">Modificar</button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="w-full lg:w-1/2 bg-[var(--fondo-crema)] relative min-h-[50vh] lg:min-h-screen">
-        <div className="sticky top-20 lg:top-1/2 lg:-translate-y-1/2 p-8 lg:p-12 flex flex-col items-center justify-center">
+      {/* RIGHT PANEL — Bowl SVG (hidden on mobile, full screen on desktop) */}
+      <div className="hidden lg:flex w-full lg:w-1/2 bg-[var(--fondo-crema)] relative min-h-screen">
+        <div className="sticky top-20 lg:top-1/2 lg:-translate-y-1/2 p-8 lg:p-12 flex flex-col items-center justify-center w-full">
           <div className="hidden lg:flex w-full max-w-sm bg-white p-6 rounded-[24px] mb-12 shadow-sm justify-between items-center border border-[var(--verde-palido)]">
-             <div>
-               <p className="font-ui text-xs text-[var(--texto-suave)] uppercase tracking-wider font-bold mb-1">Tu Bowl:</p>
-               <motion.p key={totalPrice} className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-profundo)]'}`}>{formatPrice(totalPrice)}</motion.p>
-             </div>
-             {isMaximo && <div className="bg-[var(--maximo-amber)]/10 text-[var(--maximo-amber)] px-3 py-1 rounded-[8px] text-xs font-bold animate-pulse">POWER UP</div>}
+            <div>
+              <p className="font-ui text-xs text-[var(--texto-suave)] uppercase tracking-wider font-bold mb-1">Tu Bowl:</p>
+              <motion.p key={totalPrice} className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-profundo)]'}`}>{formatPrice(totalPrice)}</motion.p>
+            </div>
+            {isMaximo && <div className="bg-[var(--maximo-amber)]/10 text-[var(--maximo-amber)] px-3 py-1 rounded-[8px] text-xs font-bold animate-pulse">POWER UP</div>}
           </div>
           <div className="w-full max-w-[300px] lg:max-w-[450px] aspect-square relative z-10">
-             <BowlSVG selections={selections} />
+            <BowlSVG selections={selections} />
           </div>
           {step <= 5 && <p className="font-accent italic text-xl text-[var(--texto-suave)] mt-8 text-center animate-pulse">Visualización en tiempo real...</p>}
         </div>
