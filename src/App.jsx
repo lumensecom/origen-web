@@ -159,25 +159,16 @@ const CARTA = [
     tag: 'Vegetariano',
     dietary: ['Vegetariano', 'Gluten-Free']
   },
-  { 
-    id: 'maximo', 
-    nombre: 'ORIGEN MÁXIMO', 
-    proteina: 'Doble Proteína', 
-    precio: 30900, 
-    imagen: null, 
-    badge: { texto: '⚡ Máximo', color: '#C9A227', bg: '#F0E8D8' }, 
-    ingredientes: ['Arroz integral', 'Zanahoria', 'Brócoli', 'Pepino', 'Maíz', 'Champiñones', 'Pechuga doble', 'Semillas'], 
-    tag: 'Proteína Animal', 
-    esMaximo: true,
-    dietary: ['High-Protein']
-  }
 ];
 
 const BEBIDAS = [
-  { id: 'limonada-coco', nombre: 'Limonada de Coco Natural', precio: 8900, desc: 'Hecha al instante con coco real rallado y endulzante orgánico.', emoji: '🥥' },
-  { id: 'kombucha-rojos', nombre: 'Kombucha de Frutos Rojos', precio: 11900, desc: 'Probiótica artesanal, refrescante y con gasificación natural.', emoji: '🍹' },
-  { id: 'te-matcha-frio', nombre: 'Matcha Ceremonial Helado', precio: 9900, desc: 'Té verde premium batido con leche de almendras y miel de abejas.', emoji: '🍵' },
-  { id: 'agua-gas-menta', nombre: 'Agua de Manantial con Gas', precio: 5900, desc: 'Saborizada naturalmente con fresas, rodajas de limón y menta.', emoji: '💧' }
+  { id: 'limonada-natural', nombre: 'Limonada Natural', precio: 5900, desc: 'Limonada fresca preparada al instante con limón real.', emoji: '🍋' },
+  { id: 'jugo-agua', nombre: 'Jugo Natural en Agua', precio: 5900, desc: 'Jugos naturales del día preparados con agua fresca.', emoji: '🧃' },
+  { id: 'jugo-leche', nombre: 'Jugo Natural en Leche', precio: 6900, desc: 'Jugos naturales del día preparados con leche entera.', emoji: '🥛' },
+  { id: 'agua-mineral', nombre: 'Agua Mineral', precio: 5900, desc: 'Agua mineral natural sin gas, pura y refrescante.', emoji: '💧' },
+  { id: 'agua-gas', nombre: 'Agua con Gas', precio: 5900, desc: 'Agua mineral con gas natural, ligera y refrescante.', emoji: '💦' },
+  { id: 'te-hatsu', nombre: 'Té Hatsu', precio: 7900, desc: 'Té natural Hatsu artesanal en diferentes sabores.', emoji: '🍵' },
+  { id: 'soda-hatsu', nombre: 'Soda Hatsu', precio: 6900, desc: 'Soda refrescante Hatsu, burbujas naturales de caña.', emoji: '🥤' },
 ];
 
 const LOCALES = [
@@ -235,207 +226,204 @@ const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrde
     return cart.reduce((acc, item) => acc + (item.precio * item.quantity), 0);
   }, [cart]);
 
+  const goBack = () => {
+    if (step === 'deliveryType') setStep('cart');
+    else if (step === 'pickupStore' || step === 'deliveryAddress') setStep('deliveryType');
+  };
+
+  const stepLabel = { cart: 'Tu Pedido', deliveryType: '¿Cómo lo recibas?', pickupStore: 'Elige tu sede', deliveryAddress: '¿A dónde lo llevamos?' };
+
   if (cart.length === 0) {
     return (
-      <AnimatePresence>
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[var(--fondo-crema)] w-full max-w-md p-8 rounded-[32px] text-center shadow-xl">
-            <span className="text-5xl block mb-4">🥣</span>
-            <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-2">Tu pedido está vacío</h3>
-            <p className="font-ui text-sm text-[var(--texto-suave)] mb-6">Explora nuestra carta Origen para agregar tus favoritos.</p>
-            <Button onClick={onClose} variant="primary" className="w-full">Ir a explorar</Button>
-          </motion.div>
-        </div>
-      </AnimatePresence>
+      <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="bg-white w-full max-w-sm p-8 rounded-[28px] text-center shadow-2xl">
+          <span className="text-5xl block mb-4">🥣</span>
+          <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-2">Aún no hay nada aquí</h3>
+          <p className="font-ui text-sm text-[var(--texto-suave)] mb-6">Explora nuestra carta y agrega tu bowl favorito.</p>
+          <button onClick={onClose} className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-3.5 rounded-[16px] hover:bg-[var(--verde-vivo)] transition-all">Ver Carta</button>
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-          animate={{ opacity: 1, scale: 1, y: 0 }} 
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-[var(--fondo-crema)] w-full max-w-xl p-6 md:p-8 rounded-[32px] shadow-2xl relative my-8"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header de Checkout */}
-          <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-6">
-            <div className="flex items-center gap-3">
-              {step !== 'cart' && (
-                <button onClick={() => {
-                  if (step === 'deliveryType') setStep('cart');
-                  else if (step === 'pickupStore') setStep('deliveryType');
-                  else if (step === 'deliveryAddress') setStep('deliveryType');
-                }} className="text-gray-400 hover:text-gray-800 transition-colors">
-                  <ArrowLeft size={20} />
-                </button>
-              )}
-              <h2 className="font-display italic text-2xl text-[var(--verde-profundo)]">
-                {step === 'cart' && 'Tu Pedido'}
-                {step === 'deliveryType' && 'Método de Entrega'}
-                {step === 'pickupStore' && 'Selecciona Sede'}
-                {step === 'deliveryAddress' && 'Dirección de Entrega'}
-              </h2>
-            </div>
-            <button onClick={onClose} className="p-1.5 bg-white rounded-full text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition-colors">
-              <X size={18} />
-            </button>
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, y: 60 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 60 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 240 }}
+        className="bg-white w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Handle bar (mobile) */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-4 pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            {step !== 'cart' && (
+              <button onClick={goBack} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all">
+                <ArrowLeft size={16} className="text-gray-600" />
+              </button>
+            )}
+            <h2 className="font-display italic text-xl text-[var(--verde-profundo)]">{stepLabel[step]}</h2>
           </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all">
+            <X size={16} className="text-gray-600" />
+          </button>
+        </div>
 
-          {/* PASO 1: RESUMEN Y MODIFICAR COMPRA */}
-          {step === 'cart' && (
-            <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 scrollbar-hide">
-              {cart.map((item, idx) => (
-                <div key={`${item.id}-${idx}`} className="flex items-center gap-4 p-4 bg-white rounded-[20px] border border-[var(--verde-palido)]">
-                  <div className="w-14 h-14 bg-[var(--verde-menta)] rounded-[14px] flex items-center justify-center text-2xl flex-shrink-0">
-                    {item.imagen ? <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover rounded-[14px]" /> : (item.emoji || '🥣')}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-display font-bold text-base text-[var(--verde-profundo)]">{item.nombre}</h4>
-                    {item.esBuilder && (
-                      <p className="font-ui text-[10px] text-[var(--texto-suave)] leading-tight mt-0.5">
-                        {item.base} • {item.proteina} • {item.salsa}
-                      </p>
-                    )}
-                    <span className="font-ui text-sm font-bold text-[var(--verde-main)] mt-1 block">{formatPrice(item.precio)}</span>
-                  </div>
-                  
-                  {/* Modificar Cantidad */}
-                  <div className="flex items-center gap-2 bg-[var(--verde-menta)] px-2.5 py-1.5 rounded-full">
-                    <button onClick={() => onUpdateQty(item, -1)} className="text-[var(--verde-main)] hover:scale-110 active:scale-95 transition-all">
-                      <Minus size={14} />
+        {/* Content */}
+        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto scrollbar-hide">
+          <AnimatePresence mode="wait">
+
+            {/* PASO 1 — Items del carrito */}
+            {step === 'cart' && (
+              <motion.div key="cart" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-3">
+                {cart.map((item, idx) => (
+                  <div key={`${item.id}-${idx}`} className="flex items-center gap-3 p-3 bg-[var(--fondo-crema)] rounded-[18px]">
+                    <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-[var(--verde-menta)] flex items-center justify-center text-xl flex-shrink-0">
+                      {item.imagen ? <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover" /> : (item.emoji || '🥣')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)] truncate">{item.nombre}</p>
+                      {item.esBuilder && <p className="font-ui text-[10px] text-[var(--texto-suave)] truncate">{item.base} · {item.proteina}</p>}
+                      <p className="font-ui text-sm font-bold text-[var(--verde-main)]">{formatPrice(item.precio * item.quantity)}</p>
+                    </div>
+                    {/* Qty controls */}
+                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2 py-1">
+                      <button onClick={() => onUpdateQty(item, -1)} className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors active:scale-90">
+                        <Minus size={12} />
+                      </button>
+                      <span className="font-ui text-sm font-bold w-4 text-center text-[var(--verde-profundo)]">{item.quantity}</span>
+                      <button onClick={() => onUpdateQty(item, 1)} className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-[var(--verde-main)] transition-colors active:scale-90">
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                    <button onClick={() => onRemoveItem(item)} className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors active:scale-90">
+                      <Trash2 size={14} />
                     </button>
-                    <span className="font-ui text-sm font-bold text-[var(--verde-profundo)] w-4 text-center">{item.quantity}</span>
-                    <button onClick={() => onUpdateQty(item, 1)} className="text-[var(--verde-main)] hover:scale-110 active:scale-95 transition-all">
-                      <Plus size={14} />
-                    </button>
                   </div>
+                ))}
+              </motion.div>
+            )}
 
-                  {/* Eliminar de una */}
-                  <button onClick={() => onRemoveItem(item)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* PASO 2: TIPO DE ENTREGA */}
-          {step === 'deliveryType' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button 
-                onClick={() => setStep('pickupStore')}
-                className="flex flex-col items-center justify-center p-8 bg-white border border-[var(--verde-palido)] rounded-[24px] hover:border-[var(--verde-main)] hover:shadow-[0_10px_30px_rgba(18,179,98,0.12)] group transition-all text-center"
-              >
-                <div className="bg-[var(--verde-menta)] p-4 rounded-[16px] text-[var(--verde-main)] group-hover:scale-110 group-hover:bg-[var(--verde-main)] group-hover:text-white transition-all mb-4">
-                  <Store size={32} />
-                </div>
-                <h3 className="font-display font-bold text-xl text-[var(--verde-profundo)] mb-1">Recoger en local</h3>
-                <p className="font-ui text-xs text-[var(--texto-suave)] max-w-[180px]">Pasa por tu bowl sin filas en tu sede favorita.</p>
-              </button>
-
-              <button 
-                onClick={() => setStep('deliveryAddress')}
-                className="flex flex-col items-center justify-center p-8 bg-white border border-[var(--verde-palido)] rounded-[24px] hover:border-[var(--verde-main)] hover:shadow-[0_10px_30px_rgba(18,179,98,0.12)] group transition-all text-center"
-              >
-                <div className="bg-[var(--verde-menta)] p-4 rounded-[16px] text-[var(--verde-main)] group-hover:scale-110 group-hover:bg-[var(--verde-main)] group-hover:text-white transition-all mb-4">
-                  <MapPin size={32} />
-                </div>
-                <h3 className="font-display font-bold text-xl text-[var(--verde-profundo)] mb-1">Pedir a domicilio</h3>
-                <p className="font-ui text-xs text-[var(--texto-suave)] max-w-[180px]">Te lo enviamos con nuestro repartidor de confianza.</p>
-              </button>
-            </div>
-          )}
-
-          {/* PASO 3: SELECCIONAR TIENDA FISICA (PICKUP) */}
-          {step === 'pickupStore' && (
-            <div className="space-y-3">
-              <p className="font-ui text-sm text-[var(--texto-suave)] mb-4">¿En qué local te gustaría recoger hoy?</p>
-              {LOCALES.map((store) => (
-                <button
-                  key={store.id}
-                  onClick={() => setSelectedStore(store)}
-                  className={`w-full flex items-center gap-4 p-4 rounded-[20px] border-2 text-left transition-all ${
-                    selectedStore?.id === store.id 
-                      ? 'border-[var(--verde-main)] bg-white shadow-md' 
-                      : 'border-transparent bg-white hover:border-[var(--verde-palido)]'
-                  }`}
-                >
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedStore?.id === store.id ? 'border-[var(--verde-main)] text-[var(--verde-main)]' : 'border-gray-300'}`}>
-                    {selectedStore?.id === store.id && <div className="w-3 h-3 bg-[var(--verde-main)] rounded-full" />}
+            {/* PASO 2 — Tipo de entrega */}
+            {step === 'deliveryType' && (
+              <motion.div key="delivery" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-3">
+                <button onClick={() => setStep('pickupStore')} className="w-full flex items-center gap-4 p-5 bg-[var(--fondo-crema)] rounded-[20px] hover:bg-[var(--verde-menta)] group transition-all text-left border-2 border-transparent hover:border-[var(--verde-main)]">
+                  <div className="w-12 h-12 bg-white rounded-[14px] flex items-center justify-center text-[var(--verde-main)] shadow-sm group-hover:scale-110 transition-transform">
+                    <Store size={22} />
                   </div>
                   <div>
-                    <h4 className="font-display font-bold text-base text-[var(--verde-profundo)]">{store.nombre}</h4>
-                    <p className="font-ui text-xs text-[var(--texto-suave)]">{store.direccion}</p>
+                    <p className="font-ui font-bold text-base text-[var(--verde-profundo)]">Recoger en local</p>
+                    <p className="font-ui text-xs text-[var(--texto-suave)]">Listo en minutos — pasa y recoge tu bowl</p>
                   </div>
+                  <ArrowRight size={18} className="ml-auto text-gray-300 group-hover:text-[var(--verde-main)] group-hover:translate-x-1 transition-all" />
                 </button>
-              ))}
-            </div>
-          )}
-
-          {/* PASO 4: FORMULARIO DOMICILIO */}
-          {step === 'deliveryAddress' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider mb-2">Dirección de Entrega (En Bogotá)</label>
-                <input 
-                  type="text" 
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Ej: Calle 26 # 68-10, Apto 402"
-                  className="w-full p-4 rounded-[16px] border border-[var(--verde-palido)] bg-white font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)]"
-                />
-              </div>
-              <div>
-                <label className="block font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider mb-2">Barrio o Indicaciones Adicionales</label>
-                <input 
-                  type="text" 
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Ej: Frente al parque de Salitre"
-                  className="w-full p-4 rounded-[16px] border border-[var(--verde-palido)] bg-white font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)]"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Footer de Checkout */}
-          <div className="mt-8 border-t border-gray-100 pt-6 flex justify-between items-center">
-            <div>
-              <span className="font-ui text-xs text-[var(--texto-suave)] block uppercase tracking-wider">Total Pedido</span>
-              <span className="font-display font-bold text-2xl text-[var(--verde-profundo)]">{formatPrice(cartTotal)}</span>
-            </div>
-            
-            {step === 'cart' && (
-              <Button onClick={() => setStep('deliveryType')} variant="primary">Continuar</Button>
+                <button onClick={() => setStep('deliveryAddress')} className="w-full flex items-center gap-4 p-5 bg-[var(--fondo-crema)] rounded-[20px] hover:bg-[var(--verde-menta)] group transition-all text-left border-2 border-transparent hover:border-[var(--verde-main)]">
+                  <div className="w-12 h-12 bg-white rounded-[14px] flex items-center justify-center text-[var(--verde-main)] shadow-sm group-hover:scale-110 transition-transform">
+                    <MapPin size={22} />
+                  </div>
+                  <div>
+                    <p className="font-ui font-bold text-base text-[var(--verde-profundo)]">Pedir a domicilio</p>
+                    <p className="font-ui text-xs text-[var(--texto-suave)]">Te lo llevamos directo a tu puerta</p>
+                  </div>
+                  <ArrowRight size={18} className="ml-auto text-gray-300 group-hover:text-[var(--verde-main)] group-hover:translate-x-1 transition-all" />
+                </button>
+              </motion.div>
             )}
 
+            {/* PASO 3 — Seleccionar sede */}
             {step === 'pickupStore' && (
-              <Button 
-                onClick={() => onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore })} 
-                disabled={!selectedStore}
-                variant="primary"
-              >
-                Completar en WhatsApp
-              </Button>
+              <motion.div key="pickup" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-3">
+                {LOCALES.map(store => (
+                  <button
+                    key={store.id}
+                    onClick={() => setSelectedStore(store)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-[18px] border-2 text-left transition-all ${
+                      selectedStore?.id === store.id
+                        ? 'border-[var(--verde-main)] bg-[var(--verde-menta)]'
+                        : 'border-gray-100 bg-[var(--fondo-crema)] hover:border-[var(--verde-palido)]'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedStore?.id === store.id ? 'border-[var(--verde-main)]' : 'border-gray-300'}`}>
+                      {selectedStore?.id === store.id && <div className="w-2.5 h-2.5 bg-[var(--verde-main)] rounded-full" />}
+                    </div>
+                    <div>
+                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)]">{store.nombre}</p>
+                      <p className="font-ui text-xs text-[var(--texto-suave)]">{store.direccion}</p>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
             )}
 
+            {/* PASO 4 — Domicilio */}
             {step === 'deliveryAddress' && (
-              <Button 
-                onClick={() => onConfirmOrder({ modalidad: 'Domicilio', direccion: address, detalles: phone })} 
-                disabled={!address.trim()}
-                variant="primary"
-              >
-                Completar en WhatsApp
-              </Button>
+              <motion.div key="address" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+                <div>
+                  <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Dirección en Bogotá</label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    placeholder="Ej: Calle 26 # 68-10, Apto 402"
+                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Indicaciones adicionales</label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="Ej: Barrio Chapinero, frente al parque"
+                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
+                  />
+                </div>
+              </motion.div>
             )}
+
+          </AnimatePresence>
+        </div>
+
+        {/* Footer — total + CTA */}
+        <div className="px-6 pb-6 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-ui text-sm text-[var(--texto-suave)]">Total del pedido</span>
+            <span className="font-display font-bold text-2xl text-[var(--verde-profundo)]">{formatPrice(cartTotal)}</span>
           </div>
 
-        </motion.div>
-      </div>
-    </AnimatePresence>
+          {step === 'cart' && (
+            <button onClick={() => setStep('deliveryType')} className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] flex items-center justify-center gap-2">
+              Continuar al pedido <ArrowRight size={18} />
+            </button>
+          )}
+          {step === 'pickupStore' && (
+            <button
+              onClick={() => onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore })}
+              disabled={!selectedStore}
+              className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              Confirmar por WhatsApp <ArrowRight size={18} />
+            </button>
+          )}
+          {step === 'deliveryAddress' && (
+            <button
+              onClick={() => onConfirmOrder({ modalidad: 'Domicilio', direccion: address, detalles: phone })}
+              disabled={!address.trim()}
+              className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              Confirmar por WhatsApp <ArrowRight size={18} />
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
@@ -479,7 +467,7 @@ const Footer = ({ navigate }) => {
           <h4 className="font-ui font-bold text-lg mb-6 text-white">¿Dudas o Antojos?</h4>
           <p className="font-ui text-sm text-white/50 mb-4">Pregúntale a nuestro equipo directamente por WhatsApp.</p>
           <button 
-            onClick={() => window.open('https://wa.me/573000000000', '_blank')} 
+            onClick={() => window.open('https://wa.me/573103112799', '_blank')} 
             className="w-full bg-white text-black hover:bg-[var(--verde-main)] rounded-[16px] px-6 py-3 font-ui font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
           >
             <MessageCircle size={18}/> Contactar Soporte
@@ -498,8 +486,19 @@ const Footer = ({ navigate }) => {
   );
 };
 
+const BRAND_PHRASES = [
+  "Tu cuerpo es lo que comes — elígete bien.",
+  "Cada bowl es un paso hacia tu mejor versión.",
+  "Nutrir tu cuerpo no debería ser complicado.",
+  "Hecho con ingredientes reales, para personas reales.",
+  "La salud empieza en lo que pones en tu plato.",
+  "Fresco. Rápido. Sin compromisos.",
+  "Mereces comer bien aunque tengas prisa.",
+  "El mejor momento para empezar es hoy.",
+];
+
 const FEELINGS = [
-  { key: 'energy', emoji: '⚡', label: 'Sin energía', bowlId: 'maximo', msg: 'Necesitas potencia real hoy.' },
+  { key: 'energy', emoji: '⚡', label: 'Sin energía', bowlId: 'brasa', msg: 'Proteína y energía real para tu día.' },
   { key: 'active', emoji: '💪', label: 'Activo', bowlId: 'tierra', msg: 'Proteína premium para tu rendimiento.' },
   { key: 'light', emoji: '🌿', label: 'Liviano', bowlId: 'natural', msg: 'Fresco, suave y sin culpa.' },
   { key: 'craving', emoji: '🔥', label: 'Antojado', bowlId: 'fuego', msg: 'Sabor intenso con camarón fresco.' },
@@ -514,6 +513,11 @@ const HomeView = ({ navigate }) => {
   const opacityText = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const [feeling, setFeeling] = useState(null);
   const selectedBowl = useMemo(() => feeling ? CARTA.find(b => b.id === feeling.bowlId) : null, [feeling]);
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPhraseIdx(i => (i + 1) % BRAND_PHRASES.length), 3500);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div ref={containerRef} className="w-full relative bg-[var(--fondo-crema)] pb-32">
@@ -547,6 +551,18 @@ const HomeView = ({ navigate }) => {
       {/* Widget "¿Cómo te sientes hoy?" */}
       <div className="max-w-5xl mx-auto px-4 relative z-30 -mt-10">
         <div className="bg-white rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.1)] border border-[#E8F0E8] p-5 md:p-7">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={phraseIdx}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.5 }}
+              className="font-display italic text-base md:text-lg text-[var(--verde-profundo)] text-center mb-3 min-h-[1.75rem]"
+            >
+              {BRAND_PHRASES[phraseIdx]}
+            </motion.p>
+          </AnimatePresence>
           <p className="font-ui text-xs font-bold uppercase tracking-[0.2em] text-[var(--texto-suave)] mb-4 text-center">¿Cómo te sientes hoy?</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {FEELINGS.map(f => (
@@ -609,7 +625,7 @@ const HomeView = ({ navigate }) => {
             <Sparkles size={24} />
           </div>
         </div>
-        <div onClick={() => navigate('menu')} className="relative flex-1 bg-[var(--crema-calido)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--dorado-suave)]/20">
+        <div onClick={() => navigate('menu')} className="relative flex-1 bg-[#E8EFE3] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-palido)]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
             <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)] mb-4 transition-transform duration-500 group-hover:-translate-y-1">Carta<br/><span className="text-[var(--verde-main)]">Origen</span></h2>
@@ -742,11 +758,11 @@ const CartaCard = ({ item, onAddToCart, isBebida }) => {
   );
 };
 
-const VIRALES_IDS = ['tierra', 'fuego', 'maximo', 'dulce', 'raiz'];
+const VIRALES_IDS = ['tierra', 'fuego', 'cosecha', 'dulce', 'raiz'];
 
 const CartaView = ({ onAddToCart }) => {
   const [filtroActivo, setFiltroActivo] = useState('Todos');
-  const categorias = ['Todos', 'Mariscos', 'Proteína Animal', 'Vegetariano', 'Premium', 'Bebidas'];
+  const categorias = ['Todos', 'Mariscos', 'Proteína Animal', 'Vegetariano', 'Especiales', 'Bebidas'];
 
   const virales = useMemo(() => CARTA.filter(b => VIRALES_IDS.includes(b.id)), []);
 
@@ -754,7 +770,7 @@ const CartaView = ({ onAddToCart }) => {
     if (filtroActivo === 'Bebidas') return BEBIDAS;
     return CARTA.filter(bowl => {
       if (filtroActivo === 'Todos') return true;
-      if (filtroActivo === 'Premium') return bowl.badge.texto === 'Premium' || bowl.esMaximo;
+      if (filtroActivo === 'Especiales') return bowl.badge?.texto === 'Premium';
       return bowl.tag === filtroActivo;
     });
   }, [filtroActivo]);
@@ -765,7 +781,7 @@ const CartaView = ({ onAddToCart }) => {
 
         <div className="text-center mb-16 animate-in">
           <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Carta Origen</h1>
-          <p className="font-ui text-lg text-[#2D5A4A]">12 combinaciones perfectas y bebidas frescas de la casa.</p>
+          <p className="font-ui text-lg text-[#2D5A4A]">11 combinaciones perfectas y bebidas frescas de la casa.</p>
         </div>
 
         {/* Carrusel Virales de la Semana */}
@@ -1082,28 +1098,37 @@ const BuilderView = ({ onAddToCart }) => {
                 </div>
               ) : (
                 /* RENDERIZADO GENERAL DE LOS DEMÁS PASOS */
-                <div className={`grid gap-4 ${step === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                  {curr?.items.map(item => {
-                    const isArray = Array.isArray(selections[curr.id]);
-                    const isSelected = isArray ? selections[curr.id].includes(item) : selections[curr.id] === item;
-                    const isDisabled = isArray && !isSelected && selections[curr.id].length >= curr.max;
+                <div className="space-y-4">
+                  {/* Hint de doble porción para frescuras y sabores */}
+                  {curr?.max === 2 && Array.isArray(selections[curr.id]) && selections[curr.id].length === 1 && (
+                    <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 bg-[var(--verde-main)]/20 border border-[var(--verde-main)]/30 px-3 py-2 rounded-[10px]">
+                      <span className="text-sm">✌️</span>
+                      <p className="font-ui text-xs text-[var(--verde-palido)]">Solo elegiste 1 — recibirás <strong className="text-white">doble porción</strong> de ese ingrediente. Puedes elegir un segundo diferente.</p>
+                    </motion.div>
+                  )}
+                  <div className={`grid gap-4 ${step === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    {curr?.items.map(item => {
+                      const isArray = Array.isArray(selections[curr.id]);
+                      const isSelected = isArray ? selections[curr.id].includes(item) : selections[curr.id] === item;
+                      const isDisabled = isArray && !isSelected && selections[curr.id].length >= curr.max;
 
-                    return (
-                      <button 
-                        key={item} 
-                        onClick={() => toggleSelection(curr.id, item, curr.max)}
-                        disabled={isDisabled}
-                        className={`text-left p-4 rounded-[16px] transition-all duration-300 font-ui border-2 ${
-                          isSelected ? 'bg-[var(--verde-main)] text-white border-[var(--verde-main)] shadow-md' : 'bg-[var(--verde-bosque)]/50 text-[var(--verde-palido)] border-[var(--verde-bosque)] hover:bg-[var(--verde-bosque)]'
-                        } ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} flex items-center justify-between group`}
-                      >
-                        <span className="font-bold text-lg">{item}</span>
-                        <div className={`w-6 h-6 rounded-[6px] border-2 flex items-center justify-center ${isSelected ? 'border-current bg-white/10 text-white' : 'border-current opacity-30'}`}>
-                          {isSelected && <Check size={14} />}
-                        </div>
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={item}
+                          onClick={() => toggleSelection(curr.id, item, curr.max)}
+                          disabled={isDisabled}
+                          className={`text-left p-4 rounded-[16px] transition-all duration-300 font-ui border-2 ${
+                            isSelected ? 'bg-[var(--verde-main)] text-white border-[var(--verde-main)] shadow-md' : 'bg-[var(--verde-bosque)]/50 text-[var(--verde-palido)] border-[var(--verde-bosque)] hover:bg-[var(--verde-bosque)]'
+                          } ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} flex items-center justify-between group`}
+                        >
+                          <span className="font-bold text-lg">{item}</span>
+                          <div className={`w-6 h-6 rounded-[6px] border-2 flex items-center justify-center ${isSelected ? 'border-current bg-white/10 text-white' : 'border-current opacity-30'}`}>
+                            {isSelected && <Check size={14} />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -1202,20 +1227,37 @@ const BuilderView = ({ onAddToCart }) => {
         </div>
       </div>
 
-      {/* RIGHT PANEL — Bowl SVG (hidden on mobile, full screen on desktop) */}
-      <div className="hidden lg:flex w-full lg:w-1/2 bg-[var(--fondo-crema)] relative min-h-screen">
-        <div className="sticky top-20 lg:top-1/2 lg:-translate-y-1/2 p-8 lg:p-12 flex flex-col items-center justify-center w-full">
-          <div className="hidden lg:flex w-full max-w-sm bg-white p-6 rounded-[24px] mb-12 shadow-sm justify-between items-center border border-[var(--verde-palido)]">
+      {/* RIGHT PANEL — Bowl SVG, centered, desktop only */}
+      <div className="hidden lg:block w-full lg:w-1/2 bg-[var(--fondo-crema)] relative">
+        <div className="sticky top-0 h-screen flex flex-col items-center justify-center px-12">
+          {/* Price chip */}
+          <div className="flex items-center justify-between w-full max-w-sm bg-white px-6 py-4 rounded-[20px] mb-10 shadow-sm border border-[var(--verde-palido)]">
             <div>
-              <p className="font-ui text-xs text-[var(--texto-suave)] uppercase tracking-wider font-bold mb-1">Tu Bowl:</p>
-              <motion.p key={totalPrice} className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-profundo)]'}`}>{formatPrice(totalPrice)}</motion.p>
+              <p className="font-ui text-[10px] text-[var(--texto-suave)] uppercase tracking-wider font-bold mb-0.5">Tu bowl personalizado</p>
+              <motion.p key={totalPrice} initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="font-display font-bold text-3xl text-[var(--verde-profundo)]">{formatPrice(totalPrice)}</motion.p>
             </div>
-            {isMaximo && <div className="bg-[var(--maximo-amber)]/10 text-[var(--maximo-amber)] px-3 py-1 rounded-[8px] text-xs font-bold animate-pulse">POWER UP</div>}
+            {isMaximo && <div className="bg-[var(--maximo-amber)]/10 text-[var(--maximo-amber)] px-3 py-1.5 rounded-[10px] text-xs font-bold">⚡ MÁXIMO</div>}
+            {!isMaximo && selections.proteina && <div className="bg-[var(--verde-menta)] text-[var(--verde-main)] px-3 py-1.5 rounded-[10px] text-xs font-bold">Porción sencilla</div>}
           </div>
-          <div className="w-full max-w-[300px] lg:max-w-[450px] aspect-square relative z-10">
-            <BowlSVG selections={selections} />
+
+          {/* Bowl visual con platform effect */}
+          <div className="relative w-full max-w-[420px] flex flex-col items-center">
+            {/* Subtle radial glow behind bowl */}
+            <div className="absolute inset-0 rounded-full bg-[var(--verde-main)]/8 blur-3xl scale-75 -z-10" />
+            {/* Bowl SVG */}
+            <div className="w-full aspect-square drop-shadow-2xl" style={{ filter: 'drop-shadow(0 32px 40px rgba(18,179,98,0.15)) drop-shadow(0 8px 16px rgba(0,0,0,0.12))' }}>
+              <BowlSVG selections={selections} />
+            </div>
+            {/* Platform shadow */}
+            <div className="w-3/4 h-4 bg-[var(--verde-profundo)]/10 rounded-full blur-xl -mt-2" />
           </div>
-          {step <= 5 && <p className="font-accent italic text-xl text-[var(--texto-suave)] mt-8 text-center animate-pulse">Visualización en tiempo real...</p>}
+
+          {step <= 5 && (
+            <p className="font-accent italic text-lg text-[var(--texto-suave)] mt-8 text-center">
+              {selections.base ? 'Tu bowl tomando forma...' : 'Visualización en tiempo real...'}
+            </p>
+          )}
+          {step === 7 && <p className="font-display italic text-xl text-[var(--verde-main)] mt-8 text-center font-bold">¡Listo para ordenar!</p>}
         </div>
       </div>
     </div>
@@ -1615,7 +1657,7 @@ const CuentaView = ({ onAddToCart }) => {
       if (diet === 'vegan') return CARTA.find(b => b.id === 'vital');
       if (diet === 'gluten_free') return CARTA.find(b => b.id === 'tierra');
       if (protein === 'fish') return CARTA.find(b => b.id === 'agua');
-      return CARTA.find(b => b.id === 'maximo');
+      return CARTA.find(b => b.id === 'tierra');
     }
     else if (goal === 'fat_loss') {
       if (diet === 'vegan') return CARTA.find(b => b.id === 'natural');
@@ -2032,7 +2074,7 @@ export default function App() {
     orderDetailText += `¡Preparar al instante con amor real! 🌿`;
 
     // Abrir WhatsApp con número real o placeholder estándar
-    window.open(`https://wa.me/573000000000?text=${encodeURIComponent(orderDetailText)}`, '_blank');
+    window.open(`https://wa.me/573103112799?text=${encodeURIComponent(orderDetailText)}`, '_blank');
     
     // Limpiar carrito
     setCart([]);
@@ -2081,16 +2123,19 @@ export default function App() {
       <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[#05190C]/95 backdrop-blur-xl border-b border-white/10 py-4 shadow-sm' : 'bg-gradient-to-b from-black/70 via-black/30 to-transparent py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative h-16">
           
-          {/* LADO IZQUIERDO: Submenú hamburguesa */}
-          <div className="flex items-center z-10">
-            <button 
-              onClick={() => setIsMobileMenuOpen(true)} 
-              className="text-white hover:text-[var(--verde-main)] transition-colors flex items-center gap-3 group"
+          {/* LADO IZQUIERDO: Menú hamburguesa + Explorar → Carta */}
+          <div className="flex items-center gap-2 z-10">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--verde-main)] transition-all text-white"
             >
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[var(--verde-main)] transition-all">
-                <MenuIcon size={20} className="text-white" />
-              </div>
-              <span className="hidden sm:inline font-ui text-xs font-bold tracking-widest text-white uppercase group-hover:text-[var(--verde-main)] transition-all">Explorar</span>
+              <MenuIcon size={20} />
+            </button>
+            <button
+              onClick={() => { setActiveTab('menu'); setIsMobileMenuOpen(false); }}
+              className="hidden sm:flex items-center gap-1.5 font-ui text-xs font-bold tracking-widest text-white uppercase hover:text-[var(--verde-main)] transition-all"
+            >
+              Explorar <ArrowRight size={12} />
             </button>
           </div>
 
