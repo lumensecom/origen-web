@@ -65,6 +65,14 @@ export function AuthProvider({ children }) {
     setProfile(null)
   }
 
+  const resetPassword = async (email) => {
+    if (!supabase) throw new Error('Supabase no configurado')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) throw error
+  }
+
   const refreshProfile = async () => {
     if (user) await loadProfile(user.id)
   }
@@ -78,6 +86,7 @@ export function AuthProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      resetPassword,
       refreshProfile,
     }}>
       {children}

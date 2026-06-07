@@ -1269,21 +1269,6 @@ const BlogView = ({ navigate }) => {
 
   const posts = [
     {
-      id: 'don-luis',
-      title: "Don Luis y la Revolución de la Quinua Real en Boyacá",
-      img: "https://images.unsplash.com/photo-1595856320586-30232402b1f8?auto=format&fit=crop&q=80&w=800",
-      category: "Comunidad",
-      date: "Junio 2026",
-      readTime: "4 min de lectura",
-      subtitle: "Cómo un cultivo ancestral a 2.800 metros de altura está transformando la economía local y la calidad de tu bowl.",
-      content: [
-        "En las laderas de Sogamoso, Boyacá, donde el viento helado de la cordillera roza las hojas púrpuras y doradas, Don Luis Hernando vigila la cosecha de quinua que, en pocas horas, viajará rumbo a nuestros locales de ORIGEN en Bogotá.",
-        "La quinua real no siempre fue un producto de fácil acceso en la capital. Hace cinco años, los pequeños agricultores boyacenses vendían sus tierras debido a la volatilidad de los precios agrícolas y la presencia de intermediarios que se quedaban con el 70% del valor del grano.",
-        "En ORIGEN decidimos trazar una línea directa. Compramos la cosecha completa de la cooperativa de Don Luis de forma directa, sin intermediarios, pagando un precio neto que se sitúa un 35% por encima de las cotizaciones del mercado central. Esto les asegura estabilidad financiera y a nosotros nos garantiza un grano de calidad premium, cosechado con prácticas agrícolas tradicionales libres de pesticidas agresivos.",
-        "Cuando ordenas un bowl Origen Vital o seleccionas quinua orgánica en nuestro Armador de Bowls, estás consumiendo un superalimento vivo, rico en los 9 aminoácidos esenciales, hierro y fibra dietética. Pero lo más importante: estás impulsando de manera activa el sustento de 14 familias en Boyacá que, gracias a tu elección, ven renacer sus campos."
-      ]
-    },
-    {
       id: 'aguacate',
       title: "El Aguacate Hass Colombiano: El Oro Verde en tu Plato",
       img: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&q=80&w=800",
@@ -1616,6 +1601,13 @@ const CuentaView = ({ onAddToCart }) => {
   const nombre = isAuthenticated ? (profile?.full_name ?? 'Amigo') : 'Visitante';
   const iniciales = nombre.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || 'OR';
 
+  const miembroDesde = (() => {
+    if (!user?.created_at) return null;
+    const d = new Date(user.created_at);
+    const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    return `Miembro desde ${meses[d.getMonth()]} ${d.getFullYear()}`;
+  })();
+
   const [messages, setMessages] = useState([
     {
       id: 'msg-initial',
@@ -1780,7 +1772,10 @@ const CuentaView = ({ onAddToCart }) => {
           <div className="flex items-center gap-4 mb-12 border-b border-[var(--verde-palido)] pb-10">
             <div className="w-20 h-20 bg-[var(--verde-menta)] rounded-[20px] flex items-center justify-center text-[var(--verde-main)] font-display text-3xl font-bold flex-shrink-0">{iniciales}</div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-display font-bold text-4xl text-[var(--verde-profundo)] mb-2">Hola, {nombre.split(' ')[0]}.</h2>
+              <h2 className="font-display font-bold text-4xl text-[var(--verde-profundo)] mb-1">Hola, {nombre.split(' ')[0]}.</h2>
+              {miembroDesde && (
+                <p className="font-ui text-xs text-[var(--texto-suave)] mb-2">{miembroDesde}</p>
+              )}
               <div className="inline-flex items-center gap-2 bg-[var(--dorado-suave)]/20 text-[var(--dorado-fuerte)] px-4 py-1.5 rounded-[8px] font-ui font-bold text-sm">
                 <Award size={16}/> {puntos} Puntos Origen
               </div>
