@@ -145,19 +145,19 @@ const CARTA = [
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_HUEVO_pgzav3.webp', 
     badge: { texto: 'Plant-Based', color: '#1EAD61', bg: '#E8F5E8' }, 
     ingredientes: ['Mix asiático', 'Cherry', 'Zanahoria', 'Aguacate', 'Arándanos', 'Champiñones', 'Huevos', 'Semillas'], 
-    tag: 'Vegano',
-    dietary: ['Gluten-Free', 'Vegan']
+    tag: 'Vegetariano',
+    dietary: ['Gluten-Free', 'Vegetariano']
   },
-  { 
-    id: 'vital', 
-    nombre: 'ORIGEN VITAL', 
-    proteina: 'Tofu', 
-    precio: 22900, 
-    imagen: null, 
-    badge: { texto: '100% Plant', color: '#1EAD61', bg: '#E8F5E8' }, 
-    ingredientes: ['Quinua', 'Zuquini', 'Zanahoria', 'Repollo', 'Mango', 'Champiñones', 'Tofu', 'Semillas'], 
-    tag: 'Vegano',
-    dietary: ['Vegan', 'Gluten-Free']
+  {
+    id: 'vital',
+    nombre: 'ORIGEN VITAL',
+    proteina: 'Tofu',
+    precio: 22900,
+    imagen: null,
+    badge: { texto: '100% Plant', color: '#1EAD61', bg: '#E8F5E8' },
+    ingredientes: ['Quinua', 'Zuquini', 'Zanahoria', 'Repollo', 'Mango', 'Champiñones', 'Tofu', 'Semillas'],
+    tag: 'Vegetariano',
+    dietary: ['Vegetariano', 'Gluten-Free']
   },
   { 
     id: 'maximo', 
@@ -183,9 +183,9 @@ const BEBIDAS = [
 const LOCALES = [
   {
     id: 'salitre',
-    nombre: 'Salitre 372',
-    direccion: 'Calle 24a # 69-76, Bogotá',
-    detalles: 'Cerca de la zona empresarial y de Salitre Plaza. Perfecto para un almuerzo rápido y cargado de energía real.',
+    nombre: 'CC Salitre Plaza',
+    direccion: 'Calle 24a # 69-76, Local 372 — Bogotá',
+    detalles: 'Dentro de Salitre Plaza, en plena zona empresarial. Perfecto para un almuerzo rápido y cargado de energía real.',
     horarioSemana: '11:30 AM – 8:00 PM',
     horarioFinde: '11:30 AM – 8:00 PM',
     amenidades: ['Pet Friendly', 'Wi-Fi gratis', 'Zona de terraza'],
@@ -193,8 +193,8 @@ const LOCALES = [
   },
   {
     id: 'chile',
-    nombre: 'Av Chile 408b',
-    direccion: 'Calle 72 # 10-34, Local 408b, Bogotá',
+    nombre: 'Av. Chile — Local 408B',
+    direccion: 'Calle 72 # 10-34, Local 408B — Bogotá',
     detalles: 'En el epicentro financiero de Bogotá. La pausa perfecta y nutritiva para tu jornada laboral diaria.',
     horarioSemana: '11:30 AM – 7:00 PM',
     horarioFinde: '11:30 AM – 6:00 PM',
@@ -203,8 +203,8 @@ const LOCALES = [
   },
   {
     id: 'nuestro-bogota',
-    nombre: 'Nuestro Bogotá L3-127',
-    direccion: 'Av. Ciudad de Cali # 52-25, Local L3-127, Bogotá',
+    nombre: 'CC Nuestro Bogotá',
+    direccion: 'Av. Ciudad de Cali # 52-25, Local L3-127 — Bogotá',
     detalles: 'Ubicados en el Centro Comercial Nuestro Bogotá. El spot ideal para alimentarte sanamente.',
     horarioSemana: '11:00 AM – 9:00 PM',
     horarioFinde: '11:00 AM – 9:00 PM',
@@ -533,20 +533,6 @@ const HomeView = ({ navigate }) => {
         </motion.div>
       </div>
 
-      {/* Barra de Confianza */}
-      <div className="w-full bg-[var(--verde-bosque)] border-y border-[var(--verde-main)]/20 py-4 overflow-hidden flex relative z-20 shadow-lg">
-        <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ duration: 20, ease: "linear", repeat: Infinity }} className="flex w-max">
-          {[1, 2, 3, 4].map((_, idx) => (
-            <div key={idx} className="flex items-center gap-12 px-6">
-              <span className="flex items-center gap-2 text-[var(--verde-menta)] font-ui font-medium whitespace-nowrap"><span className="text-[var(--verde-main)]">🌿</span> 100% Natural</span>
-              <span className="flex items-center gap-2 text-[var(--verde-menta)] font-ui font-medium whitespace-nowrap"><span className="text-[var(--verde-main)]">⚡</span> Alto en Proteína</span>
-              <span className="flex items-center gap-2 text-[var(--verde-menta)] font-ui font-medium whitespace-nowrap"><span className="text-[var(--verde-main)]">🎯</span> 12 Combinaciones</span>
-              <span className="flex items-center gap-2 text-[var(--verde-menta)] font-ui font-medium whitespace-nowrap"><span className="text-[var(--verde-main)]">📍</span> Bogotá</span>
-            </div>
-          ))}
-        </motion.div>
-      </div>
-
       <div className="w-full flex flex-col md:flex-row bg-[var(--fondo-crema)] relative z-20 max-w-7xl mx-auto px-6 py-12 gap-6">
         <div onClick={() => navigate('builder')} className="relative flex-1 bg-[var(--verde-profundo)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-bosque)]">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--verde-main)]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -612,9 +598,92 @@ const HomeView = ({ navigate }) => {
   );
 };
 
+const CartaCard = ({ item, onAddToCart, isBebida }) => {
+  const [doble, setDoble] = useState(false);
+  const precioFinal = doble ? item.precio + 6000 : item.precio;
+
+  const handleAdd = (e) => {
+    e.stopPropagation();
+    onAddToCart(doble ? { ...item, nombre: item.nombre + ' — Doble Proteína', precio: precioFinal } : item);
+    setDoble(false);
+  };
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4 }}
+      className={`bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-[#E8F0E8] hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col relative group ${item.esMaximo ? 'border-[var(--maximo-amber)] ring-1 ring-[var(--maximo-amber)]/20' : ''}`}
+    >
+      <div className="absolute top-6 left-6 z-20">
+        <span
+          className="px-3 py-1.5 rounded-[12px] text-[10px] font-ui font-bold uppercase tracking-wide"
+          style={{ backgroundColor: isBebida ? '#E8F9F0' : item.badge?.bg, color: isBebida ? 'var(--verde-main)' : item.badge?.color }}
+        >
+          {isBebida ? 'Refrescante' : item.badge?.texto}
+        </span>
+      </div>
+
+      <div className="w-[180px] h-[180px] mx-auto rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.06)] bg-[#FDFCF8] flex items-center justify-center overflow-hidden mb-5 relative z-10">
+        {isBebida ? (
+          <span className="text-8xl select-none group-hover:scale-110 transition-transform duration-500">{item.emoji}</span>
+        ) : item.imagen ? (
+          <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: 'multiply' }} />
+        ) : (
+          <div className="w-full h-full bg-[#E8F5E8] flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-500">🥗</div>
+        )}
+      </div>
+
+      <div className="flex-grow flex flex-col items-center">
+        <h3 className="font-display font-bold text-[22px] text-[#1A1A1A] leading-[1.2] text-center mb-3">{item.nombre}</h3>
+        {isBebida ? (
+          <p className="font-ui text-sm text-[var(--texto-suave)] text-center max-w-[240px]">{item.desc}</p>
+        ) : (
+          <div className="flex flex-wrap justify-center gap-1.5 mb-3">
+            {item.ingredientes?.map((ing, i) => (
+              <span key={i} className="bg-[#F5F5F5] text-[#2D3A2D] text-[10px] font-medium px-2.5 py-1 rounded-[6px]">{ing}</span>
+            ))}
+          </div>
+        )}
+        {!isBebida && item.dietary && (
+          <div className="flex flex-wrap justify-center gap-1.5 mt-auto pt-2">
+            {item.dietary.map((tag, i) => (
+              <span key={i} className="bg-[#E8F5E8] text-[var(--verde-main)] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[6px]">{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 flex flex-col items-center w-full gap-2.5">
+        {!isBebida && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setDoble(d => !d); }}
+            className={`w-full py-2 rounded-[12px] font-ui text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 ${doble ? 'bg-[var(--maximo-amber)] text-white' : 'bg-[#F5F5F5] text-[#6B7280] hover:bg-[#E8F5E8] hover:text-[var(--verde-main)]'}`}
+          >
+            ⚡ Doble Proteína {doble ? '— Activada' : '+$6.000'}
+          </button>
+        )}
+        <div className="font-display font-bold text-[26px] text-[var(--verde-main)]">{formatPrice(precioFinal)}</div>
+        <button
+          onClick={handleAdd}
+          className="w-full rounded-[24px] border-2 border-[#1A1A1A] text-[#1A1A1A] bg-white text-[13px] font-bold uppercase tracking-wide py-3 hover:bg-[var(--verde-main)] hover:border-[var(--verde-main)] hover:text-white transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,179,98,0.25)] flex justify-center items-center gap-2"
+        >
+          Añadir al pedido <ShoppingBag size={16} />
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+const VIRALES_IDS = ['tierra', 'fuego', 'maximo', 'dulce', 'raiz'];
+
 const CartaView = ({ onAddToCart }) => {
   const [filtroActivo, setFiltroActivo] = useState('Todos');
-  const categorias = ['Todos', 'Mariscos', 'Proteína Animal', 'Vegano', 'Premium', 'Bebidas'];
+  const categorias = ['Todos', 'Mariscos', 'Proteína Animal', 'Vegetariano', 'Premium', 'Bebidas'];
+
+  const virales = useMemo(() => CARTA.filter(b => VIRALES_IDS.includes(b.id)), []);
 
   const bowlsFiltrados = useMemo(() => {
     if (filtroActivo === 'Bebidas') return BEBIDAS;
@@ -628,19 +697,47 @@ const CartaView = ({ onAddToCart }) => {
   return (
     <div className="pt-32 pb-32 bg-[#FAFAFA] w-full min-h-screen">
       <div className="max-w-[1200px] mx-auto px-6">
-        
-        {/* Header Carta Light Mode */}
+
         <div className="text-center mb-16 animate-in">
           <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Carta Origen</h1>
           <p className="font-ui text-lg text-[#2D5A4A]">12 combinaciones perfectas y bebidas frescas de la casa.</p>
         </div>
 
-        {/* Filtros Light Mode */}
+        {/* Carrusel Virales de la Semana */}
+        <div className="mb-16">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-base">🔥</span>
+            <h2 className="font-ui font-bold text-xs uppercase tracking-[0.2em] text-[var(--verde-profundo)]">Platos Virales de la Semana</h2>
+            <div className="flex-1 h-px bg-gray-200"></div>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-6 px-6">
+            {virales.map((bowl) => (
+              <div
+                key={bowl.id}
+                onClick={() => onAddToCart(bowl)}
+                className="flex-shrink-0 w-40 bg-white rounded-[18px] border border-[#E8F0E8] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden group"
+              >
+                <div className="h-24 bg-[#F5F5F5] flex items-center justify-center overflow-hidden">
+                  {bowl.imagen
+                    ? <img src={bowl.imagen} alt={bowl.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    : <span className="text-4xl">🥗</span>}
+                </div>
+                <div className="p-3">
+                  <p className="font-display font-bold text-[11px] text-[#1A1A1A] leading-tight mb-1">{bowl.nombre}</p>
+                  <p className="font-ui text-[10px] text-[var(--texto-suave)] mb-1.5">{bowl.proteina}</p>
+                  <p className="font-display font-bold text-sm text-[var(--verde-main)]">{formatPrice(bowl.precio)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Filtros */}
         <div className="flex gap-4 overflow-x-auto pb-4 mb-12 scrollbar-hide animate-in justify-start md:justify-center" style={{ scrollbarWidth: 'none' }}>
           {categorias.map((t, i) => (
-            <button 
-              key={i} 
-              onClick={() => setFiltroActivo(t)} 
+            <button
+              key={i}
+              onClick={() => setFiltroActivo(t)}
               className={`whitespace-nowrap px-6 py-2.5 rounded-[12px] font-ui text-sm font-semibold transition-all duration-300 ${filtroActivo === t ? 'bg-[var(--verde-main)] text-white shadow-md' : 'bg-white border border-[#E8F0E8] text-[#2D3A2D] hover:bg-[#F5F5F5]'}`}
             >
               {t}
@@ -653,94 +750,7 @@ const CartaView = ({ onAddToCart }) => {
           <AnimatePresence mode="popLayout">
             {bowlsFiltrados.map((item) => {
               const isBebida = filtroActivo === 'Bebidas' || !item.tag;
-              return (
-                <motion.div 
-                  layout 
-                  key={item.id} 
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  exit={{ opacity: 0, scale: 0.95 }} 
-                  transition={{ duration: 0.4 }} 
-                  className={`bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-[#E8F0E8] hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-[550px] relative group cursor-pointer ${item.esMaximo ? 'border-[var(--maximo-amber)] ring-1 ring-[var(--maximo-amber)]/20 shadow-[0_4px_20px_rgba(240,144,48,0.15)]' : ''}`}
-                  onClick={() => onAddToCart(item)}
-                >
-                  
-                  {/* Badge Superior Izquierdo */}
-                  <div className="absolute top-6 left-6 z-20">
-                    <span 
-                      className="px-3 py-1.5 rounded-[12px] text-[10px] font-ui font-bold uppercase tracking-wide"
-                      style={{ 
-                        backgroundColor: isBebida ? '#E8F9F0' : item.badge?.bg, 
-                        color: isBebida ? 'var(--verde-main)' : item.badge?.color 
-                      }}
-                    >
-                      {isBebida ? 'Refrescante' : item.badge?.texto}
-                    </span>
-                  </div>
-
-                  {/* Imagen Circular */}
-                  <div className="w-[200px] h-[200px] mx-auto rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.06)] bg-[#FDFCF8] flex items-center justify-center overflow-hidden mb-6 relative z-10">
-                    {isBebida ? (
-                      <span className="text-8xl select-none group-hover:scale-110 transition-transform duration-500">{item.emoji}</span>
-                    ) : item.imagen ? (
-                      <img 
-                        src={item.imagen} 
-                        alt={item.nombre} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                        style={{ mixBlendMode: 'multiply' }} 
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#E8F5E8] flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-105">🥗</div>
-                    )}
-                  </div>
-
-                  {/* Textos y Etiquetas */}
-                  <div className="flex-grow flex flex-col items-center">
-                    <h3 className="font-display font-bold text-[22px] text-[#1A1A1A] leading-[1.2] text-center mb-4">
-                      {item.nombre}
-                    </h3>
-                    
-                    {/* Ingredientes / Descripción */}
-                    {isBebida ? (
-                      <p className="font-ui text-sm text-[var(--texto-suave)] text-center max-w-[240px]">{item.desc}</p>
-                    ) : (
-                      <div className="flex flex-wrap justify-center gap-2 mb-4">
-                        {item.ingredientes?.map((ing, i) => (
-                          <span key={i} className="bg-[#F5F5F5] text-[#2D3A2D] text-[10px] font-medium px-2.5 py-1 rounded-[6px]">
-                            {ing}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Dietary tags */}
-                    {!isBebida && item.dietary && (
-                      <div className="flex flex-wrap justify-center gap-1.5 mt-auto">
-                        {item.dietary.map((tag, i) => (
-                          <span key={i} className="bg-[#E8F5E8] text-[var(--verde-main)] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[6px]">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Precio y Botón (Footer de la tarjeta) */}
-                  <div className="mt-6 flex flex-col items-center w-full">
-                    <div className="font-display font-bold text-[26px] text-[var(--verde-main)] mb-4">
-                      {formatPrice(item.precio)}
-                    </div>
-                    
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onAddToCart(item); }} 
-                      className="w-full rounded-[24px] border-2 border-[#1A1A1A] text-[#1A1A1A] bg-white text-[13px] font-bold uppercase tracking-wide py-3 hover:bg-[var(--verde-main)] hover:border-[var(--verde-main)] hover:text-white transition-all duration-300 shadow-none hover:shadow-[0_8px_20px_rgba(18,179,98,0.25)] flex justify-center items-center gap-2 group-hover:-translate-y-0.5"
-                    >
-                      Añadir al pedido <ShoppingBag size={16} />
-                    </button>
-                  </div>
-
-                </motion.div>
-              );
+              return <CartaCard key={item.id} item={item} onAddToCart={onAddToCart} isBebida={isBebida} />;
             })}
           </AnimatePresence>
         </motion.div>
@@ -1181,6 +1191,21 @@ const BlogView = ({ navigate }) => {
         "La cadena de frío es implacable: el pescado se limpia, porciona y congela criogénicamente en origen minutos después de la captura. Posteriormente, viaja vía aérea bajo estrictas auditorías térmicas diarias hasta arribar a nuestras cocinas, donde es descongelado lentamente y fileteado en el momento exacto del servicio.",
         "Este viaje transparente nos permite servirte filetes magros con niveles óptimos de Omega-3 y grasas poliinsaturadas protectoras del sistema cardiovascular. Sin atajos, sin conservantes químicos artificiales. Solo la pureza intacta del mar en tu plato."
       ]
+    },
+    {
+      id: 'equipo-mujeres',
+      title: "Las Mujeres Detrás de Cada Bowl: Nuestra Apuesta por la Inclusión",
+      img: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=800",
+      category: "Comunidad",
+      date: "Junio 2026",
+      readTime: "3 min de lectura",
+      subtitle: "En ORIGEN creemos que contratar mujeres no es una política de cuotas — es una decisión que hace mejores a los equipos y más justo al mundo.",
+      content: [
+        "Desde el primer día, en ORIGEN tomamos una decisión que para nosotros es sencilla pero que sigue siendo radical en muchos sectores: preferimos contratar mujeres. No porque sea una tendencia, sino porque creemos profundamente que la inclusión de género en los equipos de trabajo genera ambientes más empáticos, más creativos y más sólidos.",
+        "La mayoría de las personas que preparan tus bowls, que cuidan cada ingrediente, que aseguran que cada porción llegue con cariño y precisión, son mujeres colombianas que encontraron en ORIGEN un espacio de trabajo digno, estable y con posibilidades de crecimiento real. Mujeres jefas de hogar, estudiantes, madres, emprendedoras. Cada una con su historia.",
+        "Sabemos que en Colombia el acceso al mercado laboral para las mujeres sigue siendo desigual. Por eso nos importa ser parte activa del cambio. No se trata solo de cumplir con una normativa, sino de construir un tipo de empresa donde el talento femenino sea reconocido, bien remunerado y respetado.",
+        "Cuando eliges un bowl de ORIGEN, no solo estás alimentando tu cuerpo con ingredientes reales. Estás siendo parte de un modelo de negocio que cree en las personas — en todas ellas, sin importar su género. Gracias por apoyar lo que hacemos."
+      ]
     }
   ];
 
@@ -1464,6 +1489,7 @@ const CuentaView = ({ onAddToCart }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [inputVal, setInputVal] = useState('');
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const puntos = isAuthenticated ? (profile?.loyalty_points ?? 0) : 0;
   const nombre = isAuthenticated ? (profile?.full_name ?? 'Amigo') : 'Visitante';
@@ -1478,7 +1504,9 @@ const CuentaView = ({ onAddToCart }) => {
   ]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const addMessage = (role, text, recommendationCard = null) => {
@@ -1663,7 +1691,7 @@ const CuentaView = ({ onAddToCart }) => {
             </div>
 
             {/* Ventana de Conversación */}
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 max-h-[350px] scrollbar-hide">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 max-h-[350px] scrollbar-hide">
               {messages.map((m) => (
                 <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                   
@@ -1716,7 +1744,6 @@ const CuentaView = ({ onAddToCart }) => {
                   <span>Origen AI está procesando...</span>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Opciones del Árbol de Decisiones */}
