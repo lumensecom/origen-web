@@ -288,7 +288,7 @@ const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrde
           {step === 'cart' && (
             <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 scrollbar-hide">
               {cart.map((item, idx) => (
-                <div key={`${item.id}-${idx}`} className="flex items-center gap-4 p-4 bg-white rounded-[20px] border border border-[var(--verde-palido)]">
+                <div key={`${item.id}-${idx}`} className="flex items-center gap-4 p-4 bg-white rounded-[20px] border border-[var(--verde-palido)]">
                   <div className="w-14 h-14 bg-[var(--verde-menta)] rounded-[14px] flex items-center justify-center text-2xl flex-shrink-0">
                     {item.imagen ? <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover rounded-[14px]" /> : (item.emoji || '🥣')}
                   </div>
@@ -515,7 +515,7 @@ const HomeView = ({ navigate }) => {
         </motion.div>
 
         <motion.div style={{ y: yText, opacity: opacityText }} className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
-          <h1 className="font-display font-bold text-5xl md:text-7.5xl text-white leading-[1.05] mb-6 drop-shadow-2xl">
+          <h1 className="font-display font-bold text-5xl md:text-8xl text-white leading-[1.05] mb-6 drop-shadow-2xl">
             Nutrición desde<br/>el origen.
           </h1>
           <p className="font-ui text-lg md:text-xl text-[var(--verde-menta)] font-light drop-shadow-md max-w-lg mx-auto">
@@ -558,7 +558,7 @@ const HomeView = ({ navigate }) => {
             <Sparkles size={24} />
           </div>
         </div>
-        <div onClick={() => navigate('menu')} className="relative flex-1 bg-[var(--crema-calido)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border border-[var(--dorado-suave)]/20">
+        <div onClick={() => navigate('menu')} className="relative flex-1 bg-[var(--crema-calido)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--dorado-suave)]/20">
           <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
             <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)] mb-4 transition-transform duration-500 group-hover:-translate-y-1">Carta<br/><span className="text-[var(--verde-main)]">Origen</span></h2>
@@ -1258,34 +1258,34 @@ const BlogView = ({ navigate }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md flex justify-end overflow-y-auto"
+            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-md flex justify-end"
             onClick={() => setActivePost(null)}
           >
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-              className="bg-[var(--fondo-crema)] w-full max-w-3xl min-h-screen p-8 md:p-16 flex flex-col relative z-20 shadow-2xl"
+              className="bg-[var(--fondo-crema)] w-full max-w-3xl h-screen flex flex-col relative z-20 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Botón de Cerrar */}
-              <button 
-                onClick={() => setActivePost(null)} 
-                className="absolute top-6 left-6 md:top-10 md:left-10 p-3 bg-white rounded-full text-gray-500 hover:text-black hover:scale-110 shadow-sm border border-gray-100 transition-all"
-              >
-                <X size={20} />
-              </button>
-
-              {/* Botón de Navegación Rápida arriba derecha */}
-              <div className="flex justify-end mb-8">
+              {/* Header sticky con botón cerrar y categoría */}
+              <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[var(--fondo-crema)]">
+                <button
+                  onClick={() => setActivePost(null)}
+                  className="p-2.5 bg-white rounded-full text-gray-500 hover:text-black hover:scale-110 shadow-sm border border-gray-100 transition-all"
+                >
+                  <X size={20} />
+                </button>
                 <span className="font-ui text-xs font-bold uppercase tracking-widest text-[var(--verde-main)] bg-[var(--verde-menta)] px-4 py-1.5 rounded-full">
                   {activePost.category}
                 </span>
               </div>
 
+              {/* Contenido scrollable */}
+              <div className="flex-1 overflow-y-auto p-8 md:p-16">
               {/* Contenido Principal */}
-              <article className="max-w-2xl mx-auto mt-6">
+              <article className="max-w-2xl mx-auto">
                 
                 {/* Meta Info */}
                 <div className="flex items-center gap-4 text-sm text-[var(--texto-suave)] font-ui mb-4">
@@ -1338,6 +1338,7 @@ const BlogView = ({ navigate }) => {
                 </div>
 
               </article>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1462,6 +1463,7 @@ const CuentaView = ({ onAddToCart }) => {
   const [userChoices, setUserChoices] = useState({ goal: '', diet: '', protein: '' });
   const [isTyping, setIsTyping] = useState(false);
   const [inputVal, setInputVal] = useState('');
+  const messagesEndRef = useRef(null);
 
   const puntos = isAuthenticated ? (profile?.loyalty_points ?? 0) : 0;
   const nombre = isAuthenticated ? (profile?.full_name ?? 'Amigo') : 'Visitante';
@@ -1474,6 +1476,10 @@ const CuentaView = ({ onAddToCart }) => {
       text: '🥦 ¡Hola! Bienvenido a Origen AI. Te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?'
     }
   ]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const addMessage = (role, text, recommendationCard = null) => {
     const uniqueId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -1710,6 +1716,7 @@ const CuentaView = ({ onAddToCart }) => {
                   <span>Origen AI está procesando...</span>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Opciones del Árbol de Decisiones */}
@@ -1972,7 +1979,7 @@ export default function App() {
           <div className="flex items-center z-10">
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
-              className="text-white hover:text-[var(--verde-main)] transition-colors flex items-center gap-3 group animate-pulse"
+              className="text-white hover:text-[var(--verde-main)] transition-colors flex items-center gap-3 group"
             >
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[var(--verde-main)] transition-all">
                 <MenuIcon size={20} className="text-white" />
@@ -2001,7 +2008,7 @@ export default function App() {
             >
               <ShoppingBag size={18} />
               {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center animate-bounce">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center">
                   {cart.reduce((sum, i) => sum + i.quantity, 0)}
                 </span>
               )}
