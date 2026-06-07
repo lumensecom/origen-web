@@ -1550,54 +1550,34 @@ const CuentaView = ({ onAddToCart }) => {
     }, 850);
   };
 
-  const handleFreeTextSend = () => {
+  const handleFreeTextSend = async () => {
     if (!inputVal.trim()) return;
 
-    const query = inputVal.toLowerCase().trim();
-    addMessage('user', inputVal);
+    const userMessage = inputVal.trim();
+    addMessage('user', userMessage);
     setInputVal('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let matchedBowl = null;
-      let textResponse = '';
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage }),
+      });
 
-      if (query.includes('fuerza') || query.includes('proteina') || query.includes('entren') || query.includes('hipertrofia') || query.includes('musculo') || query.includes('gimnasio') || query.includes('gym')) {
-        matchedBowl = CARTA.find(b => b.id === 'maximo');
-        textResponse = '💪 ¡Perfecto para tu rendimiento! Para reconstruir fibras musculares y reponer glucógeno, necesitas carga masiva de proteína. Te recomiendo de inmediato nuestro *ORIGEN MÁXIMO* con doble porción de pollo.';
-      } 
-      else if (query.includes('bajar') || query.includes('adelgazar') || query.includes('grasa') || query.includes('caloria') || query.includes('dieta') || query.includes('ligero') || query.includes('fitness') || query.includes('definir')) {
-        matchedBowl = CARTA.find(b => b.id === 'agua');
-        textResponse = '🏃‍♀️ ¡Meta: Definición! Para mantener el déficit calórico sintiéndote saciado y feliz, necesitamos grasas saludables de pescado y carbohidratos complejos de absorción lenta. Tu mejor aliado es el *ORIGEN AGUA* (con atún premium).';
-      }
-      else if (query.includes('gluten') || query.includes('sin gluten') || query.includes('celiac') || query.includes('trigo') || query.includes('harina')) {
-        matchedBowl = CARTA.find(b => b.id === 'tierra');
-        textResponse = '🌾 ¡100% Gluten-Free! Todos nuestros ingredientes se manipulan con cuidado, pero el *ORIGEN TIERRA* (con salmón y aguacate) está certificado para darte una digestión ligera y libre de gluten.';
-      }
-      else if (query.includes('vegano') || query.includes('vegetariano') || query.includes('sin carne') || query.includes('planta') || query.includes('tofu')) {
-        matchedBowl = CARTA.find(b => b.id === 'vital');
-        textResponse = '🌱 ¡Poder vegetal al 100%! Nuestro *ORIGEN VITAL* te aporta proteínas limpias y aminoácidos completos combinando quinua orgánica con tofu de la casa marinado en finas hierbas.';
-      }
-      else if (query.includes('pescado') || query.includes('salmon') || query.includes('salmón') || query.includes('atun') || query.includes('atún') || query.includes('camaron') || query.includes('camarón') || query.includes('marisco')) {
-        matchedBowl = CARTA.find(b => b.id === 'tierra');
-        textResponse = '🐟 ¡Amante del mar! Si buscas grasas insaturadas de alta calidad y omega-3, te sugiero el rey de la casa: *ORIGEN TIERRA*, que trae un salmón de pesca sostenible espectacular.';
-      }
-      else if (query.includes('dulce') || query.includes('mango') || query.includes('fruta') || query.includes('aderezo') || query.includes('miel') || query.includes('mostaza')) {
-        matchedBowl = CARTA.find(b => b.id === 'dulce');
-        textResponse = '🍯 ¡Tu paladar pide un toque dulce! El lomo sellado con nuestro aderezo casero de miel y mostaza, acompañado de repollo encurtido y mango fresco, crea un balance perfecto en el *ORIGEN DULCE*.';
-      }
-      else if (query.includes('barato') || query.includes('economico') || query.includes('económico') || query.includes('precio') || query.includes('costo') || query.includes('menor')) {
-        matchedBowl = CARTA.find(b => b.id === 'natural');
-        textResponse = '💰 ¡La opción más inteligente y económica! El *ORIGEN NATURAL* cuesta solo $19.900 y viene cargado de huevos cocidos, tomates cherry y aguacate sobre un mix asiático fresco.';
-      }
-      else {
-        matchedBowl = CARTA.find(b => b.id === 'tierra');
-        textResponse = '✍️ ¡Interesante consulta! Para darte una respuesta certera, te sugiero utilizar nuestros botones interactivos de diagnóstico o probar la carta Origen. Como recomendación general de la casa, te sugiero probar nuestro bowl insignia: *ORIGEN TIERRA*.';
-      }
+      const data = await res.json();
+      const reply = data.reply ?? 'Lo siento, no pude procesar tu consulta. Intenta de nuevo.';
 
-      addMessage('ai', textResponse, matchedBowl);
+      const bowlMatch = reply.match(/\[BOWL:(\w+)\]/);
+      const cleanReply = reply.replace(/\[BOWL:\w+\]/, '').trim();
+      const recommendedBowl = bowlMatch ? CARTA.find(b => b.id === bowlMatch[1]) : null;
+
+      addMessage('ai', cleanReply, recommendedBowl);
+    } catch {
+      addMessage('ai', 'Sin conexión al asesor nutricional. Revisa tu conexión e intenta de nuevo.');
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   if (!isAuthenticated) {
