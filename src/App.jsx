@@ -35,8 +35,10 @@ const REAL_MEDIA = {
   local: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635345/9O4A5518_bgwmoe.jpg",
   staff1: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635345/9O4A5682_pxsl4a.jpg",
   staff2: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635346/9O4A5676_v2vrgt.jpg",
-  videoTimelapse: "https://res.cloudinary.com/dfj0ckm10/video/upload/q_auto/f_auto/v1781635367/9O4A5552_njddyy.mp4",
-  videoClientes: "https://res.cloudinary.com/dfj0ckm10/video/upload/q_auto/f_auto/v1781635457/9O4A5666_zp1g5p.mp4",
+  videoTimelapse: "https://res.cloudinary.com/dfj0ckm10/video/upload/q_auto,f_auto,w_800/v1781635367/9O4A5552_njddyy.mp4",
+  videoTimelapsePoster: "https://res.cloudinary.com/dfj0ckm10/video/upload/so_0,q_auto,f_auto,w_800/v1781635367/9O4A5552_njddyy.jpg",
+  videoClientes: "https://res.cloudinary.com/dfj0ckm10/video/upload/q_auto,f_auto,w_800/v1781635457/9O4A5666_zp1g5p.mp4",
+  videoClientesPoster: "https://res.cloudinary.com/dfj0ckm10/video/upload/so_0,q_auto,f_auto,w_800/v1781635457/9O4A5666_zp1g5p.jpg",
   topping1: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635507/9O4A5529_x9bqlf.jpg",
   topping2: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635513/9O4A5532_v6wpek.jpg",
   topping3: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635513/9O4A5530_urx4gn.jpg",
@@ -220,6 +222,7 @@ const LOCALES = [
 ];
 
 const formatPrice = (price) => `$${price.toLocaleString('es-CO')}`;
+const MAX_CHAT_HISTORY = 8; // mensajes recientes que se envían como contexto a Savia
 
 // Variantes de animación reutilizables para revelar secciones al hacer scroll
 const fadeUp = {
@@ -264,6 +267,25 @@ const FloatingLeaf = ({ className = '', size = 28, delay = 0, color = 'var(--ver
     <Leaf size={size} style={{ color }} strokeWidth={1.5} />
   </motion.div>
 );
+
+// Video que solo carga/reproduce cuando entra a la pantalla, y respeta el modo
+// de ahorro de datos del usuario mostrando solo el poster en ese caso.
+const LazyVideo = ({ src, poster, className = '', children }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.3 });
+  const saveData = typeof navigator !== 'undefined' && navigator.connection?.saveData;
+
+  return (
+    <div ref={ref} className={className}>
+      {inView && !saveData ? (
+        <video src={src} poster={poster} autoPlay loop muted playsInline preload="none" className="w-full h-full object-cover" />
+      ) : (
+        <img src={poster} alt="" loading="lazy" className="w-full h-full object-cover" />
+      )}
+      {children}
+    </div>
+  );
+};
 
 const Button = ({ children, variant = 'primary', className = '', onClick, disabled }) => {
   const base = "px-8 py-3.5 rounded-[16px] font-ui font-bold tracking-wider text-xs uppercase transition-all duration-300 flex items-center justify-center gap-2";
@@ -345,7 +367,7 @@ const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrde
                 {cart.map((item, idx) => (
                   <div key={`${item.id}-${idx}`} className="flex items-center gap-3 p-3 bg-[var(--fondo-crema)] rounded-[18px]">
                     <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-[var(--verde-menta)] flex items-center justify-center text-xl flex-shrink-0">
-                      {item.imagen ? <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover" /> : (item.emoji || '🥣')}
+                      {item.imagen ? <img loading="lazy" src={item.imagen} alt={item.nombre} className="w-full h-full object-cover" /> : (item.emoji || '🥣')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-ui font-bold text-sm text-[var(--verde-profundo)] truncate">{item.nombre}</p>
@@ -584,7 +606,7 @@ const HomeView = ({ navigate }) => {
       {/* Hero Inmersivo */}
       <div className="relative h-[85vh] w-full overflow-hidden bg-[#050505]">
         <motion.div style={{ scale: useTransform(scrollYProgress, [0, 1], [1, 1.15]) }} className="absolute inset-0 z-0">
-          <img src={HERO_IMAGE} alt="Origen Bowl" className="w-full h-full object-cover object-center opacity-80" />
+          <img loading="eager" fetchPriority="high" src={HERO_IMAGE} alt="Origen Bowl" className="w-full h-full object-cover object-center opacity-80" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(13,40,24,0.4)] to-[rgba(5,25,12,0.9)]"></div>
         </motion.div>
 
@@ -667,7 +689,7 @@ const HomeView = ({ navigate }) => {
                 <div className="mt-5 pt-5 border-t border-gray-100 flex flex-col sm:flex-row items-center gap-4">
                   <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--verde-menta)] flex-shrink-0 border border-gray-100">
                     {selectedBowl.imagen
-                      ? <img src={selectedBowl.imagen} alt={selectedBowl.nombre} className="w-full h-full object-cover" />
+                      ? <img loading="lazy" src={selectedBowl.imagen} alt={selectedBowl.nombre} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-3xl">🥗</div>}
                   </div>
                   <div className="flex-1 text-center sm:text-left">
@@ -755,18 +777,18 @@ const HomeView = ({ navigate }) => {
         >
           <div className="space-y-4">
             <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-[4/5] relative group">
-              <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_RAIZ_ATUN_puhjsi.webp" alt="Origen Raíz" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img loading="lazy" src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_RAIZ_ATUN_puhjsi.webp" alt="Origen Raíz" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </motion.div>
             <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-square relative group">
-              <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_HUEVO_pgzav3.webp" alt="Origen Huevo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img loading="lazy" src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_HUEVO_pgzav3.webp" alt="Origen Huevo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </motion.div>
           </div>
           <div className="space-y-4 pt-8">
             <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-square relative group">
-              <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_LOMO_zqrfqh.webp" alt="Origen Lomo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img loading="lazy" src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_LOMO_zqrfqh.webp" alt="Origen Lomo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </motion.div>
             <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-[4/5] relative group">
-              <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_COSECHA_LOMO_cfbzy9.webp" alt="Origen Cosecha" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img loading="lazy" src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_COSECHA_LOMO_cfbzy9.webp" alt="Origen Cosecha" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </motion.div>
           </div>
         </motion.div>
@@ -803,13 +825,13 @@ const HomeView = ({ navigate }) => {
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Video: timelapse de preparación */}
           <motion.div variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
-            <video src={REAL_MEDIA.videoTimelapse} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+            <LazyVideo src={REAL_MEDIA.videoTimelapse} poster={REAL_MEDIA.videoTimelapsePoster} className="absolute inset-0" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Tu bowl, armado al instante.</p>
           </motion.div>
           {/* Foto: local */}
           <motion.div variants={fadeUp} onClick={() => navigate('ubicaciones')} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
-            <img src={REAL_MEDIA.local} alt="Local Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img loading="lazy" src={REAL_MEDIA.local} alt="Local Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Nuestro espacio te espera.</p>
             <span className="absolute top-5 right-5 bg-white/90 px-3 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--verde-profundo)]">Ver ubicaciones</span>
@@ -819,13 +841,13 @@ const HomeView = ({ navigate }) => {
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Video: clientes disfrutando frente al local */}
           <motion.div variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
-            <video src={REAL_MEDIA.videoClientes} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+            <LazyVideo src={REAL_MEDIA.videoClientes} poster={REAL_MEDIA.videoClientesPoster} className="absolute inset-0" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Vive la experiencia Origen.</p>
           </motion.div>
           {/* Foto: equipo -> blog */}
           <motion.div variants={fadeUp} onClick={() => {navigate('blog'); window.scrollTo(0,0);}} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
-            <img src={REAL_MEDIA.staff1} alt="Equipo Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img loading="lazy" src={REAL_MEDIA.staff1} alt="Equipo Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">El equipo detrás de cada bowl.</p>
             <span className="absolute top-5 right-5 bg-white/90 px-3 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--verde-profundo)]">Leer historia</span>
@@ -839,13 +861,13 @@ const HomeView = ({ navigate }) => {
         </motion.div>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={staggerContainer} className="grid grid-cols-3 gap-4">
           <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
-            <img src={REAL_MEDIA.topping1} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+            <img loading="lazy" src={REAL_MEDIA.topping1} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
-            <img src={REAL_MEDIA.topping2} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+            <img loading="lazy" src={REAL_MEDIA.topping2} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
-            <img src={REAL_MEDIA.topping3} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+            <img loading="lazy" src={REAL_MEDIA.topping3} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
           </motion.div>
         </motion.div>
       </div>
@@ -885,7 +907,7 @@ const CartaCard = ({ item, onAddToCart, isBebida }) => {
         {isBebida ? (
           <span className="text-8xl select-none group-hover:scale-110 transition-transform duration-500">{item.emoji}</span>
         ) : item.imagen ? (
-          <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: 'multiply' }} />
+          <img loading="lazy" src={item.imagen} alt={item.nombre} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: 'multiply' }} />
         ) : (
           <div className="w-full h-full bg-[#E8F5E8] flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-500">🥗</div>
         )}
@@ -974,7 +996,7 @@ const CartaView = ({ onAddToCart }) => {
               >
                 <div className="h-24 bg-[#F5F5F5] flex items-center justify-center overflow-hidden">
                   {bowl.imagen
-                    ? <img src={bowl.imagen} alt={bowl.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ? <img loading="lazy" src={bowl.imagen} alt={bowl.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     : <span className="text-4xl">🥗</span>}
                 </div>
                 <div className="p-3">
@@ -1521,7 +1543,7 @@ const BlogView = ({ navigate }) => {
                 <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-[10px] font-ui text-[10px] uppercase font-bold text-[var(--verde-main)] tracking-wider shadow-sm">
                   {post.category}
                 </div>
-                <img src={post.img} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <img loading="lazy" src={post.img} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               </div>
               
               {/* Contenido de la Card */}
@@ -1619,7 +1641,7 @@ const BlogView = ({ navigate }) => {
 
                 {/* Imagen Destacada */}
                 <div className="rounded-[24px] overflow-hidden shadow-md mb-10 aspect-video">
-                  <img src={activePost.img} alt={activePost.title} className="w-full h-full object-cover" />
+                  <img loading="lazy" src={activePost.img} alt={activePost.title} className="w-full h-full object-cover" />
                 </div>
 
                 {/* Párrafos de Lectura Plena */}
@@ -1636,7 +1658,7 @@ const BlogView = ({ navigate }) => {
                   <div className="grid grid-cols-2 gap-4 mt-10">
                     {activePost.gallery.map((src, idx) => (
                       <div key={idx} className="rounded-[20px] overflow-hidden shadow-md aspect-[3/4]">
-                        <img src={src} alt={`${activePost.title} ${idx + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                        <img loading="lazy" src={src} alt={`${activePost.title} ${idx + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                       </div>
                     ))}
                   </div>
@@ -1892,6 +1914,8 @@ const CuentaView = ({ onAddToCart }) => {
     if (!inputVal.trim()) return;
 
     const userMessage = inputVal.trim();
+    // Historial reciente para que Savia recuerde el hilo de la conversación
+    const history = messages.slice(-MAX_CHAT_HISTORY).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }));
     addMessage('user', userMessage);
     setInputVal('');
     setIsTyping(true);
@@ -1900,7 +1924,7 @@ const CuentaView = ({ onAddToCart }) => {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ message: userMessage, history }),
       });
 
       const data = await res.json();
@@ -2017,7 +2041,7 @@ const CuentaView = ({ onAddToCart }) => {
                       <div className="flex items-center gap-3">
                         <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--verde-menta)] border border-gray-100 flex-shrink-0">
                           {m.recommendation.imagen ? (
-                            <img src={m.recommendation.imagen} alt={m.recommendation.nombre} className="w-full h-full object-cover" />
+                            <img loading="lazy" src={m.recommendation.imagen} alt={m.recommendation.nombre} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-3xl">🥗</div>
                           )}

@@ -31,12 +31,29 @@ REGLAS:
 - Si el usuario quiere pedir, dile que use los botones del menú o el diagnóstico.
 - Si preguntan por calorías exactas o valores nutricionales que no tienes, sé honesto.`
 
+const MAX_HISTORY_MESSAGES = 8
+
+// Anthropic requiere que la lista de mensajes alterne user/assistant y empiece
+// (y NO termine, ya que el mensaje nuevo del usuario se agrega después) en 'user'.
+function sanitizeHistory(history) {
+  if (!Array.isArray(history)) return []
+
+  let clean = history.filter(
+    (m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim()
+  )
+
+  while (clean.length && clean[0].role !== 'user') clean.shift()
+  while (clean.length && clean[clean.length - 1].role === 'user') clean.pop()
+
+  return clean.slice(-MAX_HISTORY_MESSAGES).map((m) => ({ role: m.role, content: m.content.trim() }))
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { message } = req.body ?? {}
+  const { message, history } = req.body ?? {}
   if (!message?.trim()) {
     return res.status(400).json({ error: 'Message required' })
   }
@@ -53,7 +70,7 @@ export default async function handler(req, res) {
       model: 'claude-haiku-4-5',
       max_tokens: 300,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: message.trim() }],
+      messages: [...sanitizeHistory(history), { role: 'user', content: message.trim() }],
     })
 
     const reply = response.content[0]?.text ?? 'Lo siento, no pude procesar tu consulta.'
