@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
 import {
   Leaf, MapPin, ArrowRight, Instagram, Facebook, User,
   Menu as MenuIcon, X, Sparkles, MessageCircle, Navigation,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import AuthModal from './components/AuthModal';
+import SaviaWidget from './components/SaviaWidget';
 import { createOrder, addLoyaltyPoints, addPointsHistory } from './lib/database';
 
 const COLORS = {
@@ -219,6 +220,50 @@ const LOCALES = [
 ];
 
 const formatPrice = (price) => `$${price.toLocaleString('es-CO')}`;
+
+// Variantes de animación reutilizables para revelar secciones al hacer scroll
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.23, 1, 0.32, 1] } },
+};
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12 } },
+};
+
+// Contador animado: cuenta desde 0 hasta `to` cuando entra en pantalla
+const StatCounter = ({ to, suffix = '', prefix = '', duration = 1200 }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.6 });
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const start = performance.now();
+    let raf;
+    const tick = (now) => {
+      const progress = Math.min(1, (now - start) / duration);
+      setVal(Math.round(to * (1 - Math.pow(1 - progress, 3))));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, to, duration]);
+
+  return <span ref={ref}>{prefix}{val}{suffix}</span>;
+};
+
+// Hoja decorativa flotante — detalle visual sutil, no interactivo
+const FloatingLeaf = ({ className = '', size = 28, delay = 0, color = 'var(--verde-palido)' }) => (
+  <motion.div
+    aria-hidden="true"
+    className={`pointer-events-none absolute ${className}`}
+    animate={{ y: [0, -14, 0], rotate: [0, 6, 0] }}
+    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay }}
+  >
+    <Leaf size={size} style={{ color }} strokeWidth={1.5} />
+  </motion.div>
+);
 
 const Button = ({ children, variant = 'primary', className = '', onClick, disabled }) => {
   const base = "px-8 py-3.5 rounded-[16px] font-ui font-bold tracking-wider text-xs uppercase transition-all duration-300 flex items-center justify-center gap-2";
@@ -544,21 +589,36 @@ const HomeView = ({ navigate }) => {
         </motion.div>
 
         <motion.div style={{ y: yText, opacity: opacityText }} className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
-          <h1 className="font-display font-bold text-5xl md:text-8xl text-white leading-[1.05] mb-6 drop-shadow-2xl">
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+            className="font-display font-bold text-5xl md:text-8xl text-white leading-[1.05] mb-6 drop-shadow-2xl"
+          >
             Nutrición desde<br/>el origen.
-          </h1>
-          <p className="font-ui text-lg md:text-xl text-[var(--verde-menta)] font-light drop-shadow-md max-w-lg mx-auto">
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
+            className="font-ui text-lg md:text-xl text-[var(--verde-menta)] font-light drop-shadow-md max-w-lg mx-auto"
+          >
             Recetas pensadas para alimentar tu cuerpo con la velocidad que necesitas y el sabor que mereces.
-          </p>
-          
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            className="mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center"
+          >
             <Button onClick={() => navigate('menu')} variant="primary" className="bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)]">
               Ver Carta <ArrowRight size={16} />
             </Button>
             <Button onClick={() => navigate('builder')} variant="ghost" className="hover:bg-white hover:text-[var(--verde-profundo)]">
               Armar Mi Bowl <Sparkles size={16} />
             </Button>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
 
@@ -628,8 +688,14 @@ const HomeView = ({ navigate }) => {
         </div>
       </div>
 
-      <div className="w-full flex flex-col md:flex-row bg-[var(--fondo-crema)] relative z-20 max-w-7xl mx-auto px-6 py-12 gap-6">
-        <div onClick={() => navigate('builder')} className="relative flex-1 bg-[var(--verde-profundo)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-bosque)]">
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={staggerContainer}
+        className="w-full flex flex-col md:flex-row bg-[var(--fondo-crema)] relative z-20 max-w-7xl mx-auto px-6 py-12 gap-6"
+      >
+        <motion.div variants={fadeUp} onClick={() => navigate('builder')} className="relative flex-1 bg-[var(--verde-profundo)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-bosque)]">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--verde-main)]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
             <h2 className="font-display italic text-4xl md:text-5xl text-white mb-4 transition-transform duration-500 group-hover:-translate-y-1">Crea tu<br/><span className="text-[var(--amarillo-vivo)]">Origen</span></h2>
@@ -638,113 +704,150 @@ const HomeView = ({ navigate }) => {
           <div className="relative z-10 w-14 h-14 rounded-[16px] bg-[var(--amarillo-vivo)] text-[var(--verde-profundo)] flex items-center justify-center group-hover:scale-110 transition-transform duration-500 mt-8 shadow-md">
             <Sparkles size={24} />
           </div>
-        </div>
-        <div onClick={() => navigate('menu')} className="relative flex-1 bg-[#E8EFE3] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-palido)]">
+        </motion.div>
+        <motion.div variants={fadeUp} onClick={() => navigate('menu')} className="relative flex-1 bg-[#E8EFE3] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-palido)]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
             <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)] mb-4 transition-transform duration-500 group-hover:-translate-y-1">Carta<br/><span className="text-[var(--verde-main)]">Origen</span></h2>
-            <p className="font-ui text-[var(--texto-suave)] max-w-xs text-base">Explora nuestras 12 combinaciones perfectas diseñadas por expertos.</p>
+            <p className="font-ui text-[var(--texto-suave)] max-w-xs text-base">Explora nuestras 11 combinaciones perfectas diseñadas por expertos.</p>
           </div>
           <div className="relative z-10 w-14 h-14 rounded-[16px] bg-[var(--verde-profundo)] text-white flex items-center justify-center group-hover:scale-110 transition-transform duration-500 mt-8 shadow-md">
             <ArrowRight size={24} />
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Barra de stats de marca — refuerza confianza con energía visual */}
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.4 }}
+        variants={staggerContainer}
+        className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 py-10 relative z-20"
+      >
+        {[
+          { to: 11, suffix: '', label: 'Bowls en la carta' },
+          { to: 100, suffix: '%', label: 'Preparado al momento' },
+          { to: 3, suffix: '', label: 'Locales en Bogotá' },
+          { to: 50, suffix: ' pts', label: 'Por cada compra' },
+        ].map((stat, idx) => (
+          <motion.div key={idx} variants={fadeUp} className="text-center">
+            <p className="font-display font-bold text-3xl md:text-4xl text-[var(--verde-main)] mb-1">
+              <StatCounter to={stat.to} suffix={stat.suffix} />
+            </p>
+            <p className="font-ui text-[11px] md:text-xs uppercase tracking-wider text-[var(--texto-suave)] font-semibold">{stat.label}</p>
+          </motion.div>
+        ))}
+      </motion.div>
 
       {/* Sección Editorial con Galería de Fotos Reales */}
-      <div className="max-w-[1400px] mx-auto px-6 py-20 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center bg-[var(--fondo-crema)] relative z-20">
-        
+      <div className="max-w-[1400px] mx-auto px-6 py-20 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center bg-[var(--fondo-crema)] relative z-20 overflow-hidden">
+        <FloatingLeaf className="top-4 right-[8%] hidden lg:block" size={32} delay={0.4} />
+        <FloatingLeaf className="bottom-10 left-[4%] hidden lg:block" size={22} delay={1.2} color="var(--amarillo-suave)" />
+
         {/* Galería Interactiva con las fotos reales de Cloudinary */}
-        <div className="grid grid-cols-2 gap-4 order-2 lg:order-1">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={staggerContainer}
+          className="grid grid-cols-2 gap-4 order-2 lg:order-1"
+        >
           <div className="space-y-4">
-            <div className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-[4/5] relative group">
+            <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-[4/5] relative group">
               <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_RAIZ_ATUN_puhjsi.webp" alt="Origen Raíz" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-            <div className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-square relative group">
+            </motion.div>
+            <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-square relative group">
               <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_HUEVO_pgzav3.webp" alt="Origen Huevo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
+            </motion.div>
           </div>
           <div className="space-y-4 pt-8">
-            <div className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-square relative group">
+            <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-square relative group">
               <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_LOMO_zqrfqh.webp" alt="Origen Lomo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-            <div className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-[4/5] relative group">
+            </motion.div>
+            <motion.div variants={fadeUp} className="rounded-[24px] overflow-hidden shadow-md border border-black/5 aspect-[4/5] relative group">
               <img src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_COSECHA_LOMO_cfbzy9.webp" alt="Origen Cosecha" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col justify-center order-1 lg:order-2">
-           <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-6 flex items-center gap-2">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={staggerContainer}
+          className="flex flex-col justify-center order-1 lg:order-2"
+        >
+           <motion.span variants={fadeUp} className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-6 flex items-center gap-2">
              <span className="w-6 h-px bg-[var(--verde-main)]"></span> Nuestra Esencia
-           </span>
-           <h2 className="font-display italic text-5xl md:text-6xl text-[var(--verde-profundo)] mb-8 leading-tight">
+           </motion.span>
+           <motion.h2 variants={fadeUp} className="font-display italic text-5xl md:text-6xl text-[var(--verde-profundo)] mb-8 leading-tight">
              Comer bien<br/>nunca fue<br/>tan fácil.
-           </h2>
-           <p className="font-ui text-lg text-[var(--texto-suave)] leading-relaxed mb-10 max-w-lg">
+           </motion.h2>
+           <motion.p variants={fadeUp} className="font-ui text-lg text-[var(--texto-suave)] leading-relaxed mb-10 max-w-lg">
              Creemos que la comida saludable debe ser deliciosa, rápida y accesible. Trabajamos de la mano con agricultores locales para traer los ingredientes más frescos a tu bowl, todos los días. Preparado frente a ti, a tu ritmo.
-           </p>
-           <button onClick={() => {navigate('blog'); window.scrollTo(0,0);}} className="w-max border-b-2 border-[var(--verde-main)] text-[var(--verde-profundo)] font-ui font-bold text-lg pb-1 hover:text-[var(--verde-main)] transition-colors flex items-center gap-2 group">
+           </motion.p>
+           <motion.button variants={fadeUp} onClick={() => {navigate('blog'); window.scrollTo(0,0);}} className="w-max border-b-2 border-[var(--verde-main)] text-[var(--verde-profundo)] font-ui font-bold text-lg pb-1 hover:text-[var(--verde-main)] transition-colors flex items-center gap-2 group">
              Descubre nuestras historias <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-           </button>
-        </div>
+           </motion.button>
+        </motion.div>
       </div>
 
       {/* Así es Origen — fotos y videos reales del local, equipo y proceso */}
       <div className="max-w-[1400px] mx-auto px-6 py-20 md:py-24 relative z-20">
-        <div className="text-center mb-12">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={fadeUp} className="text-center mb-12">
           <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Así es Origen</span>
           <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)]">Real, fresco y hecho<br className="hidden md:block"/> frente a ti.</h2>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Video: timelapse de preparación */}
-          <div className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
+          <motion.div variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
             <video src={REAL_MEDIA.videoTimelapse} autoPlay loop muted playsInline className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Tu bowl, armado al instante.</p>
-          </div>
+          </motion.div>
           {/* Foto: local */}
-          <div onClick={() => navigate('ubicaciones')} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
+          <motion.div variants={fadeUp} onClick={() => navigate('ubicaciones')} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
             <img src={REAL_MEDIA.local} alt="Local Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Nuestro espacio te espera.</p>
             <span className="absolute top-5 right-5 bg-white/90 px-3 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--verde-profundo)]">Ver ubicaciones</span>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Video: clientes disfrutando frente al local */}
-          <div className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
+          <motion.div variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
             <video src={REAL_MEDIA.videoClientes} autoPlay loop muted playsInline className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Vive la experiencia Origen.</p>
-          </div>
+          </motion.div>
           {/* Foto: equipo -> blog */}
-          <div onClick={() => {navigate('blog'); window.scrollTo(0,0);}} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
+          <motion.div variants={fadeUp} onClick={() => {navigate('blog'); window.scrollTo(0,0);}} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
             <img src={REAL_MEDIA.staff1} alt="Equipo Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">El equipo detrás de cada bowl.</p>
             <span className="absolute top-5 right-5 bg-white/90 px-3 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--verde-profundo)]">Leer historia</span>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Ingredientes frescos */}
-        <div className="text-center mt-16 mb-8">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={fadeUp} className="text-center mt-16 mb-8">
           <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Ingredientes Frescos</span>
           <h3 className="font-display italic text-2xl md:text-3xl text-[var(--verde-profundo)]">Lo que ves es lo que comes.</h3>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
+        </motion.div>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={staggerContainer} className="grid grid-cols-3 gap-4">
+          <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
             <img src={REAL_MEDIA.topping1} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </div>
-          <div className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
+          </motion.div>
+          <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
             <img src={REAL_MEDIA.topping2} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </div>
-          <div className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
+          </motion.div>
+          <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
             <img src={REAL_MEDIA.topping3} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
@@ -1449,7 +1552,7 @@ const BlogView = ({ navigate }) => {
              <span className="font-ui text-[var(--verde-brillante)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">¿Dudas sobre tu dieta?</span>
              <h2 className="font-display italic text-4xl md:text-5xl mb-6">Tu nutrición es única y personal.</h2>
              <p className="font-ui text-[var(--verde-palido)] mb-8 leading-relaxed text-base md:text-lg">
-               Pregúntale a nuestro asesor personalizado Origen AI o agenda un diagnóstico con nuestro equipo para encontrar tu balance idóneo.
+               Pregúntale a Savia, nuestra asesora nutricional con IA, o agenda un diagnóstico con nuestro equipo para encontrar tu balance idóneo.
              </p>
              <Button onClick={() => {navigate('cuenta'); window.scrollTo(0,0);}} className="mx-auto rounded-[16px] bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] border-0">
                <Sparkles size={18}/> Hablar con Asesor Nutricional
@@ -1700,7 +1803,7 @@ const CuentaView = ({ onAddToCart }) => {
     {
       id: 'msg-initial',
       role: 'ai',
-      text: '🥦 ¡Hola! Bienvenido a Origen AI. Te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?'
+      text: '🥦 ¡Hola! Soy Savia, tu asesora nutricional con IA. Te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?'
     }
   ]);
 
@@ -1945,7 +2048,7 @@ const CuentaView = ({ onAddToCart }) => {
                   <span className="animate-bounce">●</span>
                   <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>●</span>
                   <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>●</span>
-                  <span>Origen AI está procesando...</span>
+                  <span>Savia está procesando...</span>
                 </div>
               )}
             </div>
@@ -2341,6 +2444,10 @@ export default function App() {
           onConfirmOrder={handleConfirmOrder}
         />
       )}
+
+      {/* --- SAVIA: IA NATIVA DE RECOMENDACIÓN --- */}
+      {/* Se oculta el botón flotante en Builder: ahí la barra inferior "Siguiente" ocupa esa misma esquina en móvil */}
+      <SaviaWidget carta={CARTA} formatPrice={formatPrice} onAddToCart={handleAddToCart} navigate={setActiveTab} hideFab={activeTab === 'builder'} />
 
       {/* --- GLOBAL FOOTER --- */}
       <Footer navigate={setActiveTab} />
