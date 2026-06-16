@@ -2205,7 +2205,7 @@ export default function App() {
       `}} />
 
       {/* --- NAVBAR REDISEÑADO CON LOGO EN LA MITAD --- */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 bg-[var(--verde-main)] border-b border-white/15 shadow-sm ${scrolled || activeTab !== 'inicio' ? 'py-4' : 'py-6 md:py-8'}`}>
+      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[var(--verde-main)] border-b border-white/15 shadow-sm py-4' : 'bg-transparent py-6 md:py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative h-16">
 
           {/* LADO IZQUIERDO: Menú hamburguesa + Explorar → Carta */}
