@@ -27,7 +27,21 @@ const COLORS = {
   maximoAmber: '#F09030'
 };
 
-const HERO_IMAGE = "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780260556/A_hand_with_warm_natural_202605311437_jtu8or.jpg";
+const HERO_IMAGE = "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635341/9O4A5606_x9ut96.jpg";
+
+const REAL_MEDIA = {
+  platoMano: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635341/9O4A5606_x9ut96.jpg",
+  local: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635345/9O4A5518_bgwmoe.jpg",
+  staff1: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635345/9O4A5682_pxsl4a.jpg",
+  staff2: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635346/9O4A5676_v2vrgt.jpg",
+  videoTimelapse: "https://res.cloudinary.com/dfj0ckm10/video/upload/q_auto/f_auto/v1781635367/9O4A5552_njddyy.mp4",
+  videoClientes: "https://res.cloudinary.com/dfj0ckm10/video/upload/q_auto/f_auto/v1781635457/9O4A5666_zp1g5p.mp4",
+  topping1: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635507/9O4A5529_x9bqlf.jpg",
+  topping2: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635513/9O4A5532_v6wpek.jpg",
+  topping3: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635513/9O4A5530_urx4gn.jpg",
+  pared1: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781633407/9O4A5622_xdlms6.jpg",
+  pared2: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781633460/9O4A5610_s4xmfb.jpg",
+};
 
 const INGREDIENTE_COLORES = {
   'Arroz Blanco': '#F5F0E8', 'Arroz Integral': '#C8A87A', 'Quinoa': '#D4B896', 'Mix Asiático': '#E8D4B0',
@@ -675,6 +689,63 @@ const HomeView = ({ navigate }) => {
            </button>
         </div>
       </div>
+
+      {/* Así es Origen — fotos y videos reales del local, equipo y proceso */}
+      <div className="max-w-[1400px] mx-auto px-6 py-20 md:py-24 relative z-20">
+        <div className="text-center mb-12">
+          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Así es Origen</span>
+          <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)]">Real, fresco y hecho<br className="hidden md:block"/> frente a ti.</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Video: timelapse de preparación */}
+          <div className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
+            <video src={REAL_MEDIA.videoTimelapse} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+            <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Tu bowl, armado al instante.</p>
+          </div>
+          {/* Foto: local */}
+          <div onClick={() => navigate('ubicaciones')} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
+            <img src={REAL_MEDIA.local} alt="Local Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Nuestro espacio te espera.</p>
+            <span className="absolute top-5 right-5 bg-white/90 px-3 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--verde-profundo)]">Ver ubicaciones</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Video: clientes disfrutando frente al local */}
+          <div className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
+            <video src={REAL_MEDIA.videoClientes} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+            <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Vive la experiencia Origen.</p>
+          </div>
+          {/* Foto: equipo -> blog */}
+          <div onClick={() => {navigate('blog'); window.scrollTo(0,0);}} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] cursor-pointer group">
+            <img src={REAL_MEDIA.staff1} alt="Equipo Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">El equipo detrás de cada bowl.</p>
+            <span className="absolute top-5 right-5 bg-white/90 px-3 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--verde-profundo)]">Leer historia</span>
+          </div>
+        </div>
+
+        {/* Ingredientes frescos */}
+        <div className="text-center mt-16 mb-8">
+          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Ingredientes Frescos</span>
+          <h3 className="font-display italic text-2xl md:text-3xl text-[var(--verde-profundo)]">Lo que ves es lo que comes.</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
+            <img src={REAL_MEDIA.topping1} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+          </div>
+          <div className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
+            <img src={REAL_MEDIA.topping2} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+          </div>
+          <div className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
+            <img src={REAL_MEDIA.topping3} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -1301,10 +1372,12 @@ const BlogView = ({ navigate }) => {
     {
       id: 'equipo-mujeres',
       title: "Las Mujeres Detrás de Cada Bowl: Nuestra Apuesta por la Inclusión",
-      img: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781633407/9O4A5622_xdlms6.jpg",
+      img: REAL_MEDIA.staff2,
       gallery: [
-        "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781633407/9O4A5622_xdlms6.jpg",
-        "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781633460/9O4A5610_s4xmfb.jpg",
+        REAL_MEDIA.staff1,
+        REAL_MEDIA.staff2,
+        REAL_MEDIA.pared1,
+        REAL_MEDIA.pared2,
       ],
       category: "Comunidad",
       date: "Junio 2026",
@@ -2132,7 +2205,7 @@ export default function App() {
       `}} />
 
       {/* --- NAVBAR REDISEÑADO CON LOGO EN LA MITAD --- */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[var(--verde-main)]/95 backdrop-blur-xl border-b border-white/15 py-4 shadow-sm' : 'bg-gradient-to-b from-[var(--verde-main)]/85 via-[var(--verde-main)]/45 to-transparent py-8'}`}>
+      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 bg-[var(--verde-main)] border-b border-white/15 shadow-sm ${scrolled || activeTab !== 'inicio' ? 'py-4' : 'py-6 md:py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative h-16">
 
           {/* LADO IZQUIERDO: Menú hamburguesa + Explorar → Carta */}
