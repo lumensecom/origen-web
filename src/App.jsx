@@ -9,6 +9,7 @@ import {
 import { useAuth } from './contexts/AuthContext';
 import AuthModal from './components/AuthModal';
 import SaviaWidget from './components/SaviaWidget';
+import useLockBodyScroll from './hooks/useLockBodyScroll';
 import { createOrder, addLoyaltyPoints, addPointsHistory } from './lib/database';
 
 const COLORS = {
@@ -298,6 +299,7 @@ const Button = ({ children, variant = 'primary', className = '', onClick, disabl
 };
 
 const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrder }) => {
+  useLockBodyScroll(true);
   const [step, setStep] = useState('cart'); // cart -> deliveryType -> pickupStore -> deliveryAddress
   const [selectedStore, setSelectedStore] = useState(null);
   const [address, setAddress] = useState('');
@@ -450,20 +452,22 @@ const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrde
                   <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Dirección en Bogotá</label>
                   <input
                     type="text"
+                    autoComplete="street-address"
                     value={address}
                     onChange={e => setAddress(e.target.value)}
                     placeholder="Ej: Calle 26 # 68-10, Apto 402"
-                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
+                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
                   />
                 </div>
                 <div>
                   <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Indicaciones adicionales</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
                     placeholder="Ej: Barrio Chapinero, frente al parque"
-                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
+                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
                   />
                 </div>
               </motion.div>
@@ -720,10 +724,10 @@ const HomeView = ({ navigate }) => {
         <motion.div variants={fadeUp} onClick={() => navigate('builder')} className="relative flex-1 bg-[var(--verde-profundo)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-bosque)]">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--verde-main)]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
-            <h2 className="font-display italic text-4xl md:text-5xl text-white mb-4 transition-transform duration-500 group-hover:-translate-y-1">Crea tu<br/><span className="text-[var(--amarillo-vivo)]">Origen</span></h2>
+            <h2 className="font-display italic text-4xl md:text-5xl text-white mb-4 transition-transform duration-500 group-hover:-translate-y-1">Crea tu<br/><span className="text-[var(--terracota-vivo)]">Origen</span></h2>
             <p className="font-ui text-[var(--verde-palido)] max-w-xs text-base">Diseña tu obra maestra paso a paso con nuestros ingredientes frescos.</p>
           </div>
-          <div className="relative z-10 w-14 h-14 rounded-[16px] bg-[var(--amarillo-vivo)] text-[var(--verde-profundo)] flex items-center justify-center group-hover:scale-110 transition-transform duration-500 mt-8 shadow-md">
+          <div className="relative z-10 w-14 h-14 rounded-[16px] bg-[var(--terracota-vivo)] text-[var(--verde-profundo)] flex items-center justify-center group-hover:scale-110 transition-transform duration-500 mt-8 shadow-md">
             <Sparkles size={24} />
           </div>
         </motion.div>
@@ -748,10 +752,10 @@ const HomeView = ({ navigate }) => {
         className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 py-10 relative z-20"
       >
         {[
-          { to: 11, suffix: '', label: 'Bowls en la carta' },
+          { to: 1000, suffix: '+', label: 'Clientes satisfechos' },
+          { to: 100, suffix: '%', label: 'Ingredientes naturales' },
           { to: 100, suffix: '%', label: 'Preparado al momento' },
           { to: 3, suffix: '', label: 'Locales en Bogotá' },
-          { to: 50, suffix: ' pts', label: 'Por cada compra' },
         ].map((stat, idx) => (
           <motion.div key={idx} variants={fadeUp} className="text-center">
             <p className="font-display font-bold text-3xl md:text-4xl text-[var(--verde-main)] mb-1">
@@ -765,7 +769,7 @@ const HomeView = ({ navigate }) => {
       {/* Sección Editorial con Galería de Fotos Reales */}
       <div className="max-w-[1400px] mx-auto px-6 py-20 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center bg-[var(--fondo-crema)] relative z-20 overflow-hidden">
         <FloatingLeaf className="top-4 right-[8%] hidden lg:block" size={32} delay={0.4} />
-        <FloatingLeaf className="bottom-10 left-[4%] hidden lg:block" size={22} delay={1.2} color="var(--amarillo-suave)" />
+        <FloatingLeaf className="bottom-10 left-[4%] hidden lg:block" size={22} delay={1.2} color="var(--terracota-suave)" />
 
         {/* Galería Interactiva con las fotos reales de Cloudinary */}
         <motion.div
@@ -1215,7 +1219,7 @@ const BuilderView = ({ onAddToCart }) => {
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto scrollbar-hide px-6 pt-24 pb-4 lg:px-12 lg:pt-12">
           <div className="mb-8">
-            <h1 className="font-display italic text-4xl md:text-5xl text-white mb-2">Crea tu <span className="text-[var(--amarillo-vivo)]">Origen</span></h1>
+            <h1 className="font-display italic text-4xl md:text-5xl text-white mb-2">Crea tu <span className="text-[var(--terracota-vivo)]">Origen</span></h1>
             <p className="font-ui text-[var(--verde-palido)] opacity-80">Diseño intuitivo para crear tu bowl perfecto.</p>
           </div>
 
@@ -1462,6 +1466,7 @@ const BuilderView = ({ onAddToCart }) => {
 
 const BlogView = ({ navigate }) => {
   const [activePost, setActivePost] = useState(null);
+  useLockBodyScroll(!!activePost);
 
   const posts = [
     {
@@ -2139,7 +2144,7 @@ const CuentaView = ({ onAddToCart }) => {
                 onChange={(e) => setInputVal(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFreeTextSend()}
                 placeholder="Escribe tu antojo o meta (ej: sin gluten, ganar masa...)" 
-                className="flex-1 bg-transparent border-none px-4 font-ui text-sm focus:outline-none text-white placeholder-white/40"
+                className="flex-1 bg-transparent border-none px-4 font-ui text-base sm:text-sm focus:outline-none text-white placeholder-white/40"
               />
               <button 
                 onClick={handleFreeTextSend}
@@ -2162,6 +2167,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  useLockBodyScroll(isMobileMenuOpen);
 
   // Estado Global del Carrito
   const [cart, setCart] = useState([]);
@@ -2310,7 +2316,8 @@ export default function App() {
           --verde-menta: #E8F9F0; --dorado-fuerte: #D4A017; --dorado-suave: #F0C040;
           --crema-calido: #FDF5E0; --fondo-crema: #F1F4EA; --texto-oscuro: #0D1F0F;
           --texto-suave: #4E5C4E; --kraft: #D4A574; --maximo-amber: #F09030;
-          --amarillo-quemado: #DE9F22; --amarillo-vivo: #F0B429; --amarillo-suave: #FBDE8D;
+          --verde-navbar: #6FA37C;
+          --terracota-quemado: #C96D1D; --terracota-vivo: #E2904A; --terracota-suave: #EFB988;
         }
         .font-display { font-family: 'Fraunces', serif; }
         .font-ui { font-family: 'Outfit', sans-serif; }
@@ -2332,7 +2339,7 @@ export default function App() {
       `}} />
 
       {/* --- NAVBAR REDISEÑADO CON LOGO EN LA MITAD --- */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[var(--verde-main)] border-b border-white/15 shadow-sm py-4' : 'bg-transparent py-6 md:py-8'}`}>
+      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[var(--verde-navbar)] border-b border-white/15 shadow-sm py-4' : 'bg-transparent py-6 md:py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative h-16">
 
           {/* LADO IZQUIERDO: Menú hamburguesa + Explorar → Carta */}
@@ -2345,7 +2352,7 @@ export default function App() {
             </button>
             <button
               onClick={() => { setActiveTab('menu'); setIsMobileMenuOpen(false); }}
-              className="hidden sm:flex items-center gap-1.5 font-ui text-xs font-bold tracking-widest text-white uppercase hover:text-[var(--amarillo-suave)] transition-all"
+              className="hidden sm:flex items-center gap-1.5 font-ui text-xs font-bold tracking-widest text-white uppercase hover:text-[var(--terracota-suave)] transition-all"
             >
               Explorar <ArrowRight size={12} />
             </button>
@@ -2357,17 +2364,17 @@ export default function App() {
             onClick={() => { setActiveTab('inicio'); setIsMobileMenuOpen(false); }}
           >
             <h1 className="font-logo text-2xl md:text-3xl tracking-[0.2em] text-white leading-none">ORIGEN</h1>
-            <span className="font-ui text-[8px] md:text-[9px] text-[var(--amarillo-suave)] uppercase tracking-[0.2em] mt-1 font-bold">Comida Saludable</span>
+            <span className="font-ui text-[8px] md:text-[9px] text-[var(--terracota-suave)] uppercase tracking-[0.2em] mt-1 font-bold">Comida Saludable</span>
           </div>
 
           {/* LADO DERECHO: Cuenta + Botón de Carrito de Compras */}
           <div className="flex items-center gap-4 z-10">
-            <button onClick={() => { setActiveTab('cuenta'); setIsMobileMenuOpen(false); }} className="text-white hover:text-[var(--amarillo-suave)] transition-colors w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
+            <button onClick={() => { setActiveTab('cuenta'); setIsMobileMenuOpen(false); }} className="text-white hover:text-[var(--terracota-suave)] transition-colors w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
               <User size={18}/>
             </button>
             <button
               onClick={() => setIsCheckoutOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-[var(--amarillo-vivo)] hover:bg-[var(--amarillo-suave)] transition-colors flex items-center justify-center text-[var(--verde-profundo)]"
+              className="relative w-10 h-10 rounded-full bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-suave)] transition-colors flex items-center justify-center text-[var(--verde-profundo)]"
             >
               <ShoppingBag size={18} />
               {cart.length > 0 && (

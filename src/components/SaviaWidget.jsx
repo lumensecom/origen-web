@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X, ArrowRight, ArrowLeft, ShoppingBag } from 'lucide-react'
+import useLockBodyScroll from '../hooks/useLockBodyScroll'
 
 // --- Savia: la IA nativa de Origen que recomienda tu bowl ideal ---
 // Es un flujo de preguntas guiadas (no un chat libre): cada respuesta
@@ -53,6 +54,7 @@ const SAVIA_QUESTIONS = [
 
 export default function SaviaWidget({ carta, formatPrice, onAddToCart, navigate, hideFab = false }) {
   const [isOpen, setIsOpen] = useState(false);
+  useLockBodyScroll(isOpen);
   const [showTooltip, setShowTooltip] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState([]); // weights object por pregunta respondida
@@ -126,7 +128,7 @@ export default function SaviaWidget({ carta, formatPrice, onAddToCart, navigate,
             className="relative flex items-center gap-2 bg-[var(--verde-profundo)] hover:bg-[var(--verde-bosque)] text-white pl-4 pr-5 py-3.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-colors"
           >
             <span className="absolute inset-0 rounded-full bg-[var(--verde-main)]/40 animate-ping" style={{ animationDuration: '2.5s' }} />
-            <span className="relative w-7 h-7 rounded-full bg-[var(--amarillo-vivo)] flex items-center justify-center shrink-0">
+            <span className="relative w-7 h-7 rounded-full bg-[var(--terracota-vivo)] flex items-center justify-center shrink-0">
               <Sparkles size={15} className="text-[var(--verde-profundo)]" />
             </span>
             <span className="relative font-ui font-bold text-sm">Savia</span>
@@ -162,7 +164,7 @@ export default function SaviaWidget({ carta, formatPrice, onAddToCart, navigate,
                   <X size={18} />
                 </button>
                 <div className="flex items-center gap-3 mb-1">
-                  <div className="w-9 h-9 bg-[var(--amarillo-vivo)] rounded-[10px] flex items-center justify-center">
+                  <div className="w-9 h-9 bg-[var(--terracota-vivo)] rounded-[10px] flex items-center justify-center">
                     <Sparkles size={18} className="text-[var(--verde-profundo)]" />
                   </div>
                   <div>
@@ -174,7 +176,7 @@ export default function SaviaWidget({ carta, formatPrice, onAddToCart, navigate,
                 {!isResult && (
                   <div className="flex gap-1.5 mt-5">
                     {SAVIA_QUESTIONS.map((_, idx) => (
-                      <div key={idx} className={`h-1 flex-1 rounded-full transition-colors ${idx <= step ? 'bg-[var(--amarillo-vivo)]' : 'bg-white/15'}`} />
+                      <div key={idx} className={`h-1 flex-1 rounded-full transition-colors ${idx <= step ? 'bg-[var(--terracota-vivo)]' : 'bg-white/15'}`} />
                     ))}
                   </div>
                 )}

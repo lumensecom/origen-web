@@ -2,8 +2,10 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ArrowRight, Leaf, Mail, CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import useLockBodyScroll from '../hooks/useLockBodyScroll'
 
 export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' }) {
+  useLockBodyScroll(true)
   const { signIn, signUp, resetPassword } = useAuth()
   const [mode, setMode] = useState(defaultMode) // 'login' | 'register' | 'forgot'
   const [email, setEmail] = useState('')
@@ -74,16 +76,16 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className="bg-[var(--fondo-crema)] w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden"
+          className="bg-[var(--fondo-crema)] w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
           onClick={e => e.stopPropagation()}
         >
           {/* Handle móvil */}
-          <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
             <div className="w-10 h-1 bg-gray-300 rounded-full" />
           </div>
 
           {/* Header */}
-          <div className="bg-[var(--verde-profundo)] px-8 pt-8 pb-8 relative">
+          <div className="bg-[var(--verde-profundo)] px-8 pt-8 pb-8 relative shrink-0">
             {onClose && (
               <button
                 onClick={onClose}
@@ -108,6 +110,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
             </AnimatePresence>
           </div>
 
+          <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             {done ? (
               /* Pantalla de éxito */
@@ -170,11 +173,12 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
                     </label>
                     <input
                       type="text"
+                      autoComplete="name"
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
                       placeholder="Ej: María García"
                       required
-                      className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
+                      className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
                     />
                   </div>
                 )}
@@ -185,11 +189,13 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
                   </label>
                   <input
                     type="email"
+                    autoComplete="email"
+                    inputMode="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="tu@correo.com"
                     required
-                    className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
+                    className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
                   />
                 </div>
 
@@ -211,12 +217,13 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
                     </div>
                     <input
                       type="password"
+                      autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
                       required
                       minLength={6}
-                      className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
+                      className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
                     />
                   </div>
                 )}
@@ -264,6 +271,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
               </motion.form>
             )}
           </AnimatePresence>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
