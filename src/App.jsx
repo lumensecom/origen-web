@@ -684,7 +684,7 @@ const HomeView = ({ navigate, onOpenSavia }) => {
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
-            <p className="font-display italic text-sm text-[var(--texto-suave)]">¿Quieres una recomendación personalizada?</p>
+            <p className="font-display italic text-sm text-[var(--texto-suave)]">¿No sabes qué comer hoy?</p>
             <button
               onClick={onOpenSavia}
               className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap"
@@ -1773,15 +1773,36 @@ const UbicacionesView = () => {
                   </p>
                   
                   {estaActivo && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="border-t border-gray-100 pt-4 space-y-3">
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="border-t border-gray-100 pt-4 space-y-3 overflow-hidden">
                       <p className="font-ui text-xs text-[var(--texto-suave)] leading-relaxed italic">"{local.detalles}"</p>
-                      
+
                       <div className="flex gap-2 flex-wrap">
                         {local.amenidades.map((amenidad, idx) => (
                           <span key={idx} className="bg-[var(--verde-menta)] text-[var(--verde-main)] font-ui text-[10px] font-bold uppercase px-2.5 py-1 rounded-[8px]">
                             {amenidad}
                           </span>
                         ))}
+                      </div>
+
+                      {/* Mapa inline — visible solo en móvil; en desktop se muestra en el panel derecho */}
+                      <div className="lg:hidden rounded-[18px] overflow-hidden h-[220px] border border-gray-100 shadow-inner mt-2">
+                        <iframe
+                          src={local.mapaUrl}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          allowFullScreen=""
+                          loading="lazy"
+                          title={`Mapa ${local.nombre}`}
+                        />
+                      </div>
+                      <div className="lg:hidden">
+                        <button
+                          onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(local.direccion)}`, '_blank')}
+                          className="w-full bg-[var(--verde-main)] text-white font-ui font-bold text-xs py-3 rounded-[14px] flex items-center justify-center gap-2 hover:bg-[var(--verde-vivo)] transition-all"
+                        >
+                          Cómo llegar <Navigation size={14} />
+                        </button>
                       </div>
                     </motion.div>
                   )}
@@ -2356,8 +2377,8 @@ export default function App() {
           --verde-menta: #E8F9F0; --dorado-fuerte: #D4A017; --dorado-suave: #F0C040;
           --crema-calido: #FDF5E0; --fondo-crema: #F1F4EA; --texto-oscuro: #0D1F0F;
           --texto-suave: #4E5C4E; --kraft: #D4A574; --maximo-amber: #F09030;
-          --verde-navbar: #3D6B44;
-          --terracota-quemado: #A88020; --terracota-vivo: #D4A830; --terracota-suave: #E8CB72;
+          --verde-navbar: #3EA055;
+          --terracota-quemado: #B89010; --terracota-vivo: #EEC018; --terracota-suave: #F5D84A;
         }
         .font-display { font-family: 'Fraunces', serif; }
         .font-ui { font-family: 'Outfit', sans-serif; }
@@ -2401,10 +2422,11 @@ export default function App() {
           {/* CENTRO: Logo ORIGEN alineado perfectamente */}
           <div
             className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer z-10"
+            style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.22))' }}
             onClick={() => { setActiveTab('inicio'); setIsMobileMenuOpen(false); }}
           >
             <h1 className="font-logo text-2xl md:text-3xl tracking-[0.2em] text-white leading-none">ORIGEN</h1>
-            <span className="font-ui text-[8px] md:text-[9px] text-[var(--terracota-suave)] uppercase tracking-[0.2em] mt-1 font-bold">Comida Saludable</span>
+            <span className="font-ui text-[8px] md:text-[9px] text-white/80 uppercase tracking-[0.2em] mt-1 font-bold">Comida Saludable</span>
           </div>
 
           {/* LADO DERECHO: Cuenta + Botón de Carrito de Compras */}
