@@ -45,6 +45,8 @@ const REAL_MEDIA = {
   topping3: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635513/9O4A5530_urx4gn.jpg",
   pared1: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781633407/9O4A5622_xdlms6.jpg",
   pared2: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781633460/9O4A5610_s4xmfb.jpg",
+  videoLocal: "https://res.cloudinary.com/dfj0ckm10/video/upload/q_auto,f_auto,w_800/v1781669689/9O4A5525_1_potz2d.mp4",
+  videoLocalPoster: "https://res.cloudinary.com/dfj0ckm10/video/upload/so_0,q_auto,f_auto,w_800/v1781669689/9O4A5525_1_potz2d.jpg",
 };
 
 const INGREDIENTE_COLORES = {
@@ -591,7 +593,7 @@ const FEELINGS = [
   { key: 'brain', emoji: '🧠', label: 'Enfocado', bowlId: 'raiz', msg: 'Omega-3 y nutrientes para tu mente.' },
 ];
 
-const HomeView = ({ navigate }) => {
+const HomeView = ({ navigate, onOpenSavia }) => {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const yText = useTransform(scrollYProgress, [0, 1], [0, 200]);
@@ -619,7 +621,7 @@ const HomeView = ({ navigate }) => {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
-            className="font-display font-bold text-5xl md:text-8xl text-white leading-[1.05] mb-6 drop-shadow-2xl"
+            className="font-logo text-5xl md:text-8xl text-white leading-[1.05] mb-6 drop-shadow-2xl"
           >
             Nutrición desde<br/>el origen.
           </motion.h1>
@@ -627,7 +629,7 @@ const HomeView = ({ navigate }) => {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
-            className="font-ui text-lg md:text-xl text-[var(--verde-menta)] font-light drop-shadow-md max-w-lg mx-auto"
+            className="font-display italic text-lg md:text-xl text-[var(--verde-menta)] font-light drop-shadow-md max-w-lg mx-auto"
           >
             Recetas pensadas para alimentar tu cuerpo con la velocidad que necesitas y el sabor que mereces.
           </motion.p>
@@ -642,7 +644,7 @@ const HomeView = ({ navigate }) => {
               Ver Carta <ArrowRight size={16} />
             </Button>
             <Button onClick={() => navigate('builder')} variant="ghost" className="hover:bg-white hover:text-[var(--verde-profundo)]">
-              Armar Mi Bowl <Sparkles size={16} />
+              Crear Mi Bowl <Sparkles size={16} />
             </Button>
           </motion.div>
         </motion.div>
@@ -679,6 +681,16 @@ const HomeView = ({ navigate }) => {
                 <span>{f.label}</span>
               </button>
             ))}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+            <p className="font-display italic text-sm text-[var(--texto-suave)]">¿Quieres una recomendación personalizada?</p>
+            <button
+              onClick={onOpenSavia}
+              className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap"
+            >
+              <Sparkles size={14} /> Pregúntale a Savia
+            </button>
           </div>
 
           <AnimatePresence>
@@ -721,13 +733,13 @@ const HomeView = ({ navigate }) => {
         variants={staggerContainer}
         className="w-full flex flex-col md:flex-row bg-[var(--fondo-crema)] relative z-20 max-w-7xl mx-auto px-6 py-12 gap-6"
       >
-        <motion.div variants={fadeUp} onClick={() => navigate('builder')} className="relative flex-1 bg-[var(--verde-profundo)] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-bosque)]">
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--verde-main)]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <motion.div variants={fadeUp} onClick={() => navigate('builder')} className="relative flex-1 bg-[#E8EFE3] p-10 md:p-14 cursor-pointer group overflow-hidden rounded-[24px] flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-xl transition-all duration-300 border border-[var(--verde-palido)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--terracota-suave)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
-            <h2 className="font-display italic text-4xl md:text-5xl text-white mb-4 transition-transform duration-500 group-hover:-translate-y-1">Crea tu<br/><span className="text-[var(--terracota-vivo)]">Origen</span></h2>
-            <p className="font-ui text-[var(--verde-palido)] max-w-xs text-base">Diseña tu obra maestra paso a paso con nuestros ingredientes frescos.</p>
+            <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)] mb-4 transition-transform duration-500 group-hover:-translate-y-1">Crea tu<br/><span className="text-[var(--terracota-quemado)]">Origen</span></h2>
+            <p className="font-ui text-[var(--texto-suave)] max-w-xs text-base">Diseña tu obra maestra paso a paso con nuestros ingredientes frescos.</p>
           </div>
-          <div className="relative z-10 w-14 h-14 rounded-[16px] bg-[var(--terracota-vivo)] text-[var(--verde-profundo)] flex items-center justify-center group-hover:scale-110 transition-transform duration-500 mt-8 shadow-md">
+          <div className="relative z-10 w-14 h-14 rounded-[16px] bg-[var(--terracota-vivo)] text-white flex items-center justify-center group-hover:scale-110 transition-transform duration-500 mt-8 shadow-md">
             <Sparkles size={24} />
           </div>
         </motion.div>
@@ -735,7 +747,7 @@ const HomeView = ({ navigate }) => {
           <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative z-10">
             <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)] mb-4 transition-transform duration-500 group-hover:-translate-y-1">Carta<br/><span className="text-[var(--verde-main)]">Origen</span></h2>
-            <p className="font-ui text-[var(--texto-suave)] max-w-xs text-base">Explora nuestras 11 combinaciones perfectas diseñadas por expertos.</p>
+            <p className="font-ui text-[var(--texto-suave)] max-w-xs text-base">Explora nuestras combinaciones perfectas diseñadas por expertos.</p>
           </div>
           <div className="relative z-10 w-14 h-14 rounded-[16px] bg-[var(--verde-profundo)] text-white flex items-center justify-center group-hover:scale-110 transition-transform duration-500 mt-8 shadow-md">
             <ArrowRight size={24} />
@@ -843,9 +855,9 @@ const HomeView = ({ navigate }) => {
         </motion.div>
 
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Video: clientes disfrutando frente al local */}
-          <motion.div variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group bg-[var(--verde-profundo)]">
-            <LazyVideo src={REAL_MEDIA.videoClientes} poster={REAL_MEDIA.videoClientesPoster} className="absolute inset-0" />
+          {/* Foto: pared del local */}
+          <motion.div variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[4/3] group">
+            <img loading="lazy" src={REAL_MEDIA.pared1} alt="Espacio Origen" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
             <p className="absolute bottom-5 left-5 font-display italic text-xl md:text-2xl text-white drop-shadow-md">Vive la experiencia Origen.</p>
           </motion.div>
@@ -858,21 +870,14 @@ const HomeView = ({ navigate }) => {
           </motion.div>
         </motion.div>
 
-        {/* Ingredientes frescos */}
+        {/* Nuestras instalaciones */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={fadeUp} className="text-center mt-16 mb-8">
-          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Ingredientes Frescos</span>
-          <h3 className="font-display italic text-2xl md:text-3xl text-[var(--verde-profundo)]">Lo que ves es lo que comes.</h3>
+          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestras Instalaciones</span>
+          <h3 className="font-display italic text-2xl md:text-3xl text-[var(--verde-profundo)]">Un espacio pensado para ti.</h3>
         </motion.div>
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={staggerContainer} className="grid grid-cols-3 gap-4">
-          <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
-            <img loading="lazy" src={REAL_MEDIA.topping1} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </motion.div>
-          <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
-            <img loading="lazy" src={REAL_MEDIA.topping2} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </motion.div>
-          <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden shadow-sm aspect-square">
-            <img loading="lazy" src={REAL_MEDIA.topping3} alt="Ingredientes frescos" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </motion.div>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[16/7] group">
+          <LazyVideo src={REAL_MEDIA.videoLocal} poster={REAL_MEDIA.videoLocalPoster} className="absolute inset-0 w-full h-full" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
         </motion.div>
       </div>
     </div>
@@ -981,7 +986,7 @@ const CartaView = ({ onAddToCart }) => {
 
         <div className="text-center mb-16 animate-in">
           <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Carta Origen</h1>
-          <p className="font-ui text-lg text-[#2D5A4A]">11 combinaciones perfectas y bebidas frescas de la casa.</p>
+          <p className="font-ui text-lg text-[#2D5A4A]">Combinaciones perfectas y bebidas frescas de la casa.</p>
         </div>
 
         {/* Carrusel Virales de la Semana */}
@@ -1217,7 +1222,7 @@ const BuilderView = ({ onAddToCart }) => {
       <div className="w-full lg:w-1/2 bg-[var(--verde-profundo)] text-white flex flex-col h-[100svh] sticky top-0 z-20 overflow-hidden">
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide px-6 pt-24 pb-4 lg:px-12 lg:pt-12">
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-6 pt-24 pb-4 lg:px-12 lg:pt-28">
           <div className="mb-8">
             <h1 className="font-display italic text-4xl md:text-5xl text-white mb-2">Crea tu <span className="text-[var(--terracota-vivo)]">Origen</span></h1>
             <p className="font-ui text-[var(--verde-palido)] opacity-80">Diseño intuitivo para crear tu bowl perfecto.</p>
@@ -1427,11 +1432,11 @@ const BuilderView = ({ onAddToCart }) => {
         </div>
       </div>
 
-      {/* RIGHT PANEL — Bowl SVG, centered, desktop only */}
+      {/* RIGHT PANEL — Previsualización minimalista, desktop only */}
       <div className="hidden lg:block w-full lg:w-1/2 bg-[var(--fondo-crema)] relative">
         <div className="sticky top-0 h-screen flex flex-col items-center justify-center px-12">
           {/* Price chip */}
-          <div className="flex items-center justify-between w-full max-w-sm bg-white px-6 py-4 rounded-[20px] mb-10 shadow-sm border border-[var(--verde-palido)]">
+          <div className="flex items-center justify-between w-full max-w-sm bg-white px-6 py-4 rounded-[20px] mb-8 shadow-sm border border-[var(--verde-palido)]">
             <div>
               <p className="font-ui text-[10px] text-[var(--texto-suave)] uppercase tracking-wider font-bold mb-0.5">Tu bowl personalizado</p>
               <motion.p key={totalPrice} initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="font-display font-bold text-3xl text-[var(--verde-profundo)]">{formatPrice(totalPrice)}</motion.p>
@@ -1440,24 +1445,51 @@ const BuilderView = ({ onAddToCart }) => {
             {!isMaximo && selections.proteina && <div className="bg-[var(--verde-menta)] text-[var(--verde-main)] px-3 py-1.5 rounded-[10px] text-xs font-bold">Porción sencilla</div>}
           </div>
 
-          {/* Bowl visual con platform effect */}
-          <div className="relative w-full max-w-[420px] flex flex-col items-center">
-            {/* Subtle radial glow behind bowl */}
-            <div className="absolute inset-0 rounded-full bg-[var(--verde-main)]/8 blur-3xl scale-75 -z-10" />
-            {/* Bowl SVG */}
-            <div className="w-full aspect-square drop-shadow-2xl" style={{ filter: 'drop-shadow(0 32px 40px rgba(18,179,98,0.15)) drop-shadow(0 8px 16px rgba(0,0,0,0.12))' }}>
-              <BowlSVG selections={selections} />
-            </div>
-            {/* Platform shadow */}
-            <div className="w-3/4 h-4 bg-[var(--verde-profundo)]/10 rounded-full blur-xl -mt-2" />
+          {/* Preview de ingredientes — minimalista con emojis */}
+          <div className="w-full max-w-sm bg-white rounded-[28px] border border-[var(--verde-palido)] shadow-md p-8 space-y-4">
+            <p className="font-ui text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--verde-main)] mb-2">Tu bowl en construcción 🥣</p>
+
+            {[
+              { label: 'Base', emoji: '🌾', value: selections.base, empty: 'Elige tu base' },
+              { label: 'Frescuras', emoji: '🥦', value: selections.frescuras.join(' + '), empty: 'Elige tus frescuras' },
+              { label: 'Sabores', emoji: '✨', value: selections.sabores.join(' + '), empty: 'Elige tus sabores' },
+              { label: 'Proteína', emoji: '⚡', value: selections.proteina, empty: 'Elige tu proteína' },
+              { label: 'Salsa', emoji: '💚', value: selections.salsa, empty: 'Elige tu salsa' },
+            ].map(({ label, emoji, value, empty }) => (
+              <div key={label} className="flex items-start gap-3">
+                <span className="text-lg mt-0.5 shrink-0">{emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--texto-suave)] mb-0.5">{label}</p>
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={value || empty}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 6 }}
+                      transition={{ duration: 0.18 }}
+                      className={`font-display text-base leading-snug truncate ${value ? 'text-[var(--verde-profundo)] font-semibold' : 'text-gray-300 italic'}`}
+                    >
+                      {value || empty}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
+                {value && <Check size={16} className="text-[var(--verde-main)] shrink-0 mt-1" />}
+              </div>
+            ))}
+
+            {addedDrinks.length > 0 && (
+              <div className="flex items-start gap-3 pt-2 border-t border-gray-100">
+                <span className="text-lg mt-0.5 shrink-0">🍹</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--texto-suave)] mb-0.5">Bebidas</p>
+                  <p className="font-display text-base text-[var(--verde-profundo)] font-semibold leading-snug">{addedDrinks.map(d => d.nombre).join(', ')}</p>
+                </div>
+                <Check size={16} className="text-[var(--verde-main)] shrink-0 mt-1" />
+              </div>
+            )}
           </div>
 
-          {step <= 5 && (
-            <p className="font-accent italic text-lg text-[var(--texto-suave)] mt-8 text-center">
-              {selections.base ? 'Tu bowl tomando forma...' : 'Visualización en tiempo real...'}
-            </p>
-          )}
-          {step === 7 && <p className="font-display italic text-xl text-[var(--verde-main)] mt-8 text-center font-bold">¡Listo para ordenar!</p>}
+          {step === 7 && <p className="font-display italic text-xl text-[var(--verde-main)] mt-8 text-center font-bold">¡Tu bowl está listo para ordenar!</p>}
         </div>
       </div>
     </div>
@@ -1535,6 +1567,13 @@ const BlogView = ({ navigate }) => {
           </p>
         </div>
 
+        {/* Nuestra historia — breve */}
+        <div className="max-w-3xl mx-auto mb-16 text-center">
+          <p className="font-display italic text-xl md:text-2xl text-[var(--verde-profundo)] leading-relaxed">
+            Origen nació en Bogotá con una idea sencilla: <span className="text-[var(--verde-main)]">comer bien no debería ser complicado ni caro.</span> Hoy somos 3 locales, un equipo apasionado y miles de bowls preparados con ingredientes reales, frente a ti, todos los días.
+          </p>
+        </div>
+
         {/* Listado de Posts */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in" style={{ animationDelay: '200ms' }}>
           {posts.map((post) => (
@@ -1548,7 +1587,7 @@ const BlogView = ({ navigate }) => {
                 <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-[10px] font-ui text-[10px] uppercase font-bold text-[var(--verde-main)] tracking-wider shadow-sm">
                   {post.category}
                 </div>
-                <img loading="lazy" src={post.img} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <img loading="lazy" src={post.img} alt={post.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ${post.id === 'equipo-mujeres' ? 'object-top' : ''}`} />
               </div>
               
               {/* Contenido de la Card */}
@@ -1646,7 +1685,7 @@ const BlogView = ({ navigate }) => {
 
                 {/* Imagen Destacada */}
                 <div className="rounded-[24px] overflow-hidden shadow-md mb-10 aspect-video">
-                  <img loading="lazy" src={activePost.img} alt={activePost.title} className="w-full h-full object-cover" />
+                  <img loading="lazy" src={activePost.img} alt={activePost.title} className={`w-full h-full object-cover ${activePost.id === 'equipo-mujeres' ? 'object-top' : ''}`} />
                 </div>
 
                 {/* Párrafos de Lectura Plena */}
@@ -2172,6 +2211,7 @@ export default function App() {
   // Estado Global del Carrito
   const [cart, setCart] = useState([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [saviaOpen, setSaviaOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2316,8 +2356,8 @@ export default function App() {
           --verde-menta: #E8F9F0; --dorado-fuerte: #D4A017; --dorado-suave: #F0C040;
           --crema-calido: #FDF5E0; --fondo-crema: #F1F4EA; --texto-oscuro: #0D1F0F;
           --texto-suave: #4E5C4E; --kraft: #D4A574; --maximo-amber: #F09030;
-          --verde-navbar: #6FA37C;
-          --terracota-quemado: #C96D1D; --terracota-vivo: #E2904A; --terracota-suave: #EFB988;
+          --verde-navbar: #3D6B44;
+          --terracota-quemado: #A88020; --terracota-vivo: #D4A830; --terracota-suave: #E8CB72;
         }
         .font-display { font-family: 'Fraunces', serif; }
         .font-ui { font-family: 'Outfit', sans-serif; }
@@ -2456,7 +2496,7 @@ export default function App() {
       {/* --- RENDERIZADOR PRINCIPAL --- */}
       <main className="relative z-10 flex-grow">
         <AnimatePresence mode="wait">
-          {activeTab === 'inicio' && <motion.div key="inicio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><HomeView navigate={setActiveTab}/></motion.div>}
+          {activeTab === 'inicio' && <motion.div key="inicio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><HomeView navigate={setActiveTab} onOpenSavia={() => setSaviaOpen(true)}/></motion.div>}
           {activeTab === 'menu' && <motion.div key="menu" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><CartaView onAddToCart={handleAddToCart}/></motion.div>}
           {activeTab === 'builder' && <motion.div key="builder" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><BuilderView onAddToCart={handleAddToCart}/></motion.div>}
           {activeTab === 'blog' && <motion.div key="blog" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><BlogView navigate={setActiveTab}/></motion.div>}
@@ -2478,7 +2518,7 @@ export default function App() {
 
       {/* --- SAVIA: IA NATIVA DE RECOMENDACIÓN --- */}
       {/* Se oculta el botón flotante en Builder: ahí la barra inferior "Siguiente" ocupa esa misma esquina en móvil */}
-      <SaviaWidget carta={CARTA} formatPrice={formatPrice} onAddToCart={handleAddToCart} navigate={setActiveTab} hideFab={activeTab === 'builder'} />
+      <SaviaWidget carta={CARTA} formatPrice={formatPrice} onAddToCart={handleAddToCart} navigate={setActiveTab} isOpen={saviaOpen} onClose={() => setSaviaOpen(false)} />
 
       {/* --- GLOBAL FOOTER --- */}
       <Footer navigate={setActiveTab} />
