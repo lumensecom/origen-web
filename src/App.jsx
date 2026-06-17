@@ -225,7 +225,7 @@ const LOCALES = [
 ];
 
 const formatPrice = (price) => `$${price.toLocaleString('es-CO')}`;
-const MAX_CHAT_HISTORY = 8; // mensajes recientes que se envían como contexto a Savia
+
 
 // Variantes de animación reutilizables para revelar secciones al hacer scroll
 const fadeUp = {
@@ -1273,8 +1273,8 @@ const BuilderView = ({ onAddToCart }) => {
                   <div className="grid grid-cols-1 gap-3">
                     {curr?.items.map(item => {
                       const isSelected = selectedProteins.includes(item);
-                      const isLimitReached = proteinMode === 'sencilla' ? selectedProteins.length >= 1 : selectedProteins.length >= 2;
-                      const isDisabled = isLimitReached && !isSelected;
+                      const isLimitReached = selectedProteins.length >= 2;
+                      const isDisabled = proteinMode === 'doble' ? (isLimitReached && !isSelected) : false;
 
                       return (
                         <button 
@@ -1871,8 +1871,6 @@ const CuentaView = ({ onAddToCart }) => {
   const [chatStep, setChatStep] = useState('welcome');
   const [userChoices, setUserChoices] = useState({ goal: '', diet: '', protein: '' });
   const [isTyping, setIsTyping] = useState(false);
-  const [inputVal, setInputVal] = useState('');
-  const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
   const puntos = isAuthenticated ? (profile?.loyalty_points ?? 0) : 0;
@@ -1967,44 +1965,12 @@ const CuentaView = ({ onAddToCart }) => {
       } 
       else if (stepCategory === 'protein') {
         setChatStep('result');
-        const recommendedBowl = calculateRecommendation(updatedChoices);
+        const recommendedBowl = calculateRecommendation(updatedChoices) ?? CARTA[0];
         addMessage('ai', `¡Hecho! He procesado tus metas con nuestro algoritmo de nutrición. El bowl que mejor se adapta a lo que tu cuerpo necesita hoy es:`);
         addMessage('ai', `Te sugiero disfrutar de un espectacular *${recommendedBowl.nombre}*.`, recommendedBowl);
       }
       setIsTyping(false);
     }, 850);
-  };
-
-  const handleFreeTextSend = async () => {
-    if (!inputVal.trim()) return;
-
-    const userMessage = inputVal.trim();
-    // Historial reciente para que Savia recuerde el hilo de la conversación
-    const history = messages.slice(-MAX_CHAT_HISTORY).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }));
-    addMessage('user', userMessage);
-    setInputVal('');
-    setIsTyping(true);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, history }),
-      });
-
-      const data = await res.json();
-      const reply = data.reply ?? 'Lo siento, no pude procesar tu consulta. Intenta de nuevo.';
-
-      const bowlMatch = reply.match(/\[BOWL:(\w+)\]/);
-      const cleanReply = reply.replace(/\[BOWL:\w+\]/, '').trim();
-      const recommendedBowl = bowlMatch ? CARTA.find(b => b.id === bowlMatch[1]) : null;
-
-      addMessage('ai', cleanReply, recommendedBowl);
-    } catch {
-      addMessage('ai', 'Sin conexión al asesor nutricional. Revisa tu conexión e intenta de nuevo.');
-    } finally {
-      setIsTyping(false);
-    }
   };
 
   if (!isAuthenticated) {
@@ -2194,24 +2160,6 @@ const CuentaView = ({ onAddToCart }) => {
                 )}
 
               </AnimatePresence>
-            </div>
-
-            {/* Input de texto libre */}
-            <div className="mt-4 flex gap-2 bg-white/5 p-2 rounded-[16px] border border-white/10 focus-within:border-[var(--verde-main)] transition-colors relative z-10 shrink-0">
-              <input 
-                type="text" 
-                value={inputVal}
-                onChange={(e) => setInputVal(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleFreeTextSend()}
-                placeholder="Escribe tu antojo o meta (ej: sin gluten, ganar masa...)" 
-                className="flex-1 bg-transparent border-none px-4 font-ui text-base sm:text-sm focus:outline-none text-white placeholder-white/40"
-              />
-              <button 
-                onClick={handleFreeTextSend}
-                className="w-10 h-10 bg-[var(--verde-main)] text-white rounded-[12px] flex items-center justify-center hover:bg-[var(--verde-vivo)] transition-all"
-              >
-                <ArrowRight size={16}/>
-              </button>
             </div>
 
           </div>
