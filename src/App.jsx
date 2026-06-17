@@ -29,7 +29,7 @@ const COLORS = {
   maximoAmber: '#F09030'
 };
 
-const HERO_IMAGE = "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635341/9O4A5606_x9ut96.jpg";
+const HERO_IMAGE = "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781670895/A_hand_with_warm_natural_202606162334_lkkmhb.jpg";
 
 const REAL_MEDIA = {
   platoMano: "https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635341/9O4A5606_x9ut96.jpg",
