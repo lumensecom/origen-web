@@ -140,7 +140,7 @@ export default function SaviaWidget({ carta, formatPrice, onAddToCart, navigate,
                     exit={{ opacity: 0, x: -16 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <p className="font-ui text-[11px] font-bold uppercase tracking-wider text-[var(--verde-main)] mb-2">
+                    <p className="font-ui text-[11px] font-bold uppercase tracking-wider text-[var(--terracota-vivo)] mb-2">
                       Pregunta {step + 1} de {SAVIA_QUESTIONS.length}
                     </p>
                     <h3 className="font-display italic text-2xl text-[var(--verde-profundo)] mb-6 leading-snug">

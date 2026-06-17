@@ -151,9 +151,9 @@ const CARTA = [
     nombre: 'ORIGEN PARAÍSO', 
     proteina: 'Pechuga', 
     precio: 26900, 
-    imagen: null, 
-    badge: { texto: 'Frutal', color: '#D47A40', bg: '#F8F0E8' }, 
-    ingredientes: ['Cogollo', 'Zanahoria', 'Mango', 'Manzana', 'Aguacate', 'Kiwi', 'Fresa', 'Pechuga', 'Maní', 'Salsa'], 
+    imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781728305/WhatsApp_Image_2026-06-16_at_22.10.09_wni0gx.jpg',
+    badge: { texto: 'Frutal', color: '#D47A40', bg: '#F8F0E8' },
+    ingredientes: ['Cogollo', 'Zanahoria', 'Mango', 'Manzana', 'Aguacate', 'Kiwi', 'Fresa', 'Pechuga', 'Maní', 'Salsa'],
     tag: 'Proteína Animal',
     dietary: ['Raw']
   },
@@ -993,7 +993,7 @@ const CartaView = ({ onAddToCart }) => {
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-5">
             <span className="text-base">🔥</span>
-            <h2 className="font-ui font-bold text-xs uppercase tracking-[0.2em] text-[var(--verde-profundo)]">Platos Virales de la Semana</h2>
+            <h2 className="font-ui font-bold text-xs uppercase tracking-[0.2em] text-[var(--terracota-quemado)]">Platos Virales de la Semana</h2>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-6 px-6">
@@ -1024,7 +1024,7 @@ const CartaView = ({ onAddToCart }) => {
             <button
               key={i}
               onClick={() => setFiltroActivo(t)}
-              className={`whitespace-nowrap px-6 py-2.5 rounded-[12px] font-ui text-sm font-semibold transition-all duration-300 ${filtroActivo === t ? 'bg-[var(--verde-main)] text-white shadow-md' : 'bg-white border border-[#E8F0E8] text-[#2D3A2D] hover:bg-[#F5F5F5]'}`}
+              className={`whitespace-nowrap px-6 py-2.5 rounded-[12px] font-ui text-sm font-semibold transition-all duration-300 ${filtroActivo === t ? 'bg-[var(--terracota-vivo)] text-[var(--verde-profundo)] shadow-md' : 'bg-white border border-[#E8F0E8] text-[#2D3A2D] hover:bg-[#F5F5F5]'}`}
             >
               {t}
             </button>
@@ -1411,7 +1411,7 @@ const BuilderView = ({ onAddToCart }) => {
                 className={`font-ui font-semibold text-sm text-[var(--verde-palido)] hover:text-white transition-colors ${step === 1 ? 'opacity-0 pointer-events-none' : ''}`}
               >← Volver</button>
               <div className="flex gap-2">
-                {[1,2,3,4,5,6].map(i => <div key={i} className={`h-2 rounded-[4px] transition-all duration-300 ${i === step ? 'w-8 bg-[var(--verde-main)]' : 'w-2 bg-white/20'}`} />)}
+                {[1,2,3,4,5,6].map(i => <div key={i} className={`h-2 rounded-[4px] transition-all duration-300 ${i === step ? 'w-8 bg-[var(--terracota-vivo)]' : 'w-2 bg-white/20'}`} />)}
               </div>
               <Button
                 onClick={() => isStepCompleted && setStep(s => Math.min(7, s + 1))}
@@ -1560,7 +1560,7 @@ const BlogView = ({ navigate }) => {
         
         {/* Cabecera Editorial */}
         <div className="text-center mb-16 animate-in">
-          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.25em] uppercase text-xs mb-4 inline-block">Historias de Origen</span>
+          <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.25em] uppercase text-xs mb-4 inline-block">Historias de Origen</span>
           <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Nuestro Blog</h1>
           <p className="font-ui text-lg text-[var(--texto-suave)] max-w-xl mx-auto">
             Explora las crónicas de los ingredientes, las vidas de nuestros campesinos aliados y el porqué detrás de una nutrición real y honesta.
@@ -1603,7 +1603,7 @@ const BlogView = ({ navigate }) => {
                 <p className="font-ui text-sm text-[var(--texto-suave)] leading-relaxed line-clamp-3 mb-6">
                   {post.subtitle}
                 </p>
-                <span className="font-ui text-[var(--verde-main)] font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all mt-auto pt-4 border-t border-gray-50">
+                <span className="font-ui text-[var(--terracota-quemado)] font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all mt-auto pt-4 border-t border-gray-50">
                   Leer historia completa <ArrowRight size={16}/>
                 </span>
               </div>
@@ -1745,7 +1745,7 @@ const UbicacionesView = () => {
         
         {/* Editorial Header */}
         <div className="text-center mb-16 animate-in">
-          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestros Espacios</span>
+          <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestros Espacios</span>
           <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Ubicaciones</h1>
           <p className="font-ui text-lg text-[var(--texto-suave)] max-w-lg mx-auto">Encuéntranos en los puntos estratégicos de Bogotá y vive la experiencia real en persona.</p>
         </div>
@@ -1817,7 +1817,7 @@ const UbicacionesView = () => {
               
               <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
                 <div>
-                  <span className="inline-flex items-center gap-1.5 bg-[var(--verde-menta)] text-[var(--verde-main)] px-3 py-1 rounded-full text-xs font-bold font-ui uppercase tracking-wide">
+                  <span className="inline-flex items-center gap-1.5 bg-[var(--terracota-suave)]/30 text-[var(--terracota-quemado)] px-3 py-1 rounded-full text-xs font-bold font-ui uppercase tracking-wide">
                     <Clock size={12}/> Abierto Hoy
                   </span>
                   <h2 className="font-display font-bold text-3xl text-[var(--verde-profundo)] mt-2">{localSeleccionado.nombre}</h2>
@@ -2022,7 +2022,7 @@ const CuentaView = ({ onAddToCart }) => {
               {miembroDesde && (
                 <p className="font-ui text-xs text-[var(--texto-suave)] mb-2">{miembroDesde}</p>
               )}
-              <div className="inline-flex items-center gap-2 bg-[var(--dorado-suave)]/20 text-[var(--dorado-fuerte)] px-4 py-1.5 rounded-[8px] font-ui font-bold text-sm">
+              <div className="inline-flex items-center gap-2 bg-[var(--terracota-suave)]/30 text-[var(--terracota-quemado)] px-4 py-1.5 rounded-[8px] font-ui font-bold text-sm">
                 <Award size={16}/> {puntos} Puntos Origen
               </div>
             </div>
@@ -2041,7 +2041,7 @@ const CuentaView = ({ onAddToCart }) => {
             {/* Cabecera del Chat */}
             <div className="relative z-10 flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[var(--verde-main)] animate-pulse"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[var(--terracota-vivo)] animate-pulse"></span>
                 <p className="font-ui text-xs font-bold uppercase tracking-widest text-[var(--verde-palido)]">Diagnóstico Nutricional Experto</p>
               </div>
               <button 
@@ -2150,9 +2150,9 @@ const CuentaView = ({ onAddToCart }) => {
                 {chatStep === 'result' && !isTyping && (
                   <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="p-3 bg-white/5 rounded-[16px] flex items-center justify-between">
                     <span className="text-xs text-[var(--verde-palido)] font-ui">¿Quieres realizar otro diagnóstico?</span>
-                    <button 
+                    <button
                       onClick={handleReset}
-                      className="bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] font-ui font-bold text-xs px-4 py-2 rounded-[12px] transition-all flex items-center gap-1.5 shadow-md"
+                      className="bg-[var(--terracota-vivo)] text-[var(--verde-profundo)] hover:bg-[var(--terracota-suave)] font-ui font-bold text-xs px-4 py-2 rounded-[12px] transition-all flex items-center gap-1.5 shadow-md"
                     >
                       Nuevo Diagnóstico <ArrowRight size={14}/>
                     </button>
