@@ -184,7 +184,7 @@ const CARTA = [
     nombre: 'ORIGEN VITAL',
     proteina: 'Tofu',
     precio: 22900,
-    imagen: null,
+    imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781824629/ORIGEN_TOFU_fuukpp.png',
     badge: { texto: '100% Plant', color: '#1EAD61', bg: '#E8F5E8' },
     ingredientes: ['Quinua', 'Zuquini', 'Zanahoria', 'Repollo encurtido', 'Mango', 'Champiñones', 'Tofu', 'Semillas de girasol'],
     tag: 'Vegetariano',
