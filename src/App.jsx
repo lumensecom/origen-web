@@ -770,7 +770,7 @@ const HomeView = ({ navigate, onOpenSavia }) => {
           { to: 3, suffix: '', label: 'Locales en Bogotá' },
         ].map((stat, idx) => (
           <motion.div key={idx} variants={fadeUp} className="text-center">
-            <p className="font-display font-bold text-3xl md:text-4xl text-[var(--verde-main)] mb-1">
+            <p className="font-display font-bold text-3xl md:text-4xl text-[var(--terracota-quemado)] mb-1">
               <StatCounter to={stat.to} suffix={stat.suffix} />
             </p>
             <p className="font-ui text-[11px] md:text-xs uppercase tracking-wider text-[var(--texto-suave)] font-semibold">{stat.label}</p>
@@ -816,8 +816,8 @@ const HomeView = ({ navigate, onOpenSavia }) => {
           variants={staggerContainer}
           className="flex flex-col justify-center order-1 lg:order-2"
         >
-           <motion.span variants={fadeUp} className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-6 flex items-center gap-2">
-             <span className="w-6 h-px bg-[var(--verde-main)]"></span> Nuestra Esencia
+           <motion.span variants={fadeUp} className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.2em] uppercase text-xs mb-6 flex items-center gap-2">
+             <span className="w-6 h-px bg-[var(--terracota-quemado)]"></span> Nuestra Esencia
            </motion.span>
            <motion.h2 variants={fadeUp} className="font-display italic text-5xl md:text-6xl text-[var(--verde-profundo)] mb-8 leading-tight">
              Comer bien<br/>nunca fue<br/>tan fácil.
@@ -834,7 +834,7 @@ const HomeView = ({ navigate, onOpenSavia }) => {
       {/* Así es Origen — fotos y videos reales del local, equipo y proceso */}
       <div className="max-w-[1400px] mx-auto px-6 py-20 md:py-24 relative z-20">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={fadeUp} className="text-center mb-12">
-          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Así es Origen</span>
+          <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Así es Origen</span>
           <h2 className="font-display italic text-4xl md:text-5xl text-[var(--verde-profundo)]">Real, fresco y hecho<br className="hidden md:block"/> frente a ti.</h2>
         </motion.div>
 
@@ -872,7 +872,7 @@ const HomeView = ({ navigate, onOpenSavia }) => {
 
         {/* Nuestras instalaciones */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={fadeUp} className="text-center mt-16 mb-8">
-          <span className="font-ui text-[var(--verde-main)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestras Instalaciones</span>
+          <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestras Instalaciones</span>
           <h3 className="font-display italic text-2xl md:text-3xl text-[var(--verde-profundo)]">Un espacio pensado para ti.</h3>
         </motion.div>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={fadeUp} className="relative rounded-[24px] overflow-hidden shadow-md aspect-[16/7] group">
@@ -1442,7 +1442,7 @@ const BuilderView = ({ onAddToCart }) => {
               <motion.p key={totalPrice} initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="font-display font-bold text-3xl text-[var(--verde-profundo)]">{formatPrice(totalPrice)}</motion.p>
             </div>
             {isMaximo && <div className="bg-[var(--maximo-amber)]/10 text-[var(--maximo-amber)] px-3 py-1.5 rounded-[10px] text-xs font-bold">⚡ MÁXIMO</div>}
-            {!isMaximo && selections.proteina && <div className="bg-[var(--verde-menta)] text-[var(--verde-main)] px-3 py-1.5 rounded-[10px] text-xs font-bold">Porción sencilla</div>}
+            {!isMaximo && selections.proteina && <div className="bg-[var(--terracota-suave)]/30 text-[var(--terracota-quemado)] px-3 py-1.5 rounded-[10px] text-xs font-bold">Porción sencilla</div>}
           </div>
 
           {/* Preview de ingredientes — minimalista con emojis */}
@@ -1489,7 +1489,7 @@ const BuilderView = ({ onAddToCart }) => {
             )}
           </div>
 
-          {step === 7 && <p className="font-display italic text-xl text-[var(--verde-main)] mt-8 text-center font-bold">¡Tu bowl está listo para ordenar!</p>}
+          {step === 7 && <p className="font-display italic text-xl text-[var(--terracota-quemado)] mt-8 text-center font-bold">¡Tu bowl está listo para ordenar!</p>}
         </div>
       </div>
     </div>
@@ -1570,7 +1570,7 @@ const BlogView = ({ navigate }) => {
         {/* Nuestra historia — breve */}
         <div className="max-w-3xl mx-auto mb-16 text-center">
           <p className="font-display italic text-xl md:text-2xl text-[var(--verde-profundo)] leading-relaxed">
-            Origen nació en Bogotá con una idea sencilla: <span className="text-[var(--verde-main)]">comer bien no debería ser complicado ni caro.</span> Hoy somos 3 locales, un equipo apasionado y miles de bowls preparados con ingredientes reales, frente a ti, todos los días.
+            Origen nació en Bogotá con una idea sencilla: <span className="text-[var(--terracota-quemado)]">comer bien no debería ser complicado ni caro.</span> Hoy somos 3 locales, un equipo apasionado y miles de bowls preparados con ingredientes reales, frente a ti, todos los días.
           </p>
         </div>
 
@@ -1615,7 +1615,7 @@ const BlogView = ({ navigate }) => {
         <div className="mt-24 bg-[var(--verde-profundo)] rounded-[32px] p-10 md:p-16 text-center text-white relative overflow-hidden shadow-xl border border-[var(--verde-bosque)]">
            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[var(--verde-main)] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
            <div className="relative z-10 max-w-2xl mx-auto">
-             <span className="font-ui text-[var(--verde-brillante)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">¿Dudas sobre tu dieta?</span>
+             <span className="font-ui text-[var(--terracota-suave)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">¿Dudas sobre tu dieta?</span>
              <h2 className="font-display italic text-4xl md:text-5xl mb-6">Tu nutrición es única y personal.</h2>
              <p className="font-ui text-[var(--verde-palido)] mb-8 leading-relaxed text-base md:text-lg">
                Pregúntale a Savia, nuestra asesora nutricional con IA, o agenda un diagnóstico con nuestro equipo para encontrar tu balance idóneo.
@@ -2079,7 +2079,7 @@ const CuentaView = ({ onAddToCart }) => {
                         </div>
                         <div>
                           <h4 className="font-display font-bold text-lg leading-tight">{m.recommendation.nombre}</h4>
-                          <span className="text-xs bg-[var(--verde-menta)] text-[var(--verde-main)] px-2 py-0.5 rounded-full font-bold font-ui inline-block mt-1">Sugerido</span>
+                          <span className="text-xs bg-[var(--terracota-suave)]/30 text-[var(--terracota-quemado)] px-2 py-0.5 rounded-full font-bold font-ui inline-block mt-1">Sugerido</span>
                         </div>
                       </div>
                       <p className="text-xs text-[var(--texto-suave)] leading-relaxed font-ui">Con proteína de {m.recommendation.proteina} fresca, acompañado de ingredientes premium locales.</p>
@@ -2325,7 +2325,7 @@ export default function App() {
           --verde-menta: #E8F9F0; --dorado-fuerte: #D4A017; --dorado-suave: #F0C040;
           --crema-calido: #FDF5E0; --fondo-crema: #F1F4EA; --texto-oscuro: #0D1F0F;
           --texto-suave: #4E5C4E; --kraft: #D4A574; --maximo-amber: #F09030;
-          --verde-navbar: #3EA055;
+          --verde-navbar: #3A7A50;
           --terracota-quemado: #B89010; --terracota-vivo: #EEC018; --terracota-suave: #F5D84A;
         }
         .font-display { font-family: 'Fraunces', serif; }
@@ -2413,17 +2413,17 @@ export default function App() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 180 }}
-              className="fixed inset-y-0 left-0 w-full max-w-xs sm:max-w-md bg-[#05190C] border-r border-white/10 z-[160] p-8 flex flex-col justify-between shadow-2xl"
+              className="fixed inset-y-0 left-0 w-full max-w-xs sm:max-w-md bg-[#1C2E22] border-r border-white/10 z-[160] p-8 flex flex-col justify-between shadow-2xl"
             >
               <div>
                 <div className="flex justify-between items-center pb-8 border-b border-white/10">
                   <div className="flex flex-col">
                     <span className="font-logo text-xl text-white tracking-wide">ORIGEN</span>
-                    <span className="font-ui text-[8px] text-[var(--verde-main)] uppercase tracking-[0.2em] font-bold">Navegación</span>
+                    <span className="font-ui text-[8px] text-[var(--terracota-vivo)] uppercase tracking-[0.2em] font-bold">Navegación</span>
                   </div>
                   <button 
-                    onClick={() => setIsMobileMenuOpen(false)} 
-                    className="text-white hover:text-[var(--verde-main)] bg-white/10 p-2.5 rounded-full transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-white hover:text-[var(--terracota-vivo)] bg-white/10 p-2.5 rounded-full transition-colors"
                   >
                     <X size={20} />
                   </button>
@@ -2436,10 +2436,10 @@ export default function App() {
                       onClick={() => { setActiveTab(link.id); setIsMobileMenuOpen(false); }}
                       className="text-left font-display italic text-3xl sm:text-4xl transition-all hover:translate-x-2 duration-300 flex items-center justify-between group"
                     >
-                      <span className={activeTab === link.id ? 'text-[var(--verde-main)]' : 'text-white group-hover:text-[var(--verde-palido)]'}>
+                      <span className={activeTab === link.id ? 'text-[var(--terracota-vivo)]' : 'text-white group-hover:text-[var(--verde-palido)]'}>
                         {link.label}
                       </span>
-                      <ArrowRight size={20} className="text-white/40 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 group-hover:text-[var(--verde-main)] transition-all" />
+                      <ArrowRight size={20} className="text-white/40 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 group-hover:text-[var(--terracota-vivo)] transition-all" />
                     </button>
                   ))}
                 </div>
@@ -2447,10 +2447,10 @@ export default function App() {
 
               <div className="border-t border-white/10 pt-8 flex flex-col gap-6">
                 <div className="flex gap-4">
-                  <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--verde-main)] hover:text-white transition-colors text-white">
+                  <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--terracota-vivo)] hover:text-[var(--verde-profundo)] transition-colors text-white">
                     <Instagram size={18}/>
                   </button>
-                  <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--verde-main)] hover:text-white transition-colors text-white">
+                  <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--terracota-vivo)] hover:text-[var(--verde-profundo)] transition-colors text-white">
                     <Facebook size={18}/>
                   </button>
                 </div>
