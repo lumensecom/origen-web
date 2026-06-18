@@ -50,11 +50,11 @@ const REAL_MEDIA = {
 };
 
 const INGREDIENTE_COLORES = {
-  'Arroz Blanco': '#F5F0E8', 'Arroz Integral': '#C8A87A', 'Quinoa': '#D4B896', 'Mix Asiático': '#E8D4B0',
+  'Arroz Blanco': '#F5F0E8', 'Arroz Integral': '#C8A87A', 'Quinua': '#D4B896', 'Mix Asiático': '#E8D4B0',
   'Zuquini': '#7DC67E', 'Pepino': '#A8D87A', 'Tomate Cherry': '#E8584A', 'Zanahoria': '#F08030', 'Repollo Encurtido': '#C870A8', 'Cebolla Encurtida': '#E0A0C8', 'Berenjena': '#6040A0', 'Brócoli': '#40A040',
-  'Maíz': '#FFD040', 'Mango': '#F0A030', 'Manzana': '#E87080', 'Parmesano': '#F0E0A0', 'Aguacate': '#80C060', 'Jalapeños': '#40A040', 'Lenteja Crocante': '#C87820', 'Garbanzos': '#D4A050',
+  'Maíz': '#FFD040', 'Mango': '#F0A030', 'Manzana': '#E87080', 'Queso parmesano': '#F0E0A0', 'Aguacate': '#80C060', 'Jalapeños': '#40A040', 'Lenteja Crocante': '#C87820', 'Garbanzo Crocante': '#D4A050',
   'Pechuga de Pollo': '#E0A060', 'Huevo Cocido': '#F8D870', 'Tofu': '#F0E8D0', 'Carne': '#8B4020', 'Lomo de Cerdo': '#A05030', 'Máximo (Doble)': '#E0A060',
-  'Pesto Natural': '#3DB870', 'Yogurt de Casa': '#F8F8F8', 'Mango Picante': '#F08030', 'Dulce Balance': '#F8D040', 'Vino Mango': '#8040A0'
+  'Pesto Natural': '#3DB870', 'Yogurt de Casa': '#F8F8F8', 'Mango de Casa': '#F08030', 'Fuego Picante': '#E04020', 'Dulce Balance': '#F8D040', 'Vino Mango': '#8040A0'
 };
 
 const CARTA = [
@@ -65,7 +65,7 @@ const CARTA = [
     precio: 44900, 
     imagen: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400&h=400', 
     badge: { texto: 'Premium', color: '#C9A227', bg: '#F0E8D8' }, 
-    ingredientes: ['Arroz blanco', 'Repollo', 'Aguacate', 'Pepino', 'Mango', 'Garbanzo', 'Salmón', 'Semillas'], 
+    ingredientes: ['Arroz blanco', 'Repollo', 'Aguacate', 'Pepino', 'Mango', 'Garbanzo', 'Salmón', 'Semillas de calabaza'],
     tag: 'Mariscos',
     dietary: ['Gluten-Free', 'High-Protein']
   },
@@ -75,8 +75,8 @@ const CARTA = [
     proteina: 'Camarón', 
     precio: 39900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_CAMARON_errnem.webp', 
-    badge: { texto: 'Plant-Based', color: '#1EAD61', bg: '#E8F5E8' }, 
-    ingredientes: ['Mix asiático', 'Berenjena', 'Aguacate', 'Cherry', 'Lenteja', 'Arándanos', 'Camarón', 'Almendras'], 
+    badge: { texto: 'Spicy', color: '#C84020', bg: '#F8EDED' },
+    ingredientes: ['Mix asiático', 'Berenjena', 'Aguacate', 'Cherry', 'Lenteja', 'Arándanos', 'Camarón', 'Almendras'],
     tag: 'Mariscos',
     dietary: ['Raw', 'Gluten-Free']
   },
@@ -87,7 +87,7 @@ const CARTA = [
     precio: 42900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_ATUN_qvtarw.webp', 
     badge: { texto: 'Gluten-Free', color: '#315B7E', bg: '#F0F5F8' }, 
-    ingredientes: ['Mix asiático', 'Pepino', 'Aguacate', 'Queso parmesano', 'Manzana', 'Arándanos', 'Atún', 'Semillas'], 
+    ingredientes: ['Mix asiático', 'Pepino', 'Aguacate', 'Queso parmesano', 'Manzana', 'Arándanos', 'Atún', 'Semillas de girasol'],
     tag: 'Mariscos',
     dietary: ['Gluten-Free', 'High-Protein']
   },
@@ -98,7 +98,7 @@ const CARTA = [
     precio: 40900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_RAIZ_ATUN_puhjsi.webp', 
     badge: { texto: 'Premium', color: '#C9A227', bg: '#F0E8D8' }, 
-    ingredientes: ['Arroz blanco', 'Brócoli', 'Aguacate', 'Zanahoria', 'Champiñones', 'Mango', 'Atún yogurt', 'Almendras'], 
+    ingredientes: ['Arroz blanco', 'Brócoli', 'Aguacate', 'Zanahoria', 'Champiñones', 'Mango', 'Atún en yogurt', 'Almendras'],
     tag: 'Mariscos',
     dietary: ['High-Protein']
   },
@@ -109,7 +109,7 @@ const CARTA = [
     precio: 26900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781820485/5_ORIGEN_AIRE_jlcw2w.webp',
     badge: { texto: 'Favorito', color: '#1EAD61', bg: '#E8F5E8' }, 
-    ingredientes: ['Arroz integral', 'Pepino', 'Zuquini', 'Manzana', 'Arándanos', 'Garbanzo', 'Pollo', 'Semillas'], 
+    ingredientes: ['Arroz integral', 'Pepino', 'Zuquini', 'Manzana', 'Arándanos', 'Garbanzo', 'Pechuga de pollo', 'Semillas de calabaza'],
     tag: 'Proteína Animal',
     dietary: ['Gluten-Free', 'High-Protein']
   },
@@ -120,7 +120,7 @@ const CARTA = [
     precio: 28900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781820466/7_ORIGEN_BRASA_k3bjhr.webp',
     badge: { texto: 'Grill', color: '#2D3A2D', bg: '#F5F5F5' }, 
-    ingredientes: ['Arroz blanco', 'Zanahoria', 'Zuquini', 'Cherry', 'Champiñones', 'Parmesano', 'Carne', 'Semillas'], 
+    ingredientes: ['Arroz blanco', 'Zanahoria', 'Zuquini', 'Cherry', 'Champiñones', 'Parmesano', 'Carne', 'Semillas de calabaza'],
     tag: 'Proteína Animal',
     dietary: ['High-Protein']
   },
@@ -130,8 +130,8 @@ const CARTA = [
     proteina: 'Lomo Miel Mostaza', 
     precio: 28900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_LOMO_zqrfqh.webp', 
-    badge: { texto: 'Raw', color: '#D47A40', bg: '#F8F0E8' }, 
-    ingredientes: ['Arroz blanco', 'Pepino', 'Zanahoria', 'Repollo encurtido', 'Maíz', 'Aguacate', 'Lomo', 'Almendras'], 
+    badge: { texto: 'Especial', color: '#D47A40', bg: '#F8F0E8' },
+    ingredientes: ['Arroz blanco', 'Pepino', 'Zanahoria', 'Repollo encurtido', 'Maíz', 'Aguacate', 'Lomo de cerdo', 'Almendras'],
     tag: 'Proteína Animal',
     dietary: ['Gluten-Free']
   },
@@ -142,7 +142,7 @@ const CARTA = [
     precio: 27900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_COSECHA_LOMO_cfbzy9.webp', 
     badge: { texto: 'Temporada', color: '#1EAD61', bg: '#E8F5E8' }, 
-    ingredientes: ['Quinua', 'Berenjena', 'Pepino', 'Repollo', 'Garbanzo', 'Mango', 'Lomo cerdo', 'Semillas'], 
+    ingredientes: ['Quinua', 'Berenjena', 'Pepino', 'Repollo encurtido', 'Garbanzo', 'Mango', 'Lomo de cerdo', 'Semillas de calabaza'],
     tag: 'Proteína Animal',
     dietary: ['Gluten-Free']
   },
@@ -157,14 +157,25 @@ const CARTA = [
     tag: 'Proteína Animal',
     dietary: ['Raw']
   },
-  { 
-    id: 'natural', 
+  {
+    id: 'maximo',
+    nombre: 'ORIGEN MÁXIMO',
+    proteina: 'Pechuga',
+    precio: 30900,
+    imagen: null,
+    badge: { texto: 'Premium', color: '#C9A227', bg: '#F0E8D8' },
+    ingredientes: ['Arroz integral', 'Zanahoria', 'Brócoli', 'Pepino', 'Maíz', 'Champiñones', 'Pechuga', 'Semillas de girasol'],
+    tag: 'Especiales',
+    dietary: ['High-Protein', 'Gluten-Free']
+  },
+  {
+    id: 'natural',
     nombre: 'ORIGEN NATURAL', 
     proteina: 'Huevo Cocido', 
     precio: 19900, 
     imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1780285300/ORIGEN_HUEVO_pgzav3.webp', 
     badge: { texto: 'Plant-Based', color: '#1EAD61', bg: '#E8F5E8' }, 
-    ingredientes: ['Mix asiático', 'Cherry', 'Zanahoria', 'Aguacate', 'Arándanos', 'Champiñones', 'Huevos', 'Semillas'], 
+    ingredientes: ['Mix asiático', 'Cherry', 'Zanahoria', 'Aguacate', 'Arándanos', 'Champiñones', 'Huevos cocidos', 'Semillas de girasol'],
     tag: 'Vegetariano',
     dietary: ['Gluten-Free', 'Vegetariano']
   },
@@ -175,7 +186,7 @@ const CARTA = [
     precio: 22900,
     imagen: null,
     badge: { texto: '100% Plant', color: '#1EAD61', bg: '#E8F5E8' },
-    ingredientes: ['Quinua', 'Zuquini', 'Zanahoria', 'Repollo', 'Mango', 'Champiñones', 'Tofu', 'Semillas'],
+    ingredientes: ['Quinua', 'Zuquini', 'Zanahoria', 'Repollo encurtido', 'Mango', 'Champiñones', 'Tofu', 'Semillas de girasol'],
     tag: 'Vegetariano',
     dietary: ['Vegetariano', 'Gluten-Free']
   },
@@ -1172,11 +1183,11 @@ const BuilderView = ({ onAddToCart }) => {
   const totalPrice = basePrice + proteinSurcharge + drinksTotal;
 
   const OPTIONS = {
-    1: { id: 'base', max: 1, icon: '🌾', title: '¿Cuál es tu base?', sub: 'La fundación de tu bowl', items: ['Arroz Blanco', 'Arroz Integral', 'Quinoa', 'Mix Asiático'] },
+    1: { id: 'base', max: 1, icon: '🌾', title: '¿Cuál es tu base?', sub: 'La fundación de tu bowl', items: ['Arroz Blanco', 'Arroz Integral', 'Quinua', 'Mix Asiático'] },
     2: { id: 'frescuras', max: 2, icon: '🥦', title: 'Tus frescuras', sub: 'Elige hasta 2 — frescas y crujientes', items: ['Zuquini', 'Pepino', 'Tomate Cherry', 'Zanahoria', 'Repollo Encurtido', 'Cebolla Encurtida', 'Berenjena', 'Brócoli'] },
-    3: { id: 'sabores', max: 2, icon: '✨', title: 'Sabores especiales', sub: 'Lo que hace único a tu bowl — elige hasta 2', items: ['Maíz', 'Mango', 'Manzana', 'Parmesano', 'Aguacate', 'Jalapeños', 'Lenteja Crocante', 'Garbanzos'] },
+    3: { id: 'sabores', max: 2, icon: '✨', title: 'Sabores especiales', sub: 'Lo que hace único a tu bowl — elige hasta 2', items: ['Maíz', 'Mango', 'Manzana', 'Queso parmesano', 'Aguacate', 'Jalapeños', 'Lenteja Crocante', 'Garbanzo Crocante'] },
     4: { id: 'proteina', max: 1, icon: '⚡', title: 'Tu proteína', sub: 'El corazón de tu bowl', items: ['Pechuga de Pollo', 'Huevo Cocido', 'Tofu', 'Carne', 'Lomo de Cerdo'] },
-    5: { id: 'salsa', max: 1, icon: '💚', title: 'El toque final', sub: 'La salsa que lo une todo', items: ['Pesto Natural', 'Yogurt de Casa', 'Mango Picante', 'Dulce Balance', 'Vino Mango'] }
+    5: { id: 'salsa', max: 1, icon: '💚', title: 'El toque final', sub: 'La salsa que lo une todo', items: ['Pesto Natural', 'Yogurt de Casa', 'Mango de Casa', 'Fuego Picante', 'Dulce Balance', 'Vino Mango'] }
   };
 
   const curr = OPTIONS[step];
