@@ -103,11 +103,11 @@ const CARTA = [
     dietary: ['High-Protein']
   },
   { 
-    id: 'aire', 
+    id: 'aire',
     nombre: 'ORIGEN AIRE', 
     proteina: 'Pechuga de Pollo', 
     precio: 26900, 
-    imagen: null, 
+    imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781820485/5_ORIGEN_AIRE_jlcw2w.webp',
     badge: { texto: 'Favorito', color: '#1EAD61', bg: '#E8F5E8' }, 
     ingredientes: ['Arroz integral', 'Pepino', 'Zuquini', 'Manzana', 'Arándanos', 'Garbanzo', 'Pollo', 'Semillas'], 
     tag: 'Proteína Animal',
@@ -118,7 +118,7 @@ const CARTA = [
     nombre: 'ORIGEN BRASA', 
     proteina: 'Carne', 
     precio: 28900, 
-    imagen: null, 
+    imagen: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781820466/7_ORIGEN_BRASA_k3bjhr.webp',
     badge: { texto: 'Grill', color: '#2D3A2D', bg: '#F5F5F5' }, 
     ingredientes: ['Arroz blanco', 'Zanahoria', 'Zuquini', 'Cherry', 'Champiñones', 'Parmesano', 'Carne', 'Semillas'], 
     tag: 'Proteína Animal',
