@@ -8,9 +8,10 @@
 //   {session && <StaffPortal user={session.user} />}
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabaseClient'
 import PaymentScanner from './PaymentScanner'
 import AdminGeneralPanel from './AdminGeneralPanel'
+import { supabase } from "../lib/supabase";
+
 
 export default function StaffPortal({ user }) {
   const role = user?.app_metadata?.role

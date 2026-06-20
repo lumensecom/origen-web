@@ -3,7 +3,7 @@
 // "Mis pedidos" del cliente y consultas del panel admin_general.
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabase'
 
 // ─── Locales ──────────────────────────────────────────────────────
 export function useLocales() {
