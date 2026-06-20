@@ -77,12 +77,18 @@ export function AuthProvider({ children }) {
     if (user) await loadProfile(user.id)
   }
 
+  const role = profile?.role ?? 'customer'
+
   return (
     <AuthContext.Provider value={{
       user,
       profile,
       loading,
       isAuthenticated: !!user,
+      role,
+      sellerLocation: profile?.seller_location ?? null,
+      isSeller: role === 'seller' || role === 'admin',
+      isAdmin: role === 'admin',
       signIn,
       signUp,
       signOut,
