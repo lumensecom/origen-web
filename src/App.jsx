@@ -9,6 +9,7 @@ import {
 import { useAuth } from './contexts/AuthContext';
 import AuthModal from './components/AuthModal';
 import { createOrder, addLoyaltyPoints, addPointsHistory } from './lib/database';
+import StaffPortal from './components/StaffPortal';
 
 const COLORS = {
   verdeProfundo: '#131E14',   // Profundo oliva oscuro
@@ -1962,6 +1963,13 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Redirección automática si el usuario logueado es parte del Staff
+  useEffect(() => {
+    if (isAuthenticated && (user?.role === 'cajero' || user?.role === 'admin_general')) {
+      setActiveTab('staff');
+    }
+  }, [isAuthenticated, user]);
+
   // Agregar al carrito (Lógica generalizable)
   const handleAddToCart = (product) => {
     setCart(prev => {
@@ -2238,6 +2246,13 @@ export default function App() {
           {activeTab === 'blog' && <motion.div key="blog" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><BlogView navigate={setActiveTab}/></motion.div>}
           {activeTab === 'ubicaciones' && <motion.div key="ubicaciones" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><UbicacionesView/></motion.div>}
           {activeTab === 'cuenta' && <motion.div key="cuenta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><CuentaView onAddToCart={handleAddToCart}/></motion.div>}
+          
+          {/* Panel modular para el Staff */}
+          {activeTab === 'staff' && isAuthenticated && (
+            <motion.div key="staff" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}>
+              <StaffPortal user={user} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
