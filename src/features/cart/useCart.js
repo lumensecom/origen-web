@@ -1,7 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { createOrder, addLoyaltyPoints, addPointsHistory } from '../../lib/database';
+import {
+  createOrder, addLoyaltyPoints, addPointsHistory, getOrderById, getOrderHistory,
+} from '../../lib/database';
+import { supabase } from '../../lib/supabase';
 import { formatPrice } from '../../utils/format';
+
+// ---------------------------------------------------------------------------
+// Persistence — the cart and its checkout state survive reloads and WhatsApp
+// hand-offs via localStorage. Orders are NEVER auto-cleared just because a link
+// was opened; lines only leave the active cart when (A) the customer deletes
+// them or (B) a seller marks the linked order entregado = true (synced below).
+// ---------------------------------------------------------------------------
+const CART_KEY = 'origen.cart.v1';
+const CHECKOUT_KEY = 'origen.checkout.v1';
+const EMPTY_CHECKOUT = { unlocked: false, store: null, masterOrderId: null, masterSig: null };
+
+const loadJSON = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+// Lightweight signature so we can reuse an already-generated QR/order when the
+// underlying cart hasn't changed, instead of spawning a duplicate order row.
+const lineSig = (l) => `${l.id}:${l.quantity}:${l.precio}`;
+const cartSig = (lines) => lines.map(lineSig).join('|');
 
 // Normalises a cart line into the shape we persist in orders.items (jsonb).
 // Builder bowls keep ALL selections so the admin dashboard can analyse
@@ -27,7 +54,21 @@ const buildItemsData = (items) =>
 
 export const useCart = () => {
   const { user, isAuthenticated, refreshProfile } = useAuth();
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => loadJSON(CART_KEY, []));
+  const [checkout, setCheckout] = useState(() => loadJSON(CHECKOUT_KEY, EMPTY_CHECKOUT));
+
+  // Mirror state into refs so the realtime callback always reads fresh values.
+  const checkoutRef = useRef(checkout);
+  useEffect(() => { checkoutRef.current = checkout; }, [checkout]);
+
+  // Persist on every change.
+  useEffect(() => { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* quota */ } }, [cart]);
+  useEffect(() => { try { localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkout)); } catch { /* quota */ } }, [checkout]);
+
+  // When the cart empties, drop the QR-unlocked state so a fresh order starts clean.
+  useEffect(() => {
+    if (cart.length === 0 && checkout.unlocked) setCheckout(EMPTY_CHECKOUT);
+  }, [cart.length, checkout.unlocked]);
 
   const addToCart = (product) => {
     setCart(prev => {
@@ -46,7 +87,8 @@ export const useCart = () => {
       prev.map(item => {
         if (item.id !== product.id) return item;
         const newQty = item.quantity + change;
-        return newQty > 0 ? { ...item, quantity: newQty } : item;
+        // Quantity change invalidates any QR already generated for this line.
+        return newQty > 0 ? { ...item, quantity: newQty, paidOrderId: undefined, paidSig: undefined } : item;
       })
     );
   };
@@ -55,52 +97,154 @@ export const useCart = () => {
     setCart(prev => prev.filter(item => item.id !== product.id));
   };
 
+  const clearCart = () => {
+    setCart([]);
+    setCheckout(EMPTY_CHECKOUT);
+  };
+
   // Replace a cart line in place, keeping its id + quantity. Used by the
   // "Editar pedido" flow so an edited bowl updates the current line instead of
   // appending a new one.
   const replaceItem = (lineId, newProduct) => {
     setCart(prev =>
       prev.map(item =>
-        item.id === lineId ? { ...newProduct, id: lineId, quantity: item.quantity } : item
+        item.id === lineId
+          ? { ...newProduct, id: lineId, quantity: item.quantity, paidOrderId: undefined, paidSig: undefined }
+          : item
       )
     );
   };
 
-  // Persist the current cart as a pending order (entregado = false) and return
-  // the saved row (with its real UUID) so the cart can render a QR for the
-  // customer to pay in store. Requires auth (RLS: user can only insert own).
-  const saveOrderForPickup = async () => {
+  // -------------------------------------------------------------------------
+  // entregado sync — remove paid lines from the active cart.
+  // A seller scanning a QR and flipping entregado = true removes the matching
+  // line(s) here, in realtime and on (re)load.
+  // -------------------------------------------------------------------------
+  const pruneDeliveredOrder = (orderId, entregado) => {
+    if (!entregado || !orderId) return;
+    if (checkoutRef.current.masterOrderId === orderId) {
+      // The whole order was paid at the counter → empty the active cart.
+      setCart([]);
+      setCheckout(EMPTY_CHECKOUT);
+      return;
+    }
+    setCart(prev => prev.filter(item => item.paidOrderId !== orderId));
+  };
+
+  // Realtime: a seller paying a scanned QR flips entregado → prune instantly.
+  useEffect(() => {
+    if (!supabase || !user) return undefined;
+    const channel = supabase
+      .channel(`cart-orders-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
+        (payload) => pruneDeliveredOrder(payload.new?.id, payload.new?.entregado)
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // On (re)load / login, reconcile against orders already delivered while away.
+  useEffect(() => {
+    if (!supabase || !user) return undefined;
+    let active = true;
+    getOrderHistory(user.id)
+      .then(orders => {
+        if (!active) return;
+        orders.filter(o => o.entregado).forEach(o => pruneDeliveredOrder(o.id, true));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // -------------------------------------------------------------------------
+  // QR payment — only reachable once the cart is "unlocked" (pickup + store +
+  // WhatsApp confirmation, gated in the UI). Each call persists a real orders
+  // row (entregado = false) and returns it so the UI can render its QR.
+  // -------------------------------------------------------------------------
+  const requireAuth = () => {
     if (!isAuthenticated || !user) {
       throw new Error('Inicia sesión para generar el QR de tu pedido.');
     }
-    const cartTotal = cart.reduce((acc, item) => acc + item.precio * item.quantity, 0);
+  };
+
+  // Master QR: one order for the entire cart. Reused while the cart is unchanged.
+  const payAll = async () => {
+    requireAuth();
+    const sig = cartSig(cart);
+    if (checkout.masterOrderId && checkout.masterSig === sig) {
+      try {
+        const existing = await getOrderById(checkout.masterOrderId);
+        if (existing && !existing.entregado) return existing;
+      } catch { /* fall through and recreate */ }
+    }
+    const total = cart.reduce((acc, item) => acc + item.precio * item.quantity, 0);
     const order = await createOrder({
       user_id: user.id,
       items: buildItemsData(cart),
-      total_price: cartTotal,
+      total_price: total,
       delivery_type: 'En Local (QR)',
-      store_location: null,
+      store_location: checkout.store?.nombre ?? null,
       delivery_address: null,
       delivery_details: null,
     });
-    setCart([]);
+    setCheckout(prev => ({ ...prev, masterOrderId: order.id, masterSig: sig }));
     return order;
   };
 
+  // Individual QR: one order for a single cart line. Reused while that line is
+  // unchanged, so re-opening its QR doesn't spawn duplicate rows.
+  const payItem = async (line) => {
+    requireAuth();
+    const sig = lineSig(line);
+    if (line.paidOrderId && line.paidSig === sig) {
+      try {
+        const existing = await getOrderById(line.paidOrderId);
+        if (existing && !existing.entregado) return existing;
+      } catch { /* fall through and recreate */ }
+    }
+    const order = await createOrder({
+      user_id: user.id,
+      items: buildItemsData([line]),
+      total_price: line.precio * line.quantity,
+      delivery_type: 'En Local (QR) — Ítem',
+      store_location: checkout.store?.nombre ?? null,
+      delivery_address: null,
+      delivery_details: null,
+    });
+    setCart(prev => prev.map(item =>
+      item.id === line.id ? { ...item, paidOrderId: order.id, paidSig: sig } : item
+    ));
+    return order;
+  };
+
+  // -------------------------------------------------------------------------
+  // WhatsApp confirmation. For pickup this also UNLOCKS in-store QR payment and
+  // keeps the cart intact; for delivery it persists the order. Neither path
+  // clears the cart — only a manual delete or a seller payment does that.
+  // -------------------------------------------------------------------------
   const confirmOrder = async (deliveryData) => {
     const cartTotal = cart.reduce((acc, item) => acc + item.precio * item.quantity, 0);
+    const isPickup = deliveryData.modalidad === 'Recoger en Local';
 
     if (isAuthenticated && user) {
       try {
-        await createOrder({
-          user_id: user.id,
-          items: buildItemsData(cart),
-          total_price: cartTotal,
-          delivery_type: deliveryData.modalidad,
-          store_location: deliveryData.modalidad === 'Recoger en Local' ? deliveryData.store?.nombre : null,
-          delivery_address: deliveryData.modalidad === 'Domicilio' ? deliveryData.direccion : null,
-          delivery_details: deliveryData.detalles ?? null,
-        });
+        // Delivery orders have no in-store QR step, so they're persisted here.
+        // Pickup orders are persisted later when a QR is generated (payAll/payItem).
+        if (!isPickup) {
+          await createOrder({
+            user_id: user.id,
+            items: buildItemsData(cart),
+            total_price: cartTotal,
+            delivery_type: deliveryData.modalidad,
+            store_location: null,
+            delivery_address: deliveryData.direccion ?? null,
+            delivery_details: deliveryData.detalles ?? null,
+          });
+        }
         await addLoyaltyPoints(user.id, 50);
         await addPointsHistory(user.id, 50, `Compra por ${formatPrice(cartTotal)}`);
         await refreshProfile();
@@ -133,7 +277,7 @@ export const useCart = () => {
 
     orderText += `----------------------------------\n`;
     orderText += `📍 *MODALIDAD:* ${deliveryData.modalidad}\n`;
-    if (deliveryData.modalidad === 'Recoger en Local') {
+    if (isPickup) {
       orderText += `🏪 *SEDE SELECCIONADA:* ${deliveryData.store?.nombre}\n`;
       orderText += `📍 *DIRECCIÓN SEDE:* ${deliveryData.store?.direccion}\n`;
     } else {
@@ -145,8 +289,23 @@ export const useCart = () => {
     orderText += `----------------------------------\n¡Preparar al instante con amor real! 🌿`;
 
     window.open(`https://wa.me/573103112799?text=${encodeURIComponent(orderText)}`, '_blank');
-    setCart([]);
+
+    // Pickup: unlock in-store QR payment and keep the cart visible. NEVER clear it.
+    if (isPickup) {
+      setCheckout(prev => ({ ...prev, unlocked: true, store: deliveryData.store ?? null }));
+    }
   };
 
-  return { cart, addToCart, updateQty, removeItem, replaceItem, saveOrderForPickup, confirmOrder };
+  return {
+    cart,
+    checkout,
+    addToCart,
+    updateQty,
+    removeItem,
+    clearCart,
+    replaceItem,
+    confirmOrder,
+    payAll,
+    payItem,
+  };
 };

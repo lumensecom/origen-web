@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowLeft, ArrowRight, Minus, Plus, Trash2, Store, MapPin, Pencil, QrCode, Loader2 } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Minus, Plus, Trash2, Store, MapPin, Pencil, QrCode, Loader2, CheckCircle2 } from 'lucide-react';
 import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import { LOCALES } from '../constants/locations';
 import { formatPrice } from '../utils/format';
@@ -12,16 +12,23 @@ const CheckoutModal = ({
   onClose,
   onConfirmOrder,
   onEditItem,
-  onGenerateQR,
+  onPayAll,
+  onPayItem,
+  onClearCart,
+  qrUnlocked = false,
+  pickupStore = null,
   isAuthenticated,
   onRequireAuth,
 }) => {
   useLockBodyScroll(true);
-  const [step, setStep] = useState('cart'); // cart → deliveryType → pickupStore → deliveryAddress
+  // cart → deliveryType → pickupStore → deliveryAddress. When the order is
+  // QR-unlocked the "cart" step doubles as the pay-in-store zone.
+  const [step, setStep] = useState('cart');
   const [selectedStore, setSelectedStore] = useState(null);
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
-  const [generating, setGenerating] = useState(false);
+  const [payingAll, setPayingAll] = useState(false);
+  const [busyItemId, setBusyItemId] = useState(null);
   const [qrError, setQrError] = useState('');
 
   const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + item.precio * item.quantity, 0), [cart]);
@@ -31,21 +38,42 @@ const CheckoutModal = ({
     else if (step === 'pickupStore' || step === 'deliveryAddress') setStep('deliveryType');
   };
 
-  const handleGenerateQR = async () => {
+  // Pickup confirmation: sends the WhatsApp message AND unlocks in-store QR
+  // payment. We return to the "Tu Pedido" zone (now QR-enabled) instead of
+  // closing — the cart stays so the customer can pay at the counter.
+  const handlePickupConfirm = async () => {
+    await onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore });
+    setStep('cart');
+  };
+
+  const handlePayAll = async () => {
     if (!isAuthenticated) { onRequireAuth?.(); return; }
-    setGenerating(true);
+    setPayingAll(true);
     setQrError('');
     try {
-      await onGenerateQR();
-      // On success App closes this modal and opens the QR modal.
+      await onPayAll();
     } catch (e) {
       setQrError(e?.message || 'No se pudo generar el QR. Intenta de nuevo.');
-      setGenerating(false);
+    } finally {
+      setPayingAll(false);
+    }
+  };
+
+  const handlePayItem = async (item) => {
+    if (!isAuthenticated) { onRequireAuth?.(); return; }
+    setBusyItemId(item.id);
+    setQrError('');
+    try {
+      await onPayItem(item);
+    } catch (e) {
+      setQrError(e?.message || 'No se pudo generar el QR. Intenta de nuevo.');
+    } finally {
+      setBusyItemId(null);
     }
   };
 
   const stepLabel = {
-    cart: 'Tu Pedido',
+    cart: qrUnlocked ? 'Tu Pedido — Pagar' : 'Tu Pedido',
     deliveryType: '¿Cómo lo recibes?',
     pickupStore: 'Elige tu sede',
     deliveryAddress: '¿A dónde lo llevamos?',
@@ -100,6 +128,20 @@ const CheckoutModal = ({
 
             {step === 'cart' && (
               <motion.div key="cart" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-3">
+                {/* QR-unlocked banner: pickup confirmed, pay at the counter */}
+                {qrUnlocked && (
+                  <div className="flex items-start gap-2.5 bg-[var(--verde-menta)] border border-[var(--verde-palido)] rounded-[16px] p-3.5 mb-1">
+                    <CheckCircle2 size={18} className="text-[var(--verde-main)] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)]">Pedido confirmado por WhatsApp</p>
+                      <p className="font-ui text-xs text-[var(--texto-suave)]">
+                        {pickupStore?.nombre ? `Recoges en ${pickupStore.nombre}. ` : ''}
+                        Genera un QR y muéstralo en caja para pagar — todo junto o por plato.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {cart.map((item, idx) => (
                   <div key={`${item.id}-${idx}`} className="p-3 bg-[var(--fondo-crema)] rounded-[18px]">
                     <div className="flex items-center gap-3">
@@ -128,6 +170,18 @@ const CheckoutModal = ({
                       )}
                     </div>
 
+                    {/* Individual QR button — distinct, smaller, next to each dish */}
+                    {qrUnlocked && (
+                      <button
+                        onClick={() => handlePayItem(item)}
+                        disabled={busyItemId === item.id}
+                        className="w-full mt-3 flex items-center justify-center gap-2 bg-white border-2 border-[var(--verde-palido)] text-[var(--verde-profundo)] font-ui font-bold text-xs py-2.5 rounded-[12px] hover:border-[var(--verde-main)] hover:bg-[var(--verde-menta)] transition-all active:scale-[0.98] disabled:opacity-60"
+                      >
+                        {busyItemId === item.id ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />}
+                        {busyItemId === item.id ? 'Generando…' : 'QR de este plato'}
+                      </button>
+                    )}
+
                     {/* Builder bowls: prominent "Editar pedido" ABOVE a small, muted delete */}
                     {item.esBuilder && (
                       <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-black/5">
@@ -147,6 +201,15 @@ const CheckoutModal = ({
                     )}
                   </div>
                 ))}
+
+                {qrUnlocked && (
+                  <button
+                    onClick={onClearCart}
+                    className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-ui font-semibold text-[var(--texto-suave)] hover:text-red-500 transition-colors py-2"
+                  >
+                    <Trash2 size={13} /> Vaciar carrito
+                  </button>
+                )}
               </motion.div>
             )}
 
@@ -158,7 +221,7 @@ const CheckoutModal = ({
                   </div>
                   <div>
                     <p className="font-ui font-bold text-base text-[var(--verde-profundo)]">Recoger en local</p>
-                    <p className="font-ui text-xs text-[var(--texto-suave)]">Listo en minutos — pasa y recoge tu bowl</p>
+                    <p className="font-ui text-xs text-[var(--texto-suave)]">Listo en minutos — paga con QR en caja</p>
                   </div>
                   <ArrowRight size={18} className="ml-auto text-gray-300 group-hover:text-[var(--verde-main)] group-hover:translate-x-1 transition-all" />
                 </button>
@@ -232,25 +295,27 @@ const CheckoutModal = ({
             <span className="font-display font-bold text-2xl text-[var(--verde-profundo)]">{formatPrice(cartTotal)}</span>
           </div>
 
-          {step === 'cart' && (
+          {step === 'cart' && !qrUnlocked && (
+            <button onClick={() => setStep('deliveryType')} className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] flex items-center justify-center gap-2">
+              Continuar al pedido <ArrowRight size={18} />
+            </button>
+          )}
+          {step === 'cart' && qrUnlocked && (
             <div className="space-y-2.5">
-              <button onClick={() => setStep('deliveryType')} className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] flex items-center justify-center gap-2">
-                Continuar al pedido <ArrowRight size={18} />
-              </button>
               <button
-                onClick={handleGenerateQR}
-                disabled={generating}
+                onClick={handlePayAll}
+                disabled={payingAll}
                 className="w-full bg-[var(--verde-profundo)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-bosque)] transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {generating ? <Loader2 size={18} className="animate-spin" /> : <QrCode size={18} />}
-                {generating ? 'Generando…' : 'Generar QR para pagar en local'}
+                {payingAll ? <Loader2 size={18} className="animate-spin" /> : <QrCode size={18} />}
+                {payingAll ? 'Generando…' : 'Pagar todo — QR del pedido'}
               </button>
               {qrError && <p className="font-ui text-xs text-red-500 text-center pt-1">{qrError}</p>}
             </div>
           )}
           {step === 'pickupStore' && (
             <button
-              onClick={() => onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore })}
+              onClick={handlePickupConfirm}
               disabled={!selectedStore}
               className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >

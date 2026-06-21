@@ -66,8 +66,9 @@ origen-web/src/
 │   ├── Blog/index.jsx             # Blog posts + slide-in article reader
 │   ├── Ubicaciones/index.jsx      # Store selector + Google Maps embed
 │   ├── Cuenta/index.jsx           # Auth gate, user profile, Savia chatbot (decision tree)
+│   ├── Historial/index.jsx        # Auth-gated user order history (list + expandable item breakdown)
 │   ├── Seller/index.jsx           # ROLE-GATED, LAZY. Caja: scan QR → order breakdown → Pagar/Editar
-│   └── Admin/index.jsx            # ROLE-GATED, LAZY. Realtime KPIs + SVG charts + filters
+│   └── Admin/index.jsx            # ROLE-GATED, LAZY. Realtime KPIs + SVG charts + filters + order management
 ├── components/
 │   ├── layout/
 │   │   ├── Navbar.jsx             # Fixed top nav (logo centered, hamburger, cart badge)
@@ -84,7 +85,8 @@ origen-web/src/
 │   │   ├── KpiCard.jsx            # Single KPI tile
 │   │   ├── BarChart.jsx           # Hand-built on-brand SVG bar chart (no chart lib)
 │   │   ├── Histogram.jsx          # Peak-hour SVG histogram
-│   │   └── FilterBar.jsx          # Date / hour / location filter controls
+│   │   ├── FilterBar.jsx          # Date / hour / location filter controls
+│   │   └── OrderManager.jsx       # Search order by ID → edit dish quantities / delete order (admin)
 │   ├── seller/
 │   │   └── QRScanner.jsx          # Live camera scanner (html5-qrcode, iOS-safe) + manual fallback
 │   ├── CheckoutModal.jsx          # Checkout: cart→deliveryType→store/address→confirm; QR + Editar/Eliminar
@@ -117,9 +119,25 @@ Tab-based (no React Router). `activeTab` string in App.jsx controls which page r
 
 Editing a **builder bowl** routes into `pages/Builder` preloaded with the bowl's selections, then **saves back to the same order/cart line** instead of creating a new one. App.jsx tracks this via `editingOrder` (with `source`, `orderId`, `bowl`, `returnTab`/seller-resume context). Premade bowls and drinks are not editable in the builder (nothing to edit), so the edit affordance is builder-bowl-only. Customer edits return to checkout; seller edits return to the Caja checkout view (`sellerResumeOrder`).
 
+### Cart Persistence (strict)
+
+`useCart` persists both the cart lines and the checkout state to **localStorage** (`origen.cart.v1`, `origen.checkout.v1`), so the cart survives reloads and the WhatsApp hand-off. Orders are **never** auto-cleared just because a link was opened. A cart line only leaves the active cart when:
+- **(A)** the customer deletes it (per-item trash / "Vaciar carrito"), or
+- **(B)** a seller scans its QR and marks the linked order `entregado = true`.
+
+Condition (B) is synced live: `useCart` subscribes to Supabase realtime on the user's `orders` and prunes the matching line(s) when `entregado` flips (and reconciles already-delivered orders on load via `getOrderHistory`). Each line carries an optional `paidOrderId`; the master order id lives on `checkout.masterOrderId`. Paying the master order empties the cart; paying an individual item order removes just that line.
+
 ### In-Store QR Pay/Pickup Flow
 
-`useCart.saveOrderForPickup()` persists the current cart as a real `orders` row with `entregado = false` and returns the saved row (real UUID). `OrderQRModal` renders a QR encoding that UUID. Requires the customer to be **logged in** (RLS owns-row insert); guests are routed to login. In the Caja, a seller scans the QR → fetches the order → reviews the breakdown → **Pagar** (flips `entregado = true` via RPC) or **Editar pedido**. The Pagar success screen offers **Deshacer** (revert) and **Escanear nuevo QR**.
+QR generation is **gated** behind the pickup sequence and is **not** offered in the initial "Tu Pedido" view. The customer must: pick **Recoger en local** → choose a specific store → click **Confirmar por WhatsApp**. That confirmation (`useCart.confirmOrder`) sends the WhatsApp message, awards points, and sets `checkout.unlocked = true` (persisted) — it does **not** persist an order or clear the cart. The cart then stays visible as a pay-in-store zone exposing two QR paths:
+- **Pagar todo** (master QR) — `useCart.payAll()` persists the whole cart as one `orders` row and shows its QR.
+- **Per-item QR** — `useCart.payItem(line)` persists a single line as its own `orders` row and shows that item's QR.
+
+Both reuse an existing pending order while the cart/line is unchanged (signature check) to avoid duplicate rows; a quantity/edit change invalidates the cached QR. `OrderQRModal` renders the QR encoding the order UUID. Requires the customer to be **logged in** (RLS owns-row insert); guests are routed to login. In the Caja, a seller scans the QR → fetches the order → reviews the breakdown → **Pagar** (flips `entregado = true` via RPC) or **Editar pedido**. Paying removes the corresponding line(s) from the customer's cart in realtime. The Pagar success screen offers **Deshacer** (revert) and **Escanear nuevo QR**.
+
+### User Order History — `pages/Historial`
+
+Auth-gated tab (`historial`) linked from the SideDrawer for logged-in customers. Fetches the user's orders via `getOrderHistory` and lists each with its short code (`#XXXXXXXX`), date, store, delivery status (`entregado`), total, and an expandable item breakdown (builder bowls show base/proteína/frescuras/sabores/salsa). Live-refreshes on the user's `orders` changes.
 
 ### Order Flow → WhatsApp
 
@@ -133,13 +151,15 @@ Role-gated (`isSeller`) and lazy-loaded. Default view is the live camera scanner
 
 Role-gated (`isAdmin`), lazy-loaded, and **realtime** (re-refreshes on any `orders` change via Supabase realtime). KPIs plus hand-built on-brand **SVG charts** (zero chart-lib): sales by location, peak-hour histogram, best/least dishes, best/least ingredients (from builder orders). Interactive date / hour / location filters via `components/admin/FilterBar.jsx` and `useAnalytics`.
 
+**Order management** (`components/admin/OrderManager.jsx`): a search bar resolves an order by ID (short `#XXXXXXXX` code or full UUID) through the `admin_get_order` RPC, then lets the admin edit each dish's quantity (the multiplier), remove a line, **save** (`updateOrder` → items + recomputed `total_price`), or **delete the whole order** (`deleteOrder`, gated by the `orders_delete_admin` RLS policy).
+
 ### Roles & Staff Access
 
 Roles live on `profiles.role` (`customer` | `seller` | `admin`); sellers also have `seller_location`. The SideDrawer surfaces **Caja / Escáner** and **Panel de Ventas** links based on role. **After assigning a role in Supabase, the staff account must re-login** so the profile reloads and the links appear. `seller_location` must match a store name exactly: `CC Salitre Plaza`, `Av. Chile — Local 408B`, or `CC Nuestro Bogotá`. Admins use `role = 'admin'`.
 
 ### Data Access Layer — `lib/database.js`
 
-`getProfile`, `addLoyaltyPoints`, `addPointsHistory`, `createOrder`, `getOrderHistory`, `getOrderById`, `updateOrder`, `setOrderDelivered` (calls the `set_order_delivered` RPC), and `getOrdersForAnalytics({ from, to, location })`.
+`getProfile`, `addLoyaltyPoints`, `addPointsHistory`, `createOrder`, `getOrderHistory`, `getOrderById`, `updateOrder`, `setOrderDelivered` (calls the `set_order_delivered` RPC), `adminSearchOrders` (calls the `admin_get_order` RPC), `deleteOrder` (admin-only), and `getOrdersForAnalytics({ from, to, location })`.
 
 ### Menu Data
 
@@ -172,9 +192,9 @@ Schema in `supabase-setup.sql` (the canonical, idempotent setup script). Three t
 - **orders** — `items` JSON, `status`, and `entregado` (boolean delivery flag, default false; backfilled to true for already-finalized orders).
 - **points_history**.
 
-Functions/RPCs: `handle_new_user()` (seeds `role='customer'`), `add_loyalty_points(user_id, points)` (atomic), `is_admin(uid)`, `is_seller(uid)` (admin also passes), and `set_order_delivered(order_id, value)` (SECURITY DEFINER; only touches `entregado`/`status`). An `orders_seller_guard` trigger restricts a non-admin seller to changing only `entregado`/`status` and attributing their sede.
+Functions/RPCs: `handle_new_user()` (seeds `role='customer'`), `add_loyalty_points(user_id, points)` (atomic), `is_admin(uid)`, `is_seller(uid)` (admin also passes), `set_order_delivered(order_id, value)` (SECURITY DEFINER; only touches `entregado`/`status`), and `admin_get_order(query)` (SECURITY DEFINER, admin-gated; matches an order by full UUID or short id prefix for the admin search). An `orders_seller_guard` trigger restricts a non-admin seller to changing only `entregado`/`status` and attributing their sede; **admins bypass the guard** and may edit any field.
 
-**RLS:** each user reads/writes their own rows; customers may update their own orders only while `entregado = false`; sellers may SELECT all orders and UPDATE (guard-limited) delivery status; admins get global SELECT on orders/profiles/points. `orders` is added to the realtime publication for the live dashboard.
+**RLS:** each user reads/writes their own rows; customers may update their own orders only while `entregado = false`; sellers may SELECT all orders and UPDATE (guard-limited) delivery status; admins get global SELECT on orders/profiles/points, UPDATE on orders (via the seller policy + guard bypass, used to edit quantities), and **DELETE on orders** (`orders_delete_admin` policy). `orders` is added to the realtime publication for the live dashboard and live cart/history sync.
 
 **Migration strategy:** `supabase-setup.sql` is written to be **idempotent and dual-purpose** — safe on both a fresh install and an existing DB (`CREATE ... IF NOT EXISTS`, `CREATE OR REPLACE`, `ADD COLUMN IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `DO $$ ... EXCEPTION` guards). New columns are declared in both `CREATE TABLE` (fresh install) and an `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` block (existing DB no-op). Apply by pasting into Supabase → SQL Editor → Run, then assign roles using the snippets at the bottom of the file.
 

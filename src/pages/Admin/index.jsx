@@ -12,6 +12,7 @@ import KpiCard from '../../components/admin/KpiCard';
 import BarChart from '../../components/admin/BarChart';
 import Histogram from '../../components/admin/Histogram';
 import FilterBar from '../../components/admin/FilterBar';
+import OrderManager from '../../components/admin/OrderManager';
 
 const DEFAULT_FILTERS = { fromDate: '', toDate: '', location: '', hour: '' };
 
@@ -132,6 +133,11 @@ const AdminView = ({ onRequireAuth }) => {
         <p className="font-ui text-xs text-[var(--texto-suave)] text-center mt-8">
           Los ingredientes provienen de los bowls personalizados en «Arma tu bowl».
         </p>
+
+        {/* Order management — search by ID, edit quantities, delete */}
+        <div className="mt-10">
+          <OrderManager />
+        </div>
       </div>
     </div>
   );

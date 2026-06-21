@@ -22,6 +22,7 @@ import BuilderView from './pages/Builder';
 import BlogView from './pages/Blog';
 import UbicacionesView from './pages/Ubicaciones';
 import CuentaView from './pages/Cuenta';
+import HistorialView from './pages/Historial';
 
 // Staff-only modules are code-split so customers never download the QR scanner
 // library or the dashboard charts.
@@ -49,7 +50,7 @@ export default function App() {
 
   useLockBodyScroll(isMobileMenuOpen);
 
-  const { cart, addToCart, updateQty, removeItem, replaceItem, saveOrderForPickup, confirmOrder } = useCart();
+  const { cart, checkout, addToCart, updateQty, removeItem, clearCart, replaceItem, confirmOrder, payAll, payItem } = useCart();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -73,7 +74,8 @@ export default function App() {
 
   const handleConfirmOrder = async (deliveryData) => {
     await confirmOrder(deliveryData);
-    setIsCheckoutOpen(false);
+    // Pickup unlocks in-store QR payment and keeps the cart open; delivery is done.
+    if (deliveryData.modalidad !== 'Recoger en Local') setIsCheckoutOpen(false);
   };
 
   const requireAuth = () => {
@@ -81,10 +83,15 @@ export default function App() {
     navigate('cuenta');
   };
 
-  // Persist the cart and show its QR for in-store payment.
-  const handleGenerateQR = async () => {
-    const order = await saveOrderForPickup();
-    setIsCheckoutOpen(false);
+  // Generate the master QR for the whole order, shown over the open cart.
+  const handlePayAll = async () => {
+    const order = await payAll();
+    setQrOrder(order);
+  };
+
+  // Generate an individual QR for a single dish/item.
+  const handlePayItem = async (item) => {
+    const order = await payItem(item);
     setQrOrder(order);
   };
 
@@ -232,6 +239,11 @@ export default function App() {
               <CuentaView onAddToCart={handleAddToCart} />
             </motion.div>
           )}
+          {activeTab === 'historial' && (
+            <motion.div key="historial" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+              <HistorialView onRequireAuth={() => navigate('cuenta')} onNavigate={navigate} />
+            </motion.div>
+          )}
           {activeTab === 'seller' && (
             <motion.div key="seller" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
               <Suspense fallback={<StaffFallback />}>
@@ -262,7 +274,11 @@ export default function App() {
           onClose={() => setIsCheckoutOpen(false)}
           onConfirmOrder={handleConfirmOrder}
           onEditItem={handleEditCartItem}
-          onGenerateQR={handleGenerateQR}
+          onPayAll={handlePayAll}
+          onPayItem={handlePayItem}
+          onClearCart={clearCart}
+          qrUnlocked={checkout.unlocked}
+          pickupStore={checkout.store}
           isAuthenticated={isAuthenticated}
           onRequireAuth={requireAuth}
         />

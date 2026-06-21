@@ -76,6 +76,28 @@ export async function updateOrder(orderId, patch) {
   return data
 }
 
+// Admin order search. Calls the SECURITY DEFINER `admin_get_order` RPC, which
+// matches by full UUID or the short #XXXXXXXX code (dashes/casing ignored) and
+// is gated to admins server-side.
+export async function adminSearchOrders(query) {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .rpc('admin_get_order', { p_query: query })
+  if (error) throw error
+  return data ?? []
+}
+
+// Delete an order entirely (admin-only; enforced by the orders_delete_admin RLS policy).
+export async function deleteOrder(orderId) {
+  if (!supabase) return null
+  const { error } = await supabase
+    .from('orders')
+    .delete()
+    .eq('id', orderId)
+  if (error) throw error
+  return true
+}
+
 // Flip the delivery status (Pagar / Deshacer). Goes through the SECURITY DEFINER
 // RPC so only seller/admin can change it, and only the `entregado` column moves.
 export async function setOrderDelivered(orderId, value) {

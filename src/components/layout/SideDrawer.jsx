@@ -11,11 +11,12 @@ const NAV_LINKS = [
 ];
 
 const SideDrawer = ({ isOpen, activeTab, onNavigate, onClose }) => {
-  const { isSeller, isAdmin } = useAuth();
+  const { isSeller, isAdmin, isAuthenticated } = useAuth();
 
-  // Staff-only entries appear for seller/admin accounts.
+  // Order history appears for logged-in customers; staff entries for seller/admin.
   const links = [
     ...NAV_LINKS,
+    ...(isAuthenticated ? [{ id: 'historial', label: 'Historial de pedidos' }] : []),
     ...(isSeller ? [{ id: 'seller', label: 'Caja / Escáner', staff: true }] : []),
     ...(isAdmin ? [{ id: 'admin', label: 'Panel de Ventas', staff: true }] : []),
   ];
