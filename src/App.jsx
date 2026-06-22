@@ -158,17 +158,6 @@ const CARTA = [
     dietary: ['Raw']
   },
   {
-    id: 'maximo',
-    nombre: 'ORIGEN MÁXIMO',
-    proteina: 'Pechuga',
-    precio: 30900,
-    imagen: null,
-    badge: { texto: 'Premium', color: '#C9A227', bg: '#F0E8D8' },
-    ingredientes: ['Arroz integral', 'Zanahoria', 'Brócoli', 'Pepino', 'Maíz', 'Champiñones', 'Pechuga', 'Semillas de girasol'],
-    tag: 'Especiales',
-    dietary: ['High-Protein', 'Gluten-Free']
-  },
-  {
     id: 'natural',
     nombre: 'ORIGEN NATURAL', 
     proteina: 'Huevo Cocido', 
@@ -271,6 +260,12 @@ const StatCounter = ({ to, suffix = '', prefix = '', duration = 1200 }) => {
 };
 
 // Hoja decorativa flotante — detalle visual sutil, no interactivo
+const TikTokIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.33 6.33 6.34 6.34 0 006.33 6.33 6.34 6.34 0 006.33-6.33V8.7a8.27 8.27 0 004.84 1.55V6.78a4.85 4.85 0 01-1.07-.09z"/>
+  </svg>
+);
+
 const FloatingLeaf = ({ className = '', size = 28, delay = 0, color = 'var(--verde-palido)' }) => (
   <motion.div
     aria-hidden="true"
@@ -580,10 +575,31 @@ const Footer = ({ navigate }) => {
         <div className="col-span-1 md:col-span-1">
           <h2 className="font-logo text-3xl tracking-wide mb-4">ORIGEN</h2>
           <p className="font-ui text-white/50 text-sm mb-6 max-w-sm">Comida saludable, rápida y de verdad. Preparada al instante para nutrir tu cuerpo sin aburrir tu paladar.</p>
-          <div className="flex gap-4">
-            <button className="w-10 h-10 rounded-[12px] bg-white/10 flex items-center justify-center hover:bg-[var(--verde-main)] hover:text-white transition-colors"><Instagram size={18}/></button>
-            <button className="w-10 h-10 rounded-[12px] bg-white/10 flex items-center justify-center hover:bg-[var(--verde-main)] hover:text-white transition-colors"><Facebook size={18}/></button>
+          <div className="flex gap-4 flex-wrap mb-5">
+            {[
+              { icon: <Instagram size={18}/>, label: 'Instagram', href: 'https://instagram.com' },
+              { icon: <Facebook size={18}/>, label: 'Facebook', href: 'https://facebook.com' },
+              { icon: <TikTokIcon size={18}/>, label: 'TikTok', href: 'https://tiktok.com' },
+            ].map(({ icon, label, href }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5 group">
+                <div className="w-10 h-10 rounded-[12px] bg-white/10 flex items-center justify-center hover:bg-[var(--terracota-vivo)] hover:text-[var(--verde-profundo)] transition-colors text-white">{icon}</div>
+                <span className="font-ui text-[9px] text-white/35 group-hover:text-white/60 transition-colors uppercase tracking-wider">{label}</span>
+              </a>
+            ))}
           </div>
+          <a
+            href="#google-review"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[14px] px-4 py-3 transition-all group w-full max-w-[220px]"
+          >
+            <span className="text-xl">⭐</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-ui text-xs font-bold text-white leading-none mb-0.5">Califícanos en Google</p>
+              <p className="font-ui text-[10px] text-white/35 leading-none">Tu opinión nos ayuda</p>
+            </div>
+            <ArrowRight size={13} className="text-white/25 group-hover:text-white/60 shrink-0 transition-colors" />
+          </a>
         </div>
         
         <div>
@@ -981,7 +997,7 @@ const CartaCard = ({ item, onAddToCart, isBebida }) => {
         {isBebida ? (
           <span className="text-8xl select-none group-hover:scale-110 transition-transform duration-500">{item.emoji}</span>
         ) : item.imagen ? (
-          <img loading="lazy" src={item.imagen} alt={item.nombre} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: 'multiply' }} />
+          <img loading="lazy" src={item.imagen} alt={item.nombre} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${item.id === 'tierra' ? 'scale-[1.35]' : ''}`} style={{ mixBlendMode: 'multiply' }} />
         ) : (
           <div className="w-full h-full bg-[#E8F5E8] flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-500">🥗</div>
         )}
@@ -2490,12 +2506,16 @@ export default function App() {
 
               <div className="border-t border-white/10 pt-8 flex flex-col gap-6">
                 <div className="flex gap-4">
-                  <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--terracota-vivo)] hover:text-[var(--verde-profundo)] transition-colors text-white">
-                    <Instagram size={18}/>
-                  </button>
-                  <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--terracota-vivo)] hover:text-[var(--verde-profundo)] transition-colors text-white">
-                    <Facebook size={18}/>
-                  </button>
+                  {[
+                    { icon: <Instagram size={18}/>, label: 'Instagram' },
+                    { icon: <Facebook size={18}/>, label: 'Facebook' },
+                    { icon: <TikTokIcon size={18}/>, label: 'TikTok' },
+                  ].map(({ icon, label }) => (
+                    <div key={label} className="flex flex-col items-center gap-1.5 group">
+                      <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--terracota-vivo)] hover:text-[var(--verde-profundo)] transition-colors text-white">{icon}</button>
+                      <span className="font-ui text-[9px] text-white/35 group-hover:text-white/60 transition-colors uppercase tracking-wider">{label}</span>
+                    </div>
+                  ))}
                 </div>
                 <div className="font-ui text-xs text-white/50">
                   Bogotá, Colombia • CC Salitre Plaza
