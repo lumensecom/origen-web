@@ -11,12 +11,13 @@ const NAV_LINKS = [
 ];
 
 const SideDrawer = ({ isOpen, activeTab, onNavigate, onClose }) => {
-  const { isSeller, isAdmin, isAuthenticated } = useAuth();
+  const { isSeller, isAdmin, isStaff, isAuthenticated } = useAuth();
 
-  // Order history appears for logged-in customers; staff entries for seller/admin.
+  // Order history is for logged-in customers only (staff have no purchase
+  // history); staff get their Caja / Panel entries instead.
   const links = [
     ...NAV_LINKS,
-    ...(isAuthenticated ? [{ id: 'historial', label: 'Historial de pedidos' }] : []),
+    ...(isAuthenticated && !isStaff ? [{ id: 'historial', label: 'Historial de pedidos' }] : []),
     ...(isSeller ? [{ id: 'seller', label: 'Caja / Escáner', staff: true }] : []),
     ...(isAdmin ? [{ id: 'admin', label: 'Panel de Ventas', staff: true }] : []),
   ];
@@ -80,7 +81,7 @@ const SideDrawer = ({ isOpen, activeTab, onNavigate, onClose }) => {
                 </button>
               </div>
               <div className="font-ui text-xs text-white/50">
-                Bogotá, Colombia • CC Salitre Plaza
+                Bogotá, Colombia • Comida saludable
               </div>
             </div>
           </motion.div>

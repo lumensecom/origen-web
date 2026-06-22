@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ScanLine, Check, RotateCcw, Pencil, CreditCard, MapPin, Clock,
-  Loader2, ShieldAlert, ArrowRight, Hash, Package,
+  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getOrderById, setOrderDelivered } from '../../lib/database';
+import { sellerSearchOrder, sellerListOrders, setOrderDelivered } from '../../lib/database';
 import { formatPrice } from '../../utils/format';
 import QRScanner from '../../components/seller/QRScanner';
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-const extractUuid = (text) => text.match(UUID_RE)?.[0] ?? text;
+// Pull a UUID out of the scanned payload if present; otherwise return the raw
+// text so manual short codes (#XXXXXXXX) flow through. The "#" and dashes are
+// sanitised by sellerSearchOrder / the RPC, so a 400 from `id=eq.#…` is gone.
+const extractCode = (text) => String(text ?? '').match(UUID_RE)?.[0] ?? String(text ?? '').trim();
 
 const GateCard = ({ icon, title, body, action }) => (
   <div className="pt-32 pb-32 min-h-screen w-full">
@@ -27,7 +30,8 @@ const GateCard = ({ icon, title, body, action }) => (
 
 const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }) => {
   const { isAuthenticated, isSeller, sellerLocation } = useAuth();
-  const [view, setView] = useState('scan'); // scan | loading | order | paid
+  const [mode, setMode] = useState('scanner');  // scanner | history
+  const [view, setView] = useState('scan');     // scan | loading | order | paid
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
@@ -36,26 +40,34 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
   // When returning from the builder after a seller edit, resume on the order.
   useEffect(() => {
     if (resumeOrder) {
+      setMode('scanner');
       setOrder(resumeOrder);
       setView('order');
       onConsumeResume?.();
     }
   }, [resumeOrder, onConsumeResume]);
 
-  const loadOrder = async (id) => {
+  // Resolve a scanned/typed code via the sede-scoped RPC (sanitises "#", matches
+  // full UUID or short prefix, and records the scan). Returns the first match.
+  const loadOrder = async (raw) => {
     setError('');
     setView('loading');
     try {
-      const o = await getOrderById(id);
-      setOrder(o);
-      setView('order');
-    } catch {
-      setError('No encontramos un pedido con ese código.');
+      const results = await sellerSearchOrder(extractCode(raw));
+      if (results && results.length > 0) {
+        setOrder(results[0]);
+        setView('order');
+      } else {
+        setError('No encontramos un pedido con ese código en tu sede.');
+        setView('scan');
+      }
+    } catch (e) {
+      setError(e?.message || 'No se pudo buscar el pedido.');
       setView('scan');
     }
   };
 
-  const handleScan = (text) => loadOrder(extractUuid(text));
+  const handleScan = (text) => loadOrder(text);
 
   const handlePagar = async () => {
     setProcessing(true);
@@ -127,12 +139,30 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
       <div className="max-w-md mx-auto px-6">
 
         {/* Header */}
-        <div className="mb-6 text-center">
+        <div className="mb-5 text-center">
           <span className="inline-flex items-center gap-2 bg-[var(--verde-menta)] text-[var(--verde-main)] px-4 py-1.5 rounded-full font-ui text-xs font-bold uppercase tracking-wider mb-3">
             <ScanLine size={14} /> Caja Origen
           </span>
-          <h1 className="font-display italic text-4xl text-[var(--verde-profundo)]">Escáner de pedidos</h1>
+          <h1 className="font-display italic text-4xl text-[var(--verde-profundo)]">
+            {mode === 'scanner' ? 'Escáner de pedidos' : 'Historial de caja'}
+          </h1>
           {sellerLocation && <p className="font-ui text-sm text-[var(--texto-suave)] mt-1">{sellerLocation}</p>}
+        </div>
+
+        {/* Segmented control: Escáner / Historial */}
+        <div className="flex bg-white border border-[var(--verde-palido)] rounded-[16px] p-1 mb-6">
+          <button
+            onClick={() => setMode('scanner')}
+            className={`flex-1 inline-flex items-center justify-center gap-2 font-ui text-sm font-bold py-2.5 rounded-[12px] transition-all ${mode === 'scanner' ? 'bg-[var(--verde-main)] text-white shadow-sm' : 'text-[var(--texto-suave)] hover:text-[var(--verde-profundo)]'}`}
+          >
+            <ScanLine size={16} /> Escáner
+          </button>
+          <button
+            onClick={() => setMode('history')}
+            className={`flex-1 inline-flex items-center justify-center gap-2 font-ui text-sm font-bold py-2.5 rounded-[12px] transition-all ${mode === 'history' ? 'bg-[var(--verde-main)] text-white shadow-sm' : 'text-[var(--texto-suave)] hover:text-[var(--verde-profundo)]'}`}
+          >
+            <History size={16} /> Historial
+          </button>
         </div>
 
         {toast && (
@@ -141,6 +171,9 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
           </motion.div>
         )}
 
+        {mode === 'history' ? (
+          <SellerHistory onOpenOrder={(o) => { setMode('scanner'); setOrder(o); setView('order'); }} />
+        ) : (
         <AnimatePresence mode="wait">
 
           {/* ---------- SCAN ---------- */}
@@ -259,7 +292,137 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
           )}
 
         </AnimatePresence>
+        )}
       </div>
+    </div>
+  );
+};
+
+// --------------------------------------------------------------------------
+// Seller history: only orders this caja has scanned/entered (scanned_at set),
+// scoped server-side to the seller's sede, with status + timeframe filters.
+// --------------------------------------------------------------------------
+const STATUS_FILTERS = [
+  { id: 'all', label: 'Todos' },
+  { id: 'scanned', label: 'Solo escaneados' },
+  { id: 'paid', label: 'Escaneados y pagados' },
+];
+const TIME_FILTERS = [
+  { id: 'today', label: 'Hoy' },
+  { id: '1h', label: 'Última hora' },
+  { id: '3h', label: 'Últimas 3 h' },
+  { id: '12h', label: 'Últimas 12 h' },
+];
+
+const sinceFor = (tf) => {
+  const now = new Date();
+  if (tf === 'today') { const d = new Date(now); d.setHours(0, 0, 0, 0); return d.toISOString(); }
+  const hours = { '1h': 1, '3h': 3, '12h': 12 }[tf] ?? 0;
+  return new Date(now.getTime() - hours * 3600 * 1000).toISOString();
+};
+
+const SellerHistory = ({ onOpenOrder }) => {
+  const [status, setStatus] = useState('all');     // all | scanned | paid (defaults: All)
+  const [timeframe, setTimeframe] = useState('today'); // today | 1h | 3h | 12h (defaults: Today)
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await sellerListOrders({ status, since: sinceFor(timeframe) });
+      setOrders(data);
+    } catch (e) {
+      setError(e?.message || 'No se pudo cargar el historial.');
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [status, timeframe]);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  return (
+    <div className="space-y-4">
+      {/* Status filter */}
+      <div>
+        <p className="font-ui text-[10px] font-bold text-[var(--texto-suave)] uppercase tracking-wider mb-2">Estado</p>
+        <div className="flex flex-wrap gap-2">
+          {STATUS_FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setStatus(f.id)}
+              className={`font-ui text-xs font-bold px-3.5 py-2 rounded-full border transition-all ${status === f.id ? 'bg-[var(--verde-main)] text-white border-[var(--verde-main)]' : 'bg-white text-[var(--texto-suave)] border-[var(--verde-palido)] hover:border-[var(--verde-main)]'}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Timeframe filter */}
+      <div>
+        <p className="font-ui text-[10px] font-bold text-[var(--texto-suave)] uppercase tracking-wider mb-2">Periodo</p>
+        <div className="flex flex-wrap gap-2">
+          {TIME_FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setTimeframe(f.id)}
+              className={`font-ui text-xs font-bold px-3.5 py-2 rounded-full border transition-all ${timeframe === f.id ? 'bg-[var(--verde-profundo)] text-white border-[var(--verde-profundo)]' : 'bg-white text-[var(--texto-suave)] border-[var(--verde-palido)] hover:border-[var(--verde-profundo)]'}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-1">
+        <span className="font-ui text-xs text-[var(--texto-suave)]">{orders.length} pedido(s)</span>
+        <button onClick={fetchOrders} className="inline-flex items-center gap-1.5 font-ui text-xs font-bold text-[var(--verde-profundo)] hover:text-[var(--verde-main)] transition-colors">
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Actualizar
+        </button>
+      </div>
+
+      {error && <p className="font-ui text-sm text-red-500 text-center py-2">{error}</p>}
+
+      {loading && orders.length === 0 ? (
+        <div className="py-16 flex justify-center"><Loader2 size={26} className="animate-spin text-[var(--verde-main)]" /></div>
+      ) : orders.length === 0 ? (
+        <div className="bg-white rounded-[20px] border border-[var(--verde-palido)] p-10 text-center">
+          <Package size={28} className="text-[var(--verde-palido)] mx-auto mb-3" />
+          <p className="font-ui text-sm text-[var(--texto-suave)]">No hay pedidos escaneados en este periodo.</p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {orders.map(o => {
+            const sid = String(o.id).slice(0, 8).toUpperCase();
+            const count = Array.isArray(o.items) ? o.items.reduce((s, it) => s + (it.quantity ?? 1), 0) : 0;
+            const when = o.scanned_at || o.created_at;
+            return (
+              <button
+                key={o.id}
+                onClick={() => onOpenOrder?.(o)}
+                className="w-full text-left bg-white rounded-[18px] border border-[var(--verde-palido)] shadow-sm p-4 flex items-center gap-3 hover:border-[var(--verde-main)] transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-display font-bold text-base text-[var(--verde-profundo)] tracking-wide">#{sid}</span>
+                    {o.entregado
+                      ? <span className="font-ui text-[10px] font-bold bg-[var(--verde-menta)] text-[var(--verde-main)] px-2 py-0.5 rounded-full uppercase tracking-wider">Pagado</span>
+                      : <span className="font-ui text-[10px] font-bold bg-[var(--terracota-suave)]/30 text-[var(--terracota-quemado)] px-2 py-0.5 rounded-full uppercase tracking-wider">Escaneado</span>}
+                  </div>
+                  <p className="font-ui text-[11px] text-[var(--texto-suave)] mt-0.5 inline-flex items-center gap-1">
+                    <Clock size={11} />{when ? new Date(when).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '—'} · {count} ítem(s)
+                  </p>
+                </div>
+                <span className="font-display font-bold text-base text-[var(--verde-main)] flex-shrink-0">{formatPrice(o.total_price)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

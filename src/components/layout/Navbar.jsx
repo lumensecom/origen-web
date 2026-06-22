@@ -1,6 +1,6 @@
 import { MenuIcon, User, ShoppingBag, ArrowRight } from 'lucide-react';
 
-const Navbar = ({ activeTab, scrolled, cart, onNavigate, onOpenMenu, onOpenCart, onOpenAccount }) => {
+const Navbar = ({ activeTab, scrolled, cart, showCart = true, onNavigate, onOpenMenu, onOpenCart, onOpenAccount }) => {
   return (
     <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[var(--verde-navbar)] border-b border-white/15 shadow-sm py-4' : 'bg-transparent py-6 md:py-8'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative h-16">
@@ -39,17 +39,19 @@ const Navbar = ({ activeTab, scrolled, cart, onNavigate, onOpenMenu, onOpenCart,
           >
             <User size={18} />
           </button>
-          <button
-            onClick={onOpenCart}
-            className="relative w-10 h-10 rounded-full bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-suave)] transition-colors flex items-center justify-center text-[var(--verde-profundo)]"
-          >
-            <ShoppingBag size={18} />
-            {cart.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center">
-                {cart.reduce((sum, i) => sum + i.quantity, 0)}
-              </span>
-            )}
-          </button>
+          {showCart && (
+            <button
+              onClick={onOpenCart}
+              className="relative w-10 h-10 rounded-full bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-suave)] transition-colors flex items-center justify-center text-[var(--verde-profundo)]"
+            >
+              <ShoppingBag size={18} />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center">
+                  {cart.reduce((sum, i) => sum + i.quantity, 0)}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </nav>

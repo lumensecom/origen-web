@@ -1,12 +1,26 @@
 import { supabase } from './supabase'
 
+// A customer's profile lives in `clientes`. Staff have no `clientes` row, so we
+// use maybeSingle() and return null instead of throwing for them.
 export async function getProfile(userId) {
   if (!supabase) return null
   const { data, error } = await supabase
-    .from('profiles')
+    .from('clientes')
     .select('*')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+// Staff identity (role + sede). Returns null for customers. `id_local` NULL = admin/global.
+export async function getEmpleado(userId) {
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('empleados')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle()
   if (error) throw error
   return data
 }
@@ -76,13 +90,40 @@ export async function updateOrder(orderId, patch) {
   return data
 }
 
+// Strip the leading "#" of the order code (and surrounding space) before it ever
+// reaches the API. The "#" is display-only; sending it produced 400s when it was
+// passed into an `id=eq.%23…` filter. The RPCs also sanitise server-side.
+const cleanOrderNumber = (query) => String(query ?? '').replace(/#/g, '').trim()
+
 // Admin order search. Calls the SECURITY DEFINER `admin_get_order` RPC, which
-// matches by full UUID or the short #XXXXXXXX code (dashes/casing ignored) and
-// is gated to admins server-side.
+// matches by full UUID or the short #XXXXXXXX code (dashes/casing/"#" ignored)
+// and is gated to admins server-side.
 export async function adminSearchOrders(query) {
   if (!supabase) return []
   const { data, error } = await supabase
-    .rpc('admin_get_order', { p_query: query })
+    .rpc('admin_get_order', { p_query: cleanOrderNumber(query) })
+  if (error) throw error
+  return data ?? []
+}
+
+// Seller order lookup (scan OR manual code). Sanitises the "#" then calls the
+// `seller_get_order` RPC, which matches a full UUID or short prefix, scopes the
+// result to the seller's own sede (location), and records the scan. This is the
+// search path that replaced the malformed `id=eq.#XXXXXXXX` REST query.
+export async function sellerSearchOrder(query) {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .rpc('seller_get_order', { p_query: cleanOrderNumber(query) })
+  if (error) throw error
+  return data ?? []
+}
+
+// Seller order history. Returns only orders this caja has scanned/entered,
+// filtered by status ('all' | 'scanned' | 'paid') and an ISO `since` timestamp.
+export async function sellerListOrders({ status = 'all', since = null } = {}) {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .rpc('seller_list_orders', { p_status: status, p_since: since })
   if (error) throw error
   return data ?? []
 }

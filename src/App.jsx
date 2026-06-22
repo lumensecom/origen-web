@@ -36,7 +36,7 @@ const StaffFallback = () => (
 );
 
 export default function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isSeller, isCajaSeller } = useAuth();
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -56,6 +56,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
+  // A caja (seller) logs in straight into the Ventas/Escáner module. Fires on
+  // the transition to seller (login or refresh-while-logged-in), not on every
+  // render, so they can still navigate elsewhere afterwards if they choose.
+  useEffect(() => {
+    if (isCajaSeller) setActiveTab('seller');
+  }, [isCajaSeller]);
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
@@ -68,6 +75,9 @@ export default function App() {
   };
 
   const handleAddToCart = (product) => {
+    // Staff accounts (seller/admin) have no purchasing flow — the cart/checkout
+    // is hidden for them, so adding to cart is a no-op.
+    if (isSeller) return;
     addToCart(product);
     setIsCheckoutOpen(true);
   };
@@ -189,6 +199,7 @@ export default function App() {
         activeTab={activeTab}
         scrolled={scrolled}
         cart={cart}
+        showCart={!isSeller}
         onNavigate={navigate}
         onOpenMenu={() => setIsMobileMenuOpen(true)}
         onOpenCart={() => setIsCheckoutOpen(true)}
