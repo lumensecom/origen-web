@@ -139,9 +139,17 @@ Both reuse an existing pending order while the cart/line is unchanged (signature
 
 Auth-gated tab (`historial`) linked from the SideDrawer for logged-in customers. Fetches the user's orders via `getOrderHistory` and lists each with its short code (`#XXXXXXXX`), date, store, delivery status (`entregado`), total, and an expandable item breakdown (builder bowls show base/proteína/frescuras/sabores/salsa). Live-refreshes on the user's `orders` changes.
 
+### Multi-Channel Orders (pickup vs online)
+
+Orders are differentiated on a **single `orders` table** by a `channel` discriminator (single-table design keeps RLS, realtime, the seller guard, analytics, and all RPCs on one table):
+- **`pickup`** — physical sede order (Recoger en local / in-store QR). **Requires a valid `local_id`** (FK → `locales`), enforced by the `orders_pickup_requires_local` CHECK and in the UI (a sede must be chosen). Functionally required too: the seller's RLS only exposes orders for their own `local_id`, so a pickup order without one is invisible in the Caja.
+- **`delivery`** — online/remote order (domicilio today; Rappi/Didi/web later). Captures `customer_name`/`customer_phone`, `delivery_address`/`delivery_zone`, and `source`; enforced by `orders_delivery_requires_contact` (address + phone).
+
+**Third-party extensibility:** `source` identifies the origin, `external_ref` holds the provider's order id, and `channel_meta` (JSONB) absorbs provider-specific payloads with no schema migration. `CheckoutModal` collects the channel-specific data; `useCart` writes the typed columns (`payAll`/`payItem` → pickup, `confirmOrder` → delivery). Migration lives in root `base_correcta.txt` (= Section 15 of `supabase-setup.sql`).
+
 ### Order Flow → WhatsApp
 
-For non-QR orders, Checkout (`CheckoutModal`) collects delivery type and destination. `useCart.confirmOrder()` saves the order to Supabase (if authenticated, awards 50 loyalty points), formats a WhatsApp message, and opens `wa.me/573103112799`. No payment gateway.
+For delivery orders, Checkout (`CheckoutModal`) collects address, a **required contact phone**, and optional zone/notes. `useCart.confirmOrder()` validates the channel selection, persists the order as `channel='delivery'` (if authenticated), formats a WhatsApp message (with contact + zone), and opens `wa.me/573103112799`. No payment gateway. (Pickup orders persist later, at QR generation.)
 
 ### Seller (Caja) Module — `pages/Seller`
 
@@ -186,19 +194,22 @@ Two implementations exist:
 
 ### Database (Supabase PostgreSQL)
 
-Schema in `supabase-setup.sql` (the canonical, idempotent setup script). Three tables:
+Schema in `supabase-setup.sql` (canonical baseline) **plus tracked Supabase migrations** the live DB has applied beyond it — location FKs, audit fields, lifecycle `status`, cross-location RLS, and the multichannel layer (see the ⚠️ divergence note at the top of `supabase-setup.sql`). Core tables:
 
-- **profiles** — `loyalty_points`, plus `role` (`customer`/`seller`/`admin`, CHECK-constrained) and `seller_location`.
-- **orders** — `items` JSON, `status`, and `entregado` (boolean delivery flag, default false; backfilled to true for already-finalized orders).
+- **profiles** — `loyalty_points`, `role` (`customer`/`seller`/`admin`, CHECK-constrained), `seller_location`, and **`local_id`** (FK → `locales`, the seller's sede).
+- **orders** — `items` JSON, `total_price`, `status` (lifecycle CHECK: `recibido`/`confirmado`/`en_preparacion`/`listo`/`entregado`/`cancelado`), `entregado` (boolean delivery flag). **Multichannel columns:** `channel` (`pickup`|`delivery`, NOT NULL), `local_id` (FK → `locales`; required for pickup), `source` (channel id: `app`/`web`/`rappi`/`didi`/…), `customer_name`, `customer_phone`, `delivery_zone`, `external_ref` (third-party order id), `channel_meta` (JSONB provider payload), plus legacy/display `delivery_type`/`store_location`/`delivery_address`/`delivery_details` and audit `square_order_id`/`confirmado_por`/`confirmado_at`/`updated_at`.
+- **locales** — physical stores (`id` smallint, `name`, `direccion`), seeded with the 3 sedes (ids 1/2/3 ↔ `constants/locations.js` `localId`). Public SELECT RLS.
 - **points_history**.
 
-Functions/RPCs: `handle_new_user()` (seeds `role='customer'`), `add_loyalty_points(user_id, points)` (atomic), `is_admin(uid)`, `is_seller(uid)` (admin also passes), `set_order_delivered(order_id, value)` (SECURITY DEFINER; only touches `entregado`/`status`), and `admin_get_order(query)` (SECURITY DEFINER, admin-gated; matches an order by full UUID or short id prefix for the admin search). An `orders_seller_guard` trigger restricts a non-admin seller to changing only `entregado`/`status` and attributing their sede; **admins bypass the guard** and may edit any field.
+Functions/RPCs: `handle_new_user()` (seeds `role='customer'`), `add_loyalty_points(user_id, points)` (atomic; **now gated to seller/admin** by the loyalty-exploit fix — see "Known issue" below), `is_admin(uid)`, `is_seller(uid)` (admin also passes), `set_order_delivered(order_id, value)` (SECURITY DEFINER; sets `entregado`/`status` + `confirmado_por`/`confirmado_at`, **scoped to the seller's own sede**), and `admin_get_order(query)` (SECURITY DEFINER, admin-gated). The `orders_seller_guard` trigger restricts a non-admin seller to delivery state only (now also protecting the channel/customer columns); **admins bypass the guard**.
 
-**RLS:** each user reads/writes their own rows; customers may update their own orders only while `entregado = false`; sellers may SELECT all orders and UPDATE (guard-limited) delivery status; admins get global SELECT on orders/profiles/points, UPDATE on orders (via the seller policy + guard bypass, used to edit quantities), and **DELETE on orders** (`orders_delete_admin` policy). `orders` is added to the realtime publication for the live dashboard and live cart/history sync.
+**RLS:** each user reads/writes their own rows; customers may update their own orders only while `entregado = false`; **sellers may SELECT/UPDATE only orders for their own sede** (`orders.local_id` = their `profiles.local_id`; the guard further limits them to delivery state); admins get global SELECT on orders/profiles/points, UPDATE on orders (seller policy + guard bypass), and **DELETE on orders** (`orders_delete_admin` policy). `orders` is in the realtime publication for the live dashboard and cart/history sync.
+
+> **Known issue (loyalty):** `confirmOrder` still calls `add_loyalty_points` as the *customer*, but the exploit fix now restricts that RPC to seller/admin, so the 50-pt award **silently no-ops** for customers (the error is caught). Fix forward by awarding points server-side on payment (e.g., inside `set_order_delivered`) rather than from the client.
 
 **Migration strategy:** `supabase-setup.sql` is written to be **idempotent and dual-purpose** — safe on both a fresh install and an existing DB (`CREATE ... IF NOT EXISTS`, `CREATE OR REPLACE`, `ADD COLUMN IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `DO $$ ... EXCEPTION` guards). New columns are declared in both `CREATE TABLE` (fresh install) and an `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` block (existing DB no-op). Apply by pasting into Supabase → SQL Editor → Run, then assign roles using the snippets at the bottom of the file.
 
-> Note: `base_correcta.txt` (in the parent `Origen/` folder, outside the repo) was an earlier draft of these DB changes; its contents have been merged into `supabase-setup.sql`, which is now authoritative.
+> Note: `base_correcta.txt` (in the parent `Origen/` folder, outside the repo) is the **multichannel orders migration** (idempotent, dependency-safe), mirrored as **Section 15** of `supabase-setup.sql` — keep the two in sync. Earlier DB work (roles, `entregado`, RLS, location FKs, audit fields) lives in `supabase-setup.sql` Sections 1–14 and the Supabase migration history.
 
 ### Deployment
 

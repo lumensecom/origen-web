@@ -171,9 +171,20 @@ export const useCart = () => {
     }
   };
 
+  // Pickup orders are channel='pickup' and MUST carry a valid sede (local_id):
+  // the seller's RLS only lets them see/charge orders of their own sede, so a
+  // QR without local_id would be invisible in the Caja. Enforced in the DB too
+  // (orders_pickup_requires_local).
+  const requirePickupStore = () => {
+    if (!checkout.store?.localId) {
+      throw new Error('Selecciona una sede para recoger antes de generar el QR.');
+    }
+  };
+
   // Master QR: one order for the entire cart. Reused while the cart is unchanged.
   const payAll = async () => {
     requireAuth();
+    requirePickupStore();
     const sig = cartSig(cart);
     if (checkout.masterOrderId && checkout.masterSig === sig) {
       try {
@@ -186,6 +197,10 @@ export const useCart = () => {
       user_id: user.id,
       items: buildItemsData(cart),
       total_price: total,
+      channel: 'pickup',                       // canal: sede física
+      source: 'app',
+      status: 'recibido',
+      local_id: checkout.store.localId,        // sede obligatoria (validada arriba)
       delivery_type: 'En Local (QR)',
       store_location: checkout.store?.nombre ?? null,
       delivery_address: null,
@@ -199,6 +214,7 @@ export const useCart = () => {
   // unchanged, so re-opening its QR doesn't spawn duplicate rows.
   const payItem = async (line) => {
     requireAuth();
+    requirePickupStore();
     const sig = lineSig(line);
     if (line.paidOrderId && line.paidSig === sig) {
       try {
@@ -210,6 +226,10 @@ export const useCart = () => {
       user_id: user.id,
       items: buildItemsData([line]),
       total_price: line.precio * line.quantity,
+      channel: 'pickup',                       // canal: sede física
+      source: 'app',
+      status: 'recibido',
+      local_id: checkout.store.localId,        // sede obligatoria (validada arriba)
       delivery_type: 'En Local (QR) — Ítem',
       store_location: checkout.store?.nombre ?? null,
       delivery_address: null,
@@ -230,18 +250,35 @@ export const useCart = () => {
     const cartTotal = cart.reduce((acc, item) => acc + item.precio * item.quantity, 0);
     const isPickup = deliveryData.modalidad === 'Recoger en Local';
 
+    // Validate the channel selection up front (the UI also gates the buttons).
+    // pickup → a valid sede; delivery (online) → address + contact phone.
+    if (isPickup && !deliveryData.store?.localId) {
+      throw new Error('Selecciona una sede para recoger.');
+    }
+    if (!isPickup && (!deliveryData.direccion?.trim() || !deliveryData.telefono?.trim())) {
+      throw new Error('Para domicilio necesitamos dirección y teléfono de contacto.');
+    }
+
     if (isAuthenticated && user) {
       try {
-        // Delivery orders have no in-store QR step, so they're persisted here.
-        // Pickup orders are persisted later when a QR is generated (payAll/payItem).
+        // Delivery orders have no in-store QR step, so they're persisted here as
+        // channel='delivery' (online). Pickup orders are persisted later when a
+        // QR is generated (payAll/payItem).
         if (!isPickup) {
           await createOrder({
             user_id: user.id,
             items: buildItemsData(cart),
             total_price: cartTotal,
+            channel: 'delivery',                 // canal: pedido remoto / online
+            source: 'app',                       // origen (futuro: 'rappi', 'didi'…)
+            status: 'recibido',
+            local_id: null,
             delivery_type: deliveryData.modalidad,
             store_location: null,
+            customer_name: deliveryData.nombre ?? null,
+            customer_phone: deliveryData.telefono ?? null,
             delivery_address: deliveryData.direccion ?? null,
+            delivery_zone: deliveryData.zona ?? null,
             delivery_details: deliveryData.detalles ?? null,
           });
         }
@@ -282,6 +319,8 @@ export const useCart = () => {
       orderText += `📍 *DIRECCIÓN SEDE:* ${deliveryData.store?.direccion}\n`;
     } else {
       orderText += `🏠 *ENTREGAR EN:* ${deliveryData.direccion}\n`;
+      if (deliveryData.zona) orderText += `🗺️ *ZONA / BARRIO:* ${deliveryData.zona}\n`;
+      if (deliveryData.telefono) orderText += `📞 *CONTACTO:* ${deliveryData.telefono}\n`;
       if (deliveryData.detalles) orderText += `📝 *INDICACIONES:* ${deliveryData.detalles}\n`;
     }
     orderText += `----------------------------------\n`;

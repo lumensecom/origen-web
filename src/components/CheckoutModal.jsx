@@ -26,9 +26,12 @@ const CheckoutModal = ({
   const [step, setStep] = useState('cart');
   const [selectedStore, setSelectedStore] = useState(null);
   const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
+  const [telefono, setTelefono] = useState('');   // contacto (pedido a domicilio)
+  const [zona, setZona] = useState('');            // barrio / zona de entrega
+  const [details, setDetails] = useState('');      // indicaciones adicionales
   const [payingAll, setPayingAll] = useState(false);
   const [busyItemId, setBusyItemId] = useState(null);
+  const [confirming, setConfirming] = useState(false);
   const [qrError, setQrError] = useState('');
 
   const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + item.precio * item.quantity, 0), [cart]);
@@ -42,8 +45,36 @@ const CheckoutModal = ({
   // payment. We return to the "Tu Pedido" zone (now QR-enabled) instead of
   // closing — the cart stays so the customer can pay at the counter.
   const handlePickupConfirm = async () => {
-    await onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore });
-    setStep('cart');
+    setQrError('');
+    setConfirming(true);
+    try {
+      await onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore });
+      setStep('cart');
+    } catch (e) {
+      setQrError(e?.message || 'No se pudo confirmar el pedido. Intenta de nuevo.');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  // Delivery (online) confirmation: captures contact + address/zone for the
+  // remote transaction, then hands off to WhatsApp via onConfirmOrder.
+  const handleDeliveryConfirm = async () => {
+    setQrError('');
+    setConfirming(true);
+    try {
+      await onConfirmOrder({
+        modalidad: 'Domicilio',
+        direccion: address,
+        telefono,
+        zona,
+        detalles: details,
+      });
+    } catch (e) {
+      setQrError(e?.message || 'No se pudo confirmar el pedido. Intenta de nuevo.');
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const handlePayAll = async () => {
@@ -261,7 +292,7 @@ const CheckoutModal = ({
             {step === 'deliveryAddress' && (
               <motion.div key="address" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
                 <div>
-                  <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Dirección en Bogotá</label>
+                  <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Dirección en Bogotá *</label>
                   <input
                     type="text"
                     autoComplete="street-address"
@@ -272,13 +303,36 @@ const CheckoutModal = ({
                   />
                 </div>
                 <div>
+                  <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Teléfono de contacto *</label>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={telefono}
+                    onChange={e => setTelefono(e.target.value)}
+                    placeholder="Ej: 310 311 2799"
+                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Barrio / Zona</label>
+                  <input
+                    type="text"
+                    autoComplete="address-level3"
+                    value={zona}
+                    onChange={e => setZona(e.target.value)}
+                    placeholder="Ej: Chapinero"
+                    className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
+                  />
+                </div>
+                <div>
                   <label className="font-ui text-xs font-bold text-[var(--texto-suave)] uppercase tracking-wider block mb-2">Indicaciones adicionales</label>
                   <input
                     type="text"
                     autoComplete="off"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="Ej: Barrio Chapinero, frente al parque"
+                    value={details}
+                    onChange={e => setDetails(e.target.value)}
+                    placeholder="Ej: frente al parque, timbre 402"
                     className="w-full px-4 py-3.5 rounded-[14px] bg-[var(--fondo-crema)] border border-gray-200 font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] focus:border-transparent"
                   />
                 </div>
@@ -314,22 +368,30 @@ const CheckoutModal = ({
             </div>
           )}
           {step === 'pickupStore' && (
-            <button
-              onClick={handlePickupConfirm}
-              disabled={!selectedStore}
-              className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              Confirmar por WhatsApp <ArrowRight size={18} />
-            </button>
+            <div className="space-y-2.5">
+              <button
+                onClick={handlePickupConfirm}
+                disabled={!selectedStore || confirming}
+                className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {confirming ? <Loader2 size={18} className="animate-spin" /> : null}
+                {confirming ? 'Confirmando…' : 'Confirmar por WhatsApp'} {!confirming && <ArrowRight size={18} />}
+              </button>
+              {qrError && <p className="font-ui text-xs text-red-500 text-center pt-1">{qrError}</p>}
+            </div>
           )}
           {step === 'deliveryAddress' && (
-            <button
-              onClick={() => onConfirmOrder({ modalidad: 'Domicilio', direccion: address, detalles: phone })}
-              disabled={!address.trim()}
-              className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              Confirmar por WhatsApp <ArrowRight size={18} />
-            </button>
+            <div className="space-y-2.5">
+              <button
+                onClick={handleDeliveryConfirm}
+                disabled={!address.trim() || !telefono.trim() || confirming}
+                className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {confirming ? <Loader2 size={18} className="animate-spin" /> : null}
+                {confirming ? 'Confirmando…' : 'Confirmar por WhatsApp'} {!confirming && <ArrowRight size={18} />}
+              </button>
+              {qrError && <p className="font-ui text-xs text-red-500 text-center pt-1">{qrError}</p>}
+            </div>
           )}
         </div>
       </motion.div>

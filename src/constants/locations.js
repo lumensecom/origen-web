@@ -1,6 +1,8 @@
 export const LOCALES = [
   {
     id: 'salitre',
+    localId: 1,            // → public.locales.id (FK orders.local_id). NO cambiar sin migrar la BD.
+    slug: 'salitre',
     nombre: 'CC Salitre Plaza',
     direccion: 'Calle 24a # 69-76, Local 372 — Bogotá',
     detalles: 'Dentro de Salitre Plaza, en plena zona empresarial. Perfecto para un almuerzo rápido y cargado de energía real.',
@@ -11,6 +13,8 @@ export const LOCALES = [
   },
   {
     id: 'chile',
+    localId: 2,            // → public.locales.id
+    slug: 'chile',
     nombre: 'Av. Chile — Local 408B',
     direccion: 'Calle 72 # 10-34, Local 408B — Bogotá',
     detalles: 'En el epicentro financiero de Bogotá. La pausa perfecta y nutritiva para tu jornada laboral diaria.',
@@ -21,6 +25,8 @@ export const LOCALES = [
   },
   {
     id: 'nuestro-bogota',
+    localId: 3,            // → public.locales.id
+    slug: 'nuestro-bogota',
     nombre: 'CC Nuestro Bogotá',
     direccion: 'Av. Ciudad de Cali # 52-25, Local L3-127 — Bogotá',
     detalles: 'Ubicados en el Centro Comercial Nuestro Bogotá. El spot ideal para alimentarte sanamente.',
