@@ -313,10 +313,11 @@ const Button = ({ children, variant = 'primary', className = '', onClick, disabl
 
 const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrder }) => {
   useLockBodyScroll(true);
-  const [step, setStep] = useState('cart'); // cart -> deliveryType -> pickupStore -> deliveryAddress
+  const [step, setStep] = useState('cart'); // cart -> deliveryType -> pickupStore -> deliveryAddress -> confirmed
   const [selectedStore, setSelectedStore] = useState(null);
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
+  const [confirmedInfo, setConfirmedInfo] = useState(null);
 
   const cartTotal = useMemo(() => {
     return cart.reduce((acc, item) => acc + (item.precio * item.quantity), 0);
@@ -327,12 +328,15 @@ const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrde
     else if (step === 'pickupStore' || step === 'deliveryAddress') setStep('deliveryType');
   };
 
-  const stepLabel = { cart: 'Tu Pedido', deliveryType: '¿Cómo lo recibas?', pickupStore: 'Elige tu sede', deliveryAddress: '¿A dónde lo llevamos?' };
+  const stepLabel = { cart: 'Tu Pedido', deliveryType: '¿Cómo lo recibes?', pickupStore: 'Elige tu sede', deliveryAddress: '¿A dónde lo llevamos?', confirmed: '¡Pedido recibido!' };
 
   if (cart.length === 0) {
     return (
       <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="bg-white w-full max-w-sm p-8 rounded-[28px] text-center shadow-2xl">
+        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="bg-white w-full max-w-sm p-8 rounded-[28px] text-center shadow-2xl relative">
+          <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all">
+            <X size={16} className="text-gray-500" />
+          </button>
           <span className="text-5xl block mb-4">🥣</span>
           <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-2">Aún no hay nada aquí</h3>
           <p className="font-ui text-sm text-[var(--texto-suave)] mb-6">Explora nuestra carta y agrega tu bowl favorito.</p>
@@ -486,15 +490,54 @@ const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrde
               </motion.div>
             )}
 
+            {/* PANTALLA CONFIRMADA */}
+            {step === 'confirmed' && (
+              <motion.div key="confirmed" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-6 flex flex-col items-center text-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-[var(--verde-menta)] flex items-center justify-center text-4xl">✅</div>
+                <div>
+                  <h3 className="font-display font-bold text-2xl text-[var(--verde-profundo)] mb-1">¡Pedido recibido!</h3>
+                  <p className="font-ui text-sm text-[var(--texto-suave)]">Nuestro equipo lo está preparando para ti.</p>
+                </div>
+                {confirmedInfo && (
+                  <div className="w-full bg-[var(--fondo-crema)] rounded-[18px] p-4 text-left space-y-2">
+                    <p className="font-ui text-xs font-bold uppercase tracking-wider text-[var(--texto-suave)] mb-2">Resumen</p>
+                    <div className="flex justify-between font-ui text-sm">
+                      <span className="text-[var(--texto-suave)]">Modalidad</span>
+                      <span className="font-bold text-[var(--verde-profundo)]">{confirmedInfo.modalidad}</span>
+                    </div>
+                    {confirmedInfo.store && (
+                      <div className="flex justify-between font-ui text-sm">
+                        <span className="text-[var(--texto-suave)]">Sede</span>
+                        <span className="font-bold text-[var(--verde-profundo)]">{confirmedInfo.store.nombre}</span>
+                      </div>
+                    )}
+                    {confirmedInfo.direccion && (
+                      <div className="flex justify-between font-ui text-sm">
+                        <span className="text-[var(--texto-suave)]">Dirección</span>
+                        <span className="font-bold text-[var(--verde-profundo)] text-right max-w-[180px]">{confirmedInfo.direccion}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-ui text-sm border-t border-gray-200 pt-2 mt-2">
+                      <span className="text-[var(--texto-suave)]">Total pagado</span>
+                      <span className="font-display font-bold text-lg text-[var(--verde-profundo)]">{formatPrice(confirmedInfo.total)}</span>
+                    </div>
+                  </div>
+                )}
+                <button onClick={onClose} className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all">
+                  Seguir explorando
+                </button>
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </div>
 
         {/* Footer — total + CTA */}
         <div className="px-6 pb-6 pt-4 border-t border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+          {step === 'confirmed' ? null : <div className="flex items-center justify-between mb-4">
             <span className="font-ui text-sm text-[var(--texto-suave)]">Total del pedido</span>
             <span className="font-display font-bold text-2xl text-[var(--verde-profundo)]">{formatPrice(cartTotal)}</span>
-          </div>
+          </div>}
 
           {step === 'cart' && (
             <button onClick={() => setStep('deliveryType')} className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] flex items-center justify-center gap-2">
@@ -503,20 +546,20 @@ const CheckoutModal = ({ cart, onUpdateQty, onRemoveItem, onClose, onConfirmOrde
           )}
           {step === 'pickupStore' && (
             <button
-              onClick={() => onConfirmOrder({ modalidad: 'Recoger en Local', store: selectedStore })}
+              onClick={() => { const data = { modalidad: 'Recoger en Local', store: selectedStore, total: cartTotal }; onConfirmOrder(data); setConfirmedInfo(data); setStep('confirmed'); }}
               disabled={!selectedStore}
               className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Confirmar por WhatsApp <ArrowRight size={18} />
+              Confirmar Pedido <ArrowRight size={18} />
             </button>
           )}
           {step === 'deliveryAddress' && (
             <button
-              onClick={() => onConfirmOrder({ modalidad: 'Domicilio', direccion: address, detalles: phone })}
+              onClick={() => { const data = { modalidad: 'Domicilio', direccion: address, detalles: phone, total: cartTotal }; onConfirmOrder(data); setConfirmedInfo(data); setStep('confirmed'); }}
               disabled={!address.trim()}
               className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Confirmar por WhatsApp <ArrowRight size={18} />
+              Confirmar Pedido <ArrowRight size={18} />
             </button>
           )}
         </div>
@@ -563,13 +606,8 @@ const Footer = ({ navigate }) => {
         
         <div>
           <h4 className="font-ui font-bold text-lg mb-6 text-white">¿Dudas o Antojos?</h4>
-          <p className="font-ui text-sm text-white/50 mb-4">Pregúntale a nuestro equipo directamente por WhatsApp.</p>
-          <button 
-            onClick={() => window.open('https://wa.me/573103112799', '_blank')} 
-            className="w-full bg-white text-black hover:bg-[var(--verde-main)] rounded-[16px] px-6 py-3 font-ui font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
-          >
-            <MessageCircle size={18}/> Contactar Soporte
-          </button>
+          <p className="font-ui text-sm text-white/50 mb-4">Visítanos en cualquiera de nuestros locales en Bogotá y te ayudamos de inmediato.</p>
+          <p className="font-ui text-xs text-white/30">soyorigen.co · Bogotá, Colombia</p>
         </div>
       </div>
       
@@ -766,27 +804,23 @@ const HomeView = ({ navigate, onOpenSavia }) => {
         </motion.div>
       </motion.div>
 
-      {/* Barra de stats de marca — refuerza confianza con energía visual */}
+      {/* Cita editorial de marca */}
       <motion.div
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.4 }}
-        variants={staggerContainer}
-        className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 py-10 relative z-20"
+        variants={fadeUp}
+        className="max-w-4xl mx-auto px-8 py-14 md:py-20 relative z-20 text-center"
       >
-        {[
-          { to: 1000, suffix: '+', label: 'Clientes satisfechos' },
-          { to: 100, suffix: '%', label: 'Ingredientes naturales' },
-          { to: 100, suffix: '%', label: 'Preparado al momento' },
-          { to: 3, suffix: '', label: 'Locales en Bogotá' },
-        ].map((stat, idx) => (
-          <motion.div key={idx} variants={fadeUp} className="text-center">
-            <p className="font-display font-bold text-3xl md:text-4xl text-[var(--terracota-quemado)] mb-1">
-              <StatCounter to={stat.to} suffix={stat.suffix} />
-            </p>
-            <p className="font-ui text-[11px] md:text-xs uppercase tracking-wider text-[var(--texto-suave)] font-semibold">{stat.label}</p>
-          </motion.div>
-        ))}
+        <span className="font-display text-7xl md:text-9xl text-[var(--terracota-vivo)] leading-none block -mb-4 select-none" aria-hidden="true">"</span>
+        <blockquote className="font-display italic text-2xl md:text-4xl text-[var(--verde-profundo)] leading-snug mb-6 px-4">
+          Que tu alimento sea tu medicina,<br className="hidden md:block"/> y tu medicina sea tu alimento.
+        </blockquote>
+        <div className="flex items-center justify-center gap-3">
+          <span className="w-8 h-px bg-[var(--terracota-vivo)]" />
+          <cite className="font-ui text-sm font-bold uppercase tracking-[0.2em] text-[var(--terracota-quemado)] not-italic">Hipócrates</cite>
+          <span className="w-8 h-px bg-[var(--terracota-vivo)]" />
+        </div>
       </motion.div>
 
       {/* Sección Editorial con Galería de Fotos Reales */}
@@ -891,6 +925,26 @@ const HomeView = ({ navigate, onOpenSavia }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
         </motion.div>
       </div>
+
+      {/* Aviso: Membresía próximamente */}
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.4 }}
+        variants={fadeUp}
+        className="max-w-[1400px] mx-auto px-6 pb-20 relative z-20"
+      >
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-[var(--verde-profundo)] rounded-[28px] px-8 py-7 border border-[var(--terracota-vivo)]/25 shadow-lg">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 rounded-[14px] bg-[var(--terracota-vivo)]/15 flex items-center justify-center text-2xl shrink-0">🔒</div>
+            <div>
+              <span className="font-ui text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--terracota-vivo)] block mb-1">Próximamente</span>
+              <h3 className="font-logo text-xl text-white leading-none">Club Membresía Origen</h3>
+            </div>
+          </div>
+          <p className="font-ui text-sm text-white/50 max-w-xs text-center sm:text-right leading-relaxed">Descuentos, prioridad en pedidos y beneficios exclusivos para miembros.</p>
+        </div>
+      </motion.div>
     </div>
   );
 };
@@ -996,7 +1050,7 @@ const CartaView = ({ onAddToCart }) => {
       <div className="max-w-[1200px] mx-auto px-6">
 
         <div className="text-center mb-16 animate-in">
-          <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Carta Origen</h1>
+          <h1 className="font-logo text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4 tracking-wide">Carta Origen</h1>
           <p className="font-ui text-lg text-[#2D5A4A]">Combinaciones perfectas y bebidas frescas de la casa.</p>
         </div>
 
@@ -1124,8 +1178,19 @@ const BuilderView = ({ onAddToCart }) => {
   const [proteinMode, setProteinMode] = useState('sencilla'); // 'sencilla' o 'doble'
   const [selectedProteins, setSelectedProteins] = useState([]); // Arreglo para acumular hasta 2 proteínas
 
-  // Estado para el upsell de bebidas dentro del propio armador
-  const [addedDrinks, setAddedDrinks] = useState([]);
+  // Estado para el upsell de bebidas dentro del propio armador (cantidad por bebida)
+  const [drinkQty, setDrinkQty] = useState({});
+
+  const changeDrinkQty = (drink, delta) => {
+    setDrinkQty(prev => {
+      const newQty = (prev[drink.id] || 0) + delta;
+      if (newQty <= 0) {
+        const { [drink.id]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [drink.id]: newQty };
+    });
+  };
 
   const toggleSelection = (category, item, max) => {
     setSelections(prev => {
@@ -1166,20 +1231,11 @@ const BuilderView = ({ onAddToCart }) => {
     }
   };
 
-  const toggleAddedDrink = (drink) => {
-    setAddedDrinks(prev => {
-      if (prev.find(d => d.id === drink.id)) {
-        return prev.filter(d => d.id !== drink.id);
-      } else {
-        return [...prev, drink];
-      }
-    });
-  };
-
   const isMaximo = proteinMode === 'doble';
   const basePrice = 24900;
   const proteinSurcharge = isMaximo ? 6000 : 0;
-  const drinksTotal = addedDrinks.reduce((acc, d) => acc + d.precio, 0);
+  const drinksTotal = BEBIDAS.reduce((acc, b) => acc + (drinkQty[b.id] || 0) * b.precio, 0);
+  const activeDrinks = BEBIDAS.filter(b => (drinkQty[b.id] || 0) > 0);
   const totalPrice = basePrice + proteinSurcharge + drinksTotal;
 
   const OPTIONS = {
@@ -1215,16 +1271,17 @@ const BuilderView = ({ onAddToCart }) => {
       ...selections 
     });
 
-    // Agregar de forma automática las bebidas elegidas en el upsell del builder
-    addedDrinks.forEach(drink => {
-      onAddToCart(drink);
+    // Agregar bebidas con sus cantidades
+    activeDrinks.forEach(drink => {
+      const qty = drinkQty[drink.id];
+      for (let i = 0; i < qty; i++) onAddToCart({ ...drink, imagen: null });
     });
 
     // Reiniciar estados del builder
     setStep(1);
     setSelections({ base: '', frescuras: [], sabores: [], proteina: '', salsa: '' });
     setSelectedProteins([]);
-    setAddedDrinks([]);
+    setDrinkQty({});
   };
 
   return (
@@ -1275,11 +1332,16 @@ const BuilderView = ({ onAddToCart }) => {
                     </button>
                   </div>
 
-                  <p className="font-ui text-xs text-[var(--verde-palido)] italic">
-                    {proteinMode === 'sencilla' 
-                      ? "Selecciona tu proteína favorita para una porción clásica." 
-                      : "¡Arma tu Origen Máximo! Elige hasta 2 proteínas diferentes (o selecciona solo una para recibir porción doble de la misma)."}
-                  </p>
+                  {proteinMode === 'doble' ? (
+                    <div className="flex items-start gap-2 bg-[var(--maximo-amber)]/15 border border-[var(--maximo-amber)]/40 px-3 py-2.5 rounded-[12px]">
+                      <span className="text-sm shrink-0">⚡</span>
+                      <p className="font-ui text-xs text-[var(--verde-palido)] leading-relaxed">
+                        <strong className="text-[var(--maximo-amber)]">1 proteína = porción doble</strong> de la misma · o elige 2 diferentes para combo mixto
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="font-ui text-xs text-[var(--verde-palido)] italic">Selecciona tu proteína favorita para una porción clásica.</p>
+                  )}
 
                   <div className="grid grid-cols-1 gap-3">
                     {curr?.items.map(item => {
@@ -1364,24 +1426,36 @@ const BuilderView = ({ onAddToCart }) => {
 
             <div className="space-y-3">
               {BEBIDAS.map((drink) => {
-                const isSelected = !!addedDrinks.find(d => d.id === drink.id);
+                const qty = drinkQty[drink.id] || 0;
                 return (
-                  <div 
+                  <div
                     key={drink.id}
-                    onClick={() => toggleAddedDrink(drink)}
-                    className={`p-4 rounded-[20px] border-2 cursor-pointer transition-all flex items-center justify-between ${isSelected ? 'bg-[var(--verde-main)] border-[var(--verde-main)] text-white' : 'bg-[var(--verde-bosque)]/50 border-transparent text-[var(--verde-palido)] hover:bg-[var(--verde-bosque)]'}`}
+                    className={`p-4 rounded-[20px] border-2 transition-all flex items-center justify-between ${qty > 0 ? 'bg-[var(--verde-main)] border-[var(--verde-main)] text-white' : 'bg-[var(--verde-bosque)]/50 border-transparent text-[var(--verde-palido)]'}`}
                   >
-                    <div className="flex items-center gap-4">
-                      <span className="text-4xl">{drink.emoji}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{drink.emoji}</span>
                       <div>
-                        <h4 className="font-ui font-bold text-base">{drink.nombre}</h4>
-                        <p className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-400'} max-w-[220px]`}>{drink.desc}</p>
+                        <h4 className="font-ui font-bold text-sm">{drink.nombre}</h4>
+                        <p className={`text-xs ${qty > 0 ? 'text-white/80' : 'text-gray-400'}`}>{formatPrice(drink.precio)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-ui font-bold block mb-1">{formatPrice(drink.precio)}</span>
-                      <button className={`px-4 py-1.5 rounded-full font-ui text-[10px] font-bold uppercase transition-all ${isSelected ? 'bg-white text-[var(--verde-profundo)]' : 'bg-[var(--verde-main)] text-white'}`}>
-                        {isSelected ? 'Agregado' : 'Añadir'}
+                    <div className="flex items-center gap-2">
+                      {qty > 0 && (
+                        <button
+                          onClick={() => changeDrinkQty(drink, -1)}
+                          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all active:scale-90"
+                        >
+                          <Minus size={14} />
+                        </button>
+                      )}
+                      {qty > 0 && (
+                        <span className="font-ui font-bold text-base w-5 text-center">{qty}</span>
+                      )}
+                      <button
+                        onClick={() => changeDrinkQty(drink, 1)}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${qty > 0 ? 'bg-white/20 hover:bg-white/30' : 'bg-[var(--verde-main)] hover:bg-[var(--verde-vivo)]'}`}
+                      >
+                        <Plus size={14} />
                       </button>
                     </div>
                   </div>
@@ -1401,8 +1475,8 @@ const BuilderView = ({ onAddToCart }) => {
               <p>• <strong className="text-white">Sabores:</strong> {selections.sabores.join(' + ')}</p>
               <p>• <strong className="text-white">Proteína:</strong> {selections.proteina || 'Sin proteína'}</p>
               <p>• <strong className="text-white">Salsa:</strong> {selections.salsa}</p>
-              {addedDrinks.length > 0 && (
-                <p>• <strong className="text-white">Bebidas:</strong> {addedDrinks.map(d => d.nombre).join(', ')}</p>
+              {activeDrinks.length > 0 && (
+                <p>• <strong className="text-white">Bebidas:</strong> {activeDrinks.map(d => `${d.nombre}${drinkQty[d.id] > 1 ? ` x${drinkQty[d.id]}` : ''}`).join(', ')}</p>
               )}
             </div>
             <div className="border-t border-white/10 pt-4 flex justify-between items-center">
@@ -1488,12 +1562,12 @@ const BuilderView = ({ onAddToCart }) => {
               </div>
             ))}
 
-            {addedDrinks.length > 0 && (
+            {activeDrinks.length > 0 && (
               <div className="flex items-start gap-3 pt-2 border-t border-gray-100">
                 <span className="text-lg mt-0.5 shrink-0">🍹</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--texto-suave)] mb-0.5">Bebidas</p>
-                  <p className="font-display text-base text-[var(--verde-profundo)] font-semibold leading-snug">{addedDrinks.map(d => d.nombre).join(', ')}</p>
+                  <p className="font-display text-base text-[var(--verde-profundo)] font-semibold leading-snug">{activeDrinks.map(d => `${d.nombre}${drinkQty[d.id] > 1 ? ` ×${drinkQty[d.id]}` : ''}`).join(', ')}</p>
                 </div>
                 <Check size={16} className="text-[var(--verde-main)] shrink-0 mt-1" />
               </div>
@@ -1572,16 +1646,9 @@ const BlogView = ({ navigate }) => {
         {/* Cabecera Editorial */}
         <div className="text-center mb-16 animate-in">
           <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.25em] uppercase text-xs mb-4 inline-block">Historias de Origen</span>
-          <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Nuestro Blog</h1>
+          <h1 className="font-logo text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4 tracking-wide">Nuestro Blog</h1>
           <p className="font-ui text-lg text-[var(--texto-suave)] max-w-xl mx-auto">
             Explora las crónicas de los ingredientes, las vidas de nuestros campesinos aliados y el porqué detrás de una nutrición real y honesta.
-          </p>
-        </div>
-
-        {/* Nuestra historia — breve */}
-        <div className="max-w-3xl mx-auto mb-16 text-center">
-          <p className="font-display italic text-xl md:text-2xl text-[var(--verde-profundo)] leading-relaxed">
-            Origen nació en Bogotá con una idea sencilla: <span className="text-[var(--terracota-quemado)]">comer bien no debería ser complicado ni caro.</span> Hoy somos 3 locales, un equipo apasionado y miles de bowls preparados con ingredientes reales, frente a ti, todos los días.
           </p>
         </div>
 
@@ -1622,8 +1689,21 @@ const BlogView = ({ navigate }) => {
           ))}
         </div>
 
+        {/* Historia de Origen — recuadro horizontal */}
+        <div className="mt-16 bg-[var(--fondo-crema)] border border-[var(--verde-palido)] rounded-[28px] p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+          <div className="shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-[20px] bg-[var(--verde-profundo)] flex items-center justify-center">
+            <span className="font-logo text-2xl md:text-3xl text-white tracking-wider">O</span>
+          </div>
+          <div>
+            <span className="font-ui text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--terracota-quemado)] block mb-2">Nuestra Historia</span>
+            <p className="font-display italic text-lg md:text-xl text-[var(--verde-profundo)] leading-relaxed">
+              Origen nació en Bogotá con una idea sencilla: <span className="text-[var(--terracota-quemado)]">comer bien no debería ser complicado ni caro.</span> Hoy somos 3 locales, un equipo apasionado y miles de bowls preparados con ingredientes reales, frente a ti, todos los días.
+            </p>
+          </div>
+        </div>
+
         {/* Sección de Asesor Nutricional Interna */}
-        <div className="mt-24 bg-[var(--verde-profundo)] rounded-[32px] p-10 md:p-16 text-center text-white relative overflow-hidden shadow-xl border border-[var(--verde-bosque)]">
+        <div className="mt-16 bg-[var(--verde-profundo)] rounded-[32px] p-10 md:p-16 text-center text-white relative overflow-hidden shadow-xl border border-[var(--verde-bosque)]">
            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[var(--verde-main)] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
            <div className="relative z-10 max-w-2xl mx-auto">
              <span className="font-ui text-[var(--terracota-suave)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">¿Dudas sobre tu dieta?</span>
@@ -1757,7 +1837,7 @@ const UbicacionesView = () => {
         {/* Editorial Header */}
         <div className="text-center mb-16 animate-in">
           <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestros Espacios</span>
-          <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Ubicaciones</h1>
+          <h1 className="font-logo text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4 tracking-wide">Ubicaciones</h1>
           <p className="font-ui text-lg text-[var(--texto-suave)] max-w-lg mx-auto">Encuéntranos en los puntos estratégicos de Bogotá y vive la experiencia real en persona.</p>
         </div>
 
@@ -1822,8 +1902,8 @@ const UbicacionesView = () => {
             })}
           </div>
 
-          {/* Active Sede Detail View (7 columns) */}
-          <div className="lg:col-span-7">
+          {/* Active Sede Detail View (7 columns) — solo desktop */}
+          <div className="hidden lg:block lg:col-span-7">
             <div className="bg-white rounded-[32px] overflow-hidden shadow-lg border border-[var(--verde-palido)] p-6 md:p-8 flex flex-col gap-6">
               
               <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
@@ -2265,56 +2345,8 @@ export default function App() {
       }
     }
 
-    // Generar bloque de texto estructurado para WhatsApp
-    let orderDetailText = `🌿 *NUEVO PEDIDO ORIGEN* 🌿\n`;
-    orderDetailText += `----------------------------------\n`;
-    
-    const bowls = cart.filter(item => !item.desc);
-    const bebidas = cart.filter(item => item.desc);
-
-    if (bowls.length > 0) {
-      orderDetailText += `🥣 *BOWL(S):*\n`;
-      bowls.forEach(b => {
-        orderDetailText += `• ${b.quantity}x ${b.nombre} (${formatPrice(b.precio * b.quantity)})\n`;
-        if (b.esBuilder) {
-          orderDetailText += `  (Base: ${b.base} | Frescuras: ${b.frescuras.join(', ')} | Proteína: ${b.proteina})\n`;
-        }
-      });
-      orderDetailText += `\n`;
-    }
-
-    if (bebidas.length > 0) {
-      orderDetailText += `🍹 *BEBIDA(S):*\n`;
-      bebidas.forEach(beb => {
-        orderDetailText += `• ${beb.quantity}x ${beb.nombre} (${formatPrice(beb.precio * beb.quantity)})\n`;
-      });
-      orderDetailText += `\n`;
-    }
-
-    orderDetailText += `----------------------------------\n`;
-    orderDetailText += `📍 *MODALIDAD:* ${deliveryData.modalidad}\n`;
-    
-    if (deliveryData.modalidad === 'Recoger en Local') {
-      orderDetailText += `🏪 *SEDE SELECCIONADA:* ${deliveryData.store?.nombre}\n`;
-      orderDetailText += `📍 *DIRECCIÓN SEDE:* ${deliveryData.store?.direccion}\n`;
-    } else {
-      orderDetailText += `🏠 *ENTREGAR EN:* ${deliveryData.direccion}\n`;
-      if (deliveryData.detalles) {
-        orderDetailText += `📝 *INDICACIONES:* ${deliveryData.detalles}\n`;
-      }
-    }
-
-    orderDetailText += `----------------------------------\n`;
-    orderDetailText += `💰 *TOTAL A PAGAR:* ${formatPrice(cartTotal)}\n`;
-    orderDetailText += `----------------------------------\n`;
-    orderDetailText += `¡Preparar al instante con amor real! 🌿`;
-
-    // Abrir WhatsApp con número real o placeholder estándar
-    window.open(`https://wa.me/573103112799?text=${encodeURIComponent(orderDetailText)}`, '_blank');
-    
-    // Limpiar carrito
+    // Limpiar carrito (el confirmed screen muestra el resumen antes de cerrarse)
     setCart([]);
-    setIsCheckoutOpen(false);
   };
 
   const NAV_LINKS = [
