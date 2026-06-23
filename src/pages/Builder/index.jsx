@@ -399,12 +399,12 @@ const BuilderView = ({ onAddToCart, editingOrder = null, onSaveEdit, onCancelEdi
                 {value && <Check size={16} className="text-[var(--verde-main)] shrink-0 mt-1" />}
               </div>
             ))}
-            {addedDrinks.length > 0 && (
+            {activeDrinks.length > 0 && (
               <div className="flex items-start gap-3 pt-2 border-t border-gray-100">
                 <span className="text-lg mt-0.5 shrink-0">🍹</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--texto-suave)] mb-0.5">Bebidas</p>
-                  <p className="font-display text-base text-[var(--verde-profundo)] font-semibold leading-snug">{addedDrinks.map(d => d.nombre).join(', ')}</p>
+                  <p className="font-display text-base text-[var(--verde-profundo)] font-semibold leading-snug">{activeDrinks.map(d => `${d.nombre}${drinkQty[d.id] > 1 ? ` x${drinkQty[d.id]}` : ''}`).join(', ')}</p>
                 </div>
                 <Check size={16} className="text-[var(--verde-main)] shrink-0 mt-1" />
               </div>

@@ -52,7 +52,7 @@ const CuentaView = ({ onAddToCart }) => {
   })();
 
   const [messages, setMessages] = useState([
-    { id: 'msg-initial', role: 'ai', text: '🥦 ¡Hola! Soy Savia, tu asesora nutricional con IA. Te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?' },
+    { id: 'msg-initial', role: 'ai', text: '🥦 ¡Hola! Soy Vita, tu asesora nutricional con IA. Te guiaré paso a paso para encontrar tu bowl perfecto. ¿Cuál es tu meta nutricional principal hoy?' },
   ]);
 
   useEffect(() => {
@@ -143,7 +143,7 @@ const CuentaView = ({ onAddToCart }) => {
             </button>
           </div>
 
-          {/* Chatbot Savia */}
+          {/* Chatbot Vita */}
           <div className="bg-[var(--verde-profundo)] rounded-[24px] p-6 text-white relative overflow-hidden flex flex-col min-h-[500px] shadow-lg">
             <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--verde-main)] rounded-full blur-[80px] opacity-20 pointer-events-none" />
 
@@ -194,7 +194,7 @@ const CuentaView = ({ onAddToCart }) => {
                   <span className="animate-bounce">●</span>
                   <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>●</span>
                   <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>●</span>
-                  <span>Savia está procesando...</span>
+                  <span>Vita está procesando...</span>
                 </div>
               )}
             </div>

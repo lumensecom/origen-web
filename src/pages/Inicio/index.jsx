@@ -10,7 +10,7 @@ import FloatingLeaf from '../../components/ui/FloatingLeaf';
 import LazyVideo from '../../components/ui/LazyVideo';
 import Button from '../../components/ui/Button';
 
-const HomeView = ({ navigate, onOpenSavia }) => {
+const HomeView = ({ navigate, onOpenVita }) => {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end start'] });
   const yText = useTransform(scrollYProgress, [0, 1], [0, 200]);
@@ -47,18 +47,18 @@ const HomeView = ({ navigate, onOpenSavia }) => {
           </motion.div>
         </motion.div>
 
-        {/* Vita mascot — bottom-right of hero, opens Savia on click */}
+        {/* Vita mascot — bottom-right of hero, opens Vita on click */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.9, ease: [0.23, 1, 0.32, 1] }}
-          onClick={onOpenSavia}
+          onClick={onOpenVita}
           className="absolute bottom-6 right-6 z-20 flex flex-col items-center gap-1 group"
           aria-label="Hablar con Vita"
         >
           <div className="h-[120px] md:h-[180px] drop-shadow-2xl group-hover:scale-105 transition-transform duration-300">
             <img
-              src="VITA_MASCOT_URL"
+              src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
               alt="Vita, asesora nutricional"
               className="h-full w-auto object-contain"
             />
@@ -93,8 +93,8 @@ const HomeView = ({ navigate, onOpenSavia }) => {
 
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
             <p className="font-display italic text-sm text-[var(--texto-suave)]">¿No sabes qué comer hoy?</p>
-            <button onClick={onOpenSavia} className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap">
-              <Sparkles size={14} /> Pregúntale a Savia
+            <button onClick={onOpenVita} className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap">
+              <Sparkles size={14} /> Pregúntale a Vita
             </button>
           </div>
 

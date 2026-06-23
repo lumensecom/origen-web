@@ -14,7 +14,7 @@ import Footer from './components/layout/Footer';
 import SideDrawer from './components/layout/SideDrawer';
 import CheckoutModal from './components/CheckoutModal';
 import OrderQRModal from './components/OrderQRModal';
-import SaviaWidget from './components/SaviaWidget';
+import VitaWidget from './components/VitaWidget';
 
 import HomeView from './pages/Inicio';
 import CartaView from './pages/Carta';
@@ -41,7 +41,7 @@ export default function App() {
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [saviaOpen, setSaviaOpen] = useState(false);
+  const [vitaOpen, setVitaOpen] = useState(false);
 
   // Cross-feature flows
   const [editingOrder, setEditingOrder] = useState(null);   // { source, ... } while editing a bowl
@@ -211,7 +211,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {activeTab === 'inicio' && (
             <motion.div key="inicio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <HomeView navigate={navigate} onOpenSavia={() => setSaviaOpen(true)} />
+              <HomeView navigate={navigate} onOpenVita={() => setVitaOpen(true)} />
             </motion.div>
           )}
           {activeTab === 'menu' && (
@@ -290,13 +290,13 @@ export default function App() {
 
       {qrOrder && <OrderQRModal order={qrOrder} onClose={() => setQrOrder(null)} />}
 
-      <SaviaWidget
+      <VitaWidget
         carta={CARTA}
         formatPrice={formatPrice}
         onAddToCart={handleAddToCart}
         navigate={navigate}
-        isOpen={saviaOpen}
-        onClose={() => setSaviaOpen(false)}
+        isOpen={vitaOpen}
+        onClose={() => setVitaOpen(false)}
       />
 
       <Footer navigate={navigate} />
