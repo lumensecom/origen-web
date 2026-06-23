@@ -6,10 +6,11 @@ import useLockBodyScroll from '../hooks/useLockBodyScroll'
 
 export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' }) {
   useLockBodyScroll(true)
-  const { signIn, signUp, resetPassword } = useAuth()
-  const [mode, setMode] = useState(defaultMode) // 'login' | 'register' | 'forgot'
+  const { signIn, signUp, resetPassword, updatePassword } = useAuth()
+  const [mode, setMode] = useState(defaultMode) // 'login' | 'register' | 'forgot' | 'reset'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -21,11 +22,16 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
     'User already registered': 'Este correo ya tiene cuenta. Inicia sesión.',
     'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
     'For security purposes, you can only request this once every 60 seconds': 'Espera 60 segundos antes de intentarlo de nuevo.',
+    'New password should be different from the old password': 'La nueva contraseña debe ser diferente a la anterior.',
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    if (mode === 'reset' && password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.')
+      return
+    }
     setLoading(true)
 
     try {
@@ -40,6 +46,10 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
       } else if (mode === 'forgot') {
         await resetPassword(email)
         setDone(true)
+      } else if (mode === 'reset') {
+        await updatePassword(password)
+        onSuccess?.()
+        onClose?.()
       }
     } catch (err) {
       setError(errorMap[err.message] ?? 'Algo salió mal. Intenta de nuevo.')
@@ -58,6 +68,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
     login:    { title: 'Bienvenido\nde vuelta.', sub: 'Inicia sesión para ver tus puntos y pedidos.' },
     register: { title: 'Crea tu\ncuenta.', sub: 'Empieza a acumular puntos con cada compra.' },
     forgot:   { title: 'Recupera\ntu acceso.', sub: 'Te enviaremos un enlace para restablecer tu contraseña.' },
+    reset:    { title: 'Nueva\ncontraseña.', sub: 'Elige una contraseña segura de mínimo 6 caracteres.' },
   }
 
   const { title, sub } = headerCopy[mode]
@@ -203,7 +214,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="font-ui text-[11px] font-bold uppercase tracking-wider text-[var(--texto-suave)]">
-                        Contraseña
+                        {mode === 'reset' ? 'Nueva contraseña' : 'Contraseña'}
                       </label>
                       {mode === 'login' && (
                         <button
@@ -217,10 +228,28 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
                     </div>
                     <input
                       type="password"
-                      autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
+                      required
+                      minLength={6}
+                      className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
+                    />
+                  </div>
+                )}
+
+                {mode === 'reset' && (
+                  <div>
+                    <label className="block font-ui text-[11px] font-bold uppercase tracking-wider text-[var(--texto-suave)] mb-1.5">
+                      Confirmar contraseña
+                    </label>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Repite la contraseña"
                       required
                       minLength={6}
                       className="w-full px-4 py-3 rounded-[14px] border border-[var(--verde-palido)] bg-white font-ui text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--verde-main)] transition"
@@ -245,15 +274,15 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
                     ? 'Iniciar sesión'
                     : mode === 'register'
                     ? 'Crear mi cuenta'
+                    : mode === 'reset'
+                    ? 'Guardar contraseña'
                     : 'Enviar instrucciones'}
                   {!loading && <ArrowRight size={16} />}
                 </button>
 
-                {mode === 'forgot' ? (
+                {(mode === 'forgot' || mode === 'reset') ? (
                   <p className="font-ui text-xs text-center text-[var(--texto-suave)]">
-                    <button type="button" onClick={() => switchMode('login')} className="text-[var(--verde-main)] font-bold hover:underline">
-                      ← Volver al inicio de sesión
-                    </button>
+                    {mode === 'forgot' && <button type="button" onClick={() => switchMode('login')} className="text-[var(--verde-main)] font-bold hover:underline">← Volver al inicio de sesión</button>}
                   </p>
                 ) : (
                   <p className="font-ui text-xs text-center text-[var(--texto-suave)]">

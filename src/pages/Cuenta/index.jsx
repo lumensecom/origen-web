@@ -33,8 +33,13 @@ const calculateRecommendation = (choices) => {
 };
 
 const CuentaView = ({ onAddToCart }) => {
-  const { user, profile, isAuthenticated, signOut } = useAuth();
+  const { user, profile, isAuthenticated, signOut, isRecovery } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // If user arrives via a password-recovery link, open the reset form immediately
+  useEffect(() => {
+    if (isRecovery) setShowAuthModal(true);
+  }, [isRecovery]);
   const [chatStep, setChatStep] = useState('welcome');
   const [userChoices, setUserChoices] = useState({ goal: '', diet: '', protein: '' });
   const [isTyping, setIsTyping] = useState(false);
@@ -103,7 +108,7 @@ const CuentaView = ({ onAddToCart }) => {
             <div className="w-20 h-20 bg-[var(--verde-menta)] rounded-[20px] flex items-center justify-center mx-auto mb-6">
               <User size={36} className="text-[var(--verde-main)]" />
             </div>
-            <h2 className="font-display italic text-4xl text-[var(--verde-profundo)] mb-4">Tu Cuenta Origen</h2>
+            <h2 className="font-logo text-4xl text-[var(--verde-profundo)] mb-4">Tu Cuenta Origen</h2>
             <p className="font-ui text-[var(--texto-suave)] mb-8 max-w-sm mx-auto">
               Inicia sesión para ver tus puntos, historial de pedidos y el asesor nutricional con IA.
             </p>
@@ -118,7 +123,7 @@ const CuentaView = ({ onAddToCart }) => {
             <p className="font-ui text-xs text-[var(--texto-suave)] mt-6">Gana 50 puntos con cada compra.</p>
           </div>
         </div>
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={() => setShowAuthModal(false)} />}
+        {showAuthModal && <AuthModal defaultMode={isRecovery ? 'reset' : 'login'} onClose={() => setShowAuthModal(false)} onSuccess={() => setShowAuthModal(false)} />}
       </div>
     );
   }

@@ -24,7 +24,7 @@ const CartaView = ({ onAddToCart }) => {
       <div className="max-w-[1200px] mx-auto px-6">
 
         <div className="text-center mb-16 animate-in">
-          <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Carta Origen</h1>
+          <h1 className="font-logo text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Carta Origen</h1>
           <p className="font-ui text-lg text-[#2D5A4A]">Combinaciones perfectas y bebidas frescas de la casa.</p>
         </div>
 
@@ -71,7 +71,7 @@ const CartaView = ({ onAddToCart }) => {
         </div>
 
         {/* Grid */}
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <motion.div layout className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
           <AnimatePresence mode="popLayout">
             {bowlsFiltrados.map(item => {
               const isBebida = filtroActivo === 'Bebidas' || !item.tag;

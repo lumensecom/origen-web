@@ -36,7 +36,7 @@ const StaffFallback = () => (
 );
 
 export default function App() {
-  const { isAuthenticated, isSeller, isCajaSeller } = useAuth();
+  const { isAuthenticated, isSeller, isCajaSeller, isRecovery } = useAuth();
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,6 +62,12 @@ export default function App() {
   useEffect(() => {
     if (isCajaSeller) setActiveTab('seller');
   }, [isCajaSeller]);
+
+  // When a password-recovery link is clicked, navigate to Cuenta so the reset
+  // modal can open automatically (CuentaView watches isRecovery).
+  useEffect(() => {
+    if (isRecovery) setActiveTab('cuenta');
+  }, [isRecovery]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);

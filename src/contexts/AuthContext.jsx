@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)   // clientes row (customers)
   const [empleado, setEmpleado] = useState(null) // empleados row (staff)
   const [loading, setLoading] = useState(true)
+  const [isRecovery, setIsRecovery] = useState(false) // password-recovery link was clicked
 
   // Staff identity is the source of truth for role/sede; customers fall back to
   // their `clientes` row. We resolve both so a single account can never be
@@ -44,6 +45,11 @@ export function AuthProvider({ children }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true)
+        setUser(session?.user ?? null)
+        return
+      }
       setUser(session?.user ?? null)
       if (session?.user) {
         loadProfile(session.user.id)
@@ -83,9 +89,17 @@ export function AuthProvider({ children }) {
   const resetPassword = async (email) => {
     if (!supabase) throw new Error('Supabase no configurado')
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}`,
     })
     if (error) throw error
+  }
+
+  const updatePassword = async (newPassword) => {
+    if (!supabase) throw new Error('Supabase no configurado')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
+    setIsRecovery(false)
+    if (user) loadProfile(user.id)
   }
 
   const refreshProfile = async () => {
@@ -118,6 +132,8 @@ export function AuthProvider({ children }) {
       signUp,
       signOut,
       resetPassword,
+      updatePassword,
+      isRecovery,
       refreshProfile,
     }}>
       {children}

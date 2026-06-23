@@ -166,8 +166,8 @@ const BuilderView = ({ onAddToCart, editingOrder = null, onSaveEdit, onCancelEdi
   return (
     <div className="bg-[var(--fondo-crema)] w-full flex flex-col lg:flex-row">
 
-      {/* LEFT PANEL */}
-      <div className="w-full lg:w-1/2 bg-[var(--verde-profundo)] text-white flex flex-col h-[100svh] sticky top-0 z-20 overflow-hidden">
+      {/* LEFT PANEL — full-width when summary (step 7) */}
+      <div className={`w-full bg-[var(--verde-profundo)] text-white flex flex-col h-[100svh] sticky top-0 z-20 overflow-hidden transition-all duration-500 ${step === 7 ? 'lg:w-full' : 'lg:w-1/2'}`}>
         <div className="flex-1 overflow-y-auto scrollbar-hide px-6 pt-24 pb-4 lg:px-12 lg:pt-28">
           <div className="mb-8">
             {isEditing && (
@@ -318,18 +318,33 @@ const BuilderView = ({ onAddToCart, editingOrder = null, onSaveEdit, onCancelEdi
 
           {/* Paso 7: Resumen */}
           {step === 7 && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 bg-[var(--verde-bosque)] p-8 rounded-[24px] border border-[var(--verde-main)]/20">
-              <h2 className="font-display italic text-3xl mb-6 text-[var(--verde-main)]">🎉 Tu combo está listo</h2>
-              <div className="space-y-3 font-ui text-[var(--verde-palido)] mb-6 text-sm">
-                <p>• <strong className="text-white">Base:</strong> {selections.base}</p>
-                <p>• <strong className="text-white">Frescuras:</strong> {selections.frescuras.join(' + ')}</p>
-                <p>• <strong className="text-white">Sabores:</strong> {selections.sabores.join(' + ')}</p>
-                <p>• <strong className="text-white">Proteína:</strong> {selections.proteina || 'Sin proteína'}</p>
-                <p>• <strong className="text-white">Salsa:</strong> {selections.salsa}</p>
-                {activeDrinks.length > 0 && <p>• <strong className="text-white">Bebidas:</strong> {activeDrinks.map(d => `${d.nombre}${drinkQty[d.id] > 1 ? ` x${drinkQty[d.id]}` : ''}`).join(', ')}</p>}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex-1">
+              <div className="mb-6">
+                <span className="text-4xl">🎉</span>
+                <h2 className="font-display italic text-3xl lg:text-4xl mt-2 text-[var(--verde-main)]">Tu bowl está listo</h2>
+                <p className="font-ui text-[var(--verde-palido)] text-sm mt-1 opacity-80">Revisa todo antes de agregar al pedido</p>
               </div>
-              <div className="border-t border-white/10 pt-4 flex justify-between items-center">
-                <span className="font-ui text-lg">Total a pagar:</span>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
+                {[
+                  { emoji: '🌾', label: 'Base', value: selections.base },
+                  { emoji: '🥦', label: 'Frescuras', value: selections.frescuras.join(' · ') },
+                  { emoji: '✨', label: 'Sabores', value: selections.sabores.join(' · ') },
+                  { emoji: '⚡', label: 'Proteína', value: selections.proteina || 'Sin proteína' },
+                  { emoji: '💚', label: 'Salsa', value: selections.salsa },
+                  ...(activeDrinks.length > 0 ? [{ emoji: '🍹', label: 'Bebidas', value: activeDrinks.map(d => `${d.nombre}${drinkQty[d.id] > 1 ? ` ×${drinkQty[d.id]}` : ''}`).join(', ') }] : []),
+                ].map(({ emoji, label, value }) => (
+                  <div key={label} className="flex items-start gap-3 bg-white/8 rounded-[16px] px-4 py-3">
+                    <span className="text-xl mt-0.5 shrink-0">{emoji}</span>
+                    <div className="min-w-0">
+                      <p className="font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--verde-palido)]/60 mb-0.5">{label}</p>
+                      <p className="font-ui font-semibold text-sm text-white leading-snug">{value}</p>
+                    </div>
+                    <Check size={14} className="text-[var(--verde-main)] shrink-0 mt-1 ml-auto" />
+                  </div>
+                ))}
+              </div>
+              <div className="bg-[var(--verde-bosque)] rounded-[20px] px-6 py-4 flex justify-between items-center border border-[var(--verde-main)]/20">
+                <span className="font-ui text-base text-[var(--verde-palido)]">Total del combo</span>
                 <span className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-main)]'}`}>{formatPrice(totalPrice)}</span>
               </div>
             </motion.div>
@@ -364,8 +379,8 @@ const BuilderView = ({ onAddToCart, editingOrder = null, onSaveEdit, onCancelEdi
         </div>
       </div>
 
-      {/* RIGHT PANEL — preview desktop */}
-      <div className="hidden lg:block w-full lg:w-1/2 bg-[var(--fondo-crema)] relative">
+      {/* RIGHT PANEL — preview desktop (hidden on step 7: full-width summary takes over) */}
+      <div className={`w-full lg:w-1/2 bg-[var(--fondo-crema)] relative ${step === 7 ? 'hidden' : 'hidden lg:block'}`}>
         <div className="sticky top-0 h-screen flex flex-col items-center justify-center px-12">
           <div className="flex items-center justify-between w-full max-w-sm bg-white px-6 py-4 rounded-[20px] mb-8 shadow-sm border border-[var(--verde-palido)]">
             <div>

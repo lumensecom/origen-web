@@ -47,23 +47,23 @@ const HomeView = ({ navigate, onOpenVita }) => {
           </motion.div>
         </motion.div>
 
-        {/* Vita mascot — bottom-right of hero, opens Vita on click */}
+        {/* Vita mascot desktop — bottom-right of hero */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.9, ease: [0.23, 1, 0.32, 1] }}
           onClick={onOpenVita}
-          className="absolute bottom-6 right-6 z-20 flex flex-col items-center gap-1 group"
+          className="hidden md:flex absolute bottom-6 right-6 z-20 flex-col items-center gap-1 group"
           aria-label="Hablar con Vita"
         >
-          <div className="h-[120px] md:h-[180px] drop-shadow-2xl group-hover:scale-105 transition-transform duration-300">
+          <div className="h-[180px] drop-shadow-2xl group-hover:scale-105 transition-transform duration-300">
             <img
               src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
               alt="Vita, asesora nutricional"
               className="h-full w-auto object-contain"
             />
           </div>
-          <span className="font-ui text-[11px] md:text-xs font-bold text-white/80 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm group-hover:text-white transition-colors">
+          <span className="font-ui text-xs font-bold text-white/80 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm group-hover:text-white transition-colors">
             ¡Hola! Soy Vita 🥦
           </span>
         </motion.button>
@@ -259,6 +259,22 @@ const HomeView = ({ navigate, onOpenVita }) => {
           </div>
         </motion.div>
       </div>
+      {/* Vita mobile FAB — fixed bottom-right, only on small screens */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 1.2, ease: [0.23, 1, 0.32, 1] }}
+        onClick={onOpenVita}
+        className="md:hidden fixed bottom-6 right-4 z-[100] flex items-center gap-2 bg-[var(--verde-profundo)] text-white font-ui font-bold text-xs px-3 py-2.5 rounded-full shadow-2xl border border-[var(--verde-main)]/30 active:scale-95 transition-transform"
+        aria-label="Hablar con Vita"
+      >
+        <img
+          src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
+          alt="Vita"
+          className="h-8 w-auto object-contain"
+        />
+        <span>Vita 🥦</span>
+      </motion.button>
     </div>
   );
 };

@@ -12,7 +12,7 @@ const UbicacionesView = () => {
 
         <div className="text-center mb-16 animate-in">
           <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">Nuestros Espacios</span>
-          <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Ubicaciones</h1>
+          <h1 className="font-logo text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Ubicaciones</h1>
           <p className="font-ui text-lg text-[var(--texto-suave)] max-w-lg mx-auto">Encuéntranos en los puntos estratégicos de Bogotá y vive la experiencia real en persona.</p>
         </div>
 
@@ -62,8 +62,8 @@ const UbicacionesView = () => {
             })}
           </div>
 
-          {/* Detalle de sede activa */}
-          <div className="lg:col-span-7">
+          {/* Detalle de sede activa — desktop only; mobile shows map inside active card */}
+          <div className="hidden lg:block lg:col-span-7">
             <div className="bg-white rounded-[32px] overflow-hidden shadow-lg border border-[var(--verde-palido)] p-6 md:p-8 flex flex-col gap-6">
               <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
                 <div>

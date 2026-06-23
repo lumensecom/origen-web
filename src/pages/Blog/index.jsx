@@ -64,7 +64,7 @@ const BlogView = ({ navigate }) => {
 
         <div className="text-center mb-16 animate-in">
           <span className="font-ui text-[var(--terracota-quemado)] font-bold tracking-[0.25em] uppercase text-xs mb-4 inline-block">Historias de Origen</span>
-          <h1 className="font-display italic text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Nuestro Blog</h1>
+          <h1 className="font-logo text-5xl md:text-7xl text-[var(--verde-profundo)] mb-4">Nuestro Blog</h1>
           <p className="font-ui text-lg text-[var(--texto-suave)] max-w-xl mx-auto">
             Explora las crónicas de los ingredientes, las vidas de nuestros campesinos aliados y el porqué detrás de una nutrición real y honesta.
           </p>
