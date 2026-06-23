@@ -1,0 +1,16 @@
+export const COLORS = {
+  verdeProfundo: '#131E14',
+  verdeBosque: '#2F3E2B',
+  verdeMain: '#12B362',
+  verdeVivo: '#1EAD61',
+  verdeBrillante: '#4CD98A',
+  verdePalido: '#C8F0DC',
+  verdeMenta: '#E8F9F0',
+  doradoFuerte: '#D4A017',
+  doradoSuave: '#F0C040',
+  cremaCalido: '#FDF5E0',
+  fondoCrema: '#F1F4EA',
+  textoOscuro: '#0D1F0F',
+  kraft: '#D4A574',
+  maximoAmber: '#F09030',
+};

@@ -1,20 +1,33 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { getProfile } from '../lib/database'
+import { getProfile, getEmpleado } from '../lib/database'
+import { LOCALES } from '../constants/locations'
 
 const AuthContext = createContext(null)
 
+const localeName = (localId) =>
+  LOCALES.find((l) => l.localId === localId)?.nombre ?? null
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const [profile, setProfile] = useState(null)   // clientes row (customers)
+  const [empleado, setEmpleado] = useState(null) // empleados row (staff)
   const [loading, setLoading] = useState(true)
 
+  // Staff identity is the source of truth for role/sede; customers fall back to
+  // their `clientes` row. We resolve both so a single account can never be
+  // mistaken for the other.
   const loadProfile = async (userId) => {
     try {
-      const p = await getProfile(userId)
+      const [p, e] = await Promise.all([
+        getProfile(userId).catch(() => null),
+        getEmpleado(userId).catch(() => null),
+      ])
       setProfile(p)
+      setEmpleado(e)
     } catch {
       setProfile(null)
+      setEmpleado(null)
     }
   }
 
@@ -36,6 +49,7 @@ export function AuthProvider({ children }) {
         loadProfile(session.user.id)
       } else {
         setProfile(null)
+        setEmpleado(null)
       }
     })
 
@@ -63,6 +77,7 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    setEmpleado(null)
   }
 
   const resetPassword = async (email) => {
@@ -77,12 +92,28 @@ export function AuthProvider({ children }) {
     if (user) await loadProfile(user.id)
   }
 
+  // Staff (empleados) win over the customer fallback. A staff member is never a
+  // customer and vice-versa.
+  const role = empleado?.rol ?? profile?.role ?? 'customer'
+  const isAdmin = role === 'admin'
+  const isSeller = role === 'seller' || role === 'admin' // staff (has Caja access)
+  const sellerLocalId = empleado?.id_local ?? null       // NULL for admin = global
+
   return (
     <AuthContext.Provider value={{
       user,
       profile,
+      empleado,
       loading,
       isAuthenticated: !!user,
+      role,
+      isStaff: !!empleado,
+      isAdmin,
+      isSeller,
+      // A pure seller (caja) — used to redirect on login and block purchasing.
+      isCajaSeller: role === 'seller',
+      sellerLocalId,
+      sellerLocation: localeName(sellerLocalId),
       signIn,
       signUp,
       signOut,
