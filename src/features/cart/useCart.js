@@ -6,6 +6,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { formatPrice } from '../../utils/format';
 
+
 // ---------------------------------------------------------------------------
 // Persistence — the cart and its checkout state survive reloads and WhatsApp
 // hand-offs via localStorage. Orders are NEVER auto-cleared just because a link
@@ -210,48 +211,16 @@ export const useCart = () => {
     return order;
   };
 
-  // Individual QR: one order for a single cart line. Reused while that line is
-  // unchanged, so re-opening its QR doesn't spawn duplicate rows.
-  const payItem = async (line) => {
-    requireAuth();
-    requirePickupStore();
-    const sig = lineSig(line);
-    if (line.paidOrderId && line.paidSig === sig) {
-      try {
-        const existing = await getOrderById(line.paidOrderId);
-        if (existing && !existing.entregado) return existing;
-      } catch { /* fall through and recreate */ }
-    }
-    const order = await createOrder({
-      user_id: user.id,
-      items: buildItemsData([line]),
-      total_price: line.precio * line.quantity,
-      channel: 'pickup',                       // canal: sede física
-      source: 'app',
-      status: 'recibido',
-      local_id: checkout.store.localId,        // sede obligatoria (validada arriba)
-      delivery_type: 'En Local (QR) — Ítem',
-      store_location: checkout.store?.nombre ?? null,
-      delivery_address: null,
-      delivery_details: null,
-    });
-    setCart(prev => prev.map(item =>
-      item.id === line.id ? { ...item, paidOrderId: order.id, paidSig: sig } : item
-    ));
-    return order;
-  };
-
   // -------------------------------------------------------------------------
-  // WhatsApp confirmation. For pickup this also UNLOCKS in-store QR payment and
-  // keeps the cart intact; for delivery it persists the order. Neither path
-  // clears the cart — only a manual delete or a seller payment does that.
+  // Order confirmation. For pickup this UNLOCKS in-store QR payment and keeps
+  // the cart intact so the customer can generate the master QR at the counter.
+  // For delivery it persists the order directly. No WhatsApp — operators are
+  // notified via Supabase Realtime on the Seller dashboard.
   // -------------------------------------------------------------------------
   const confirmOrder = async (deliveryData) => {
     const cartTotal = cart.reduce((acc, item) => acc + item.precio * item.quantity, 0);
     const isPickup = deliveryData.modalidad === 'Recoger en Local';
 
-    // Validate the channel selection up front (the UI also gates the buttons).
-    // pickup → a valid sede; delivery (online) → address + contact phone.
     if (isPickup && !deliveryData.store?.localId) {
       throw new Error('Selecciona una sede para recoger.');
     }
@@ -261,16 +230,13 @@ export const useCart = () => {
 
     if (isAuthenticated && user) {
       try {
-        // Delivery orders have no in-store QR step, so they're persisted here as
-        // channel='delivery' (online). Pickup orders are persisted later when a
-        // QR is generated (payAll/payItem).
         if (!isPickup) {
           await createOrder({
             user_id: user.id,
             items: buildItemsData(cart),
             total_price: cartTotal,
-            channel: 'delivery',                 // canal: pedido remoto / online
-            source: 'app',                       // origen (futuro: 'rappi', 'didi'…)
+            channel: 'delivery',
+            source: 'app',
             status: 'recibido',
             local_id: null,
             delivery_type: deliveryData.modalidad,
@@ -290,46 +256,6 @@ export const useCart = () => {
       }
     }
 
-    let orderText = `🌿 *NUEVO PEDIDO ORIGEN* 🌿\n----------------------------------\n`;
-    const bowls = cart.filter(item => !item.desc);
-    const bebidas = cart.filter(item => item.desc);
-
-    if (bowls.length > 0) {
-      orderText += `🥣 *BOWL(S):*\n`;
-      bowls.forEach(b => {
-        orderText += `• ${b.quantity}x ${b.nombre} (${formatPrice(b.precio * b.quantity)})\n`;
-        if (b.esBuilder) {
-          orderText += `  (Base: ${b.base} | Frescuras: ${b.frescuras.join(', ')} | Proteína: ${b.proteina})\n`;
-        }
-      });
-      orderText += `\n`;
-    }
-    if (bebidas.length > 0) {
-      orderText += `🍹 *BEBIDA(S):*\n`;
-      bebidas.forEach(beb => {
-        orderText += `• ${beb.quantity}x ${beb.nombre} (${formatPrice(beb.precio * beb.quantity)})\n`;
-      });
-      orderText += `\n`;
-    }
-
-    orderText += `----------------------------------\n`;
-    orderText += `📍 *MODALIDAD:* ${deliveryData.modalidad}\n`;
-    if (isPickup) {
-      orderText += `🏪 *SEDE SELECCIONADA:* ${deliveryData.store?.nombre}\n`;
-      orderText += `📍 *DIRECCIÓN SEDE:* ${deliveryData.store?.direccion}\n`;
-    } else {
-      orderText += `🏠 *ENTREGAR EN:* ${deliveryData.direccion}\n`;
-      if (deliveryData.zona) orderText += `🗺️ *ZONA / BARRIO:* ${deliveryData.zona}\n`;
-      if (deliveryData.telefono) orderText += `📞 *CONTACTO:* ${deliveryData.telefono}\n`;
-      if (deliveryData.detalles) orderText += `📝 *INDICACIONES:* ${deliveryData.detalles}\n`;
-    }
-    orderText += `----------------------------------\n`;
-    orderText += `💰 *TOTAL A PAGAR:* ${formatPrice(cartTotal)}\n`;
-    orderText += `----------------------------------\n¡Preparar al instante con amor real! 🌿`;
-
-    window.open(`https://wa.me/573103112799?text=${encodeURIComponent(orderText)}`, '_blank');
-
-    // Pickup: unlock in-store QR payment and keep the cart visible. NEVER clear it.
     if (isPickup) {
       setCheckout(prev => ({ ...prev, unlocked: true, store: deliveryData.store ?? null }));
     }
@@ -345,6 +271,5 @@ export const useCart = () => {
     replaceItem,
     confirmOrder,
     payAll,
-    payItem,
   };
 };

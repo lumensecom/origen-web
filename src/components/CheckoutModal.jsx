@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowLeft, ArrowRight, Minus, Plus, Trash2, Store, MapPin, Pencil, QrCode, Loader2, CheckCircle2 } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Minus, Plus, Trash2, Store, MapPin, Pencil, QrCode, Loader2, CheckCircle2, Bell } from 'lucide-react';
 import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import { LOCALES } from '../constants/locations';
 import { formatPrice } from '../utils/format';
@@ -13,7 +13,6 @@ const CheckoutModal = ({
   onConfirmOrder,
   onEditItem,
   onPayAll,
-  onPayItem,
   onClearCart,
   qrUnlocked = false,
   pickupStore = null,
@@ -21,16 +20,13 @@ const CheckoutModal = ({
   onRequireAuth,
 }) => {
   useLockBodyScroll(true);
-  // cart → deliveryType → pickupStore → deliveryAddress. When the order is
-  // QR-unlocked the "cart" step doubles as the pay-in-store zone.
   const [step, setStep] = useState('cart');
   const [selectedStore, setSelectedStore] = useState(null);
   const [address, setAddress] = useState('');
-  const [telefono, setTelefono] = useState('');   // contacto (pedido a domicilio)
-  const [zona, setZona] = useState('');            // barrio / zona de entrega
-  const [details, setDetails] = useState('');      // indicaciones adicionales
+  const [telefono, setTelefono] = useState('');
+  const [zona, setZona] = useState('');
+  const [details, setDetails] = useState('');
   const [payingAll, setPayingAll] = useState(false);
-  const [busyItemId, setBusyItemId] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [qrError, setQrError] = useState('');
 
@@ -41,9 +37,8 @@ const CheckoutModal = ({
     else if (step === 'pickupStore' || step === 'deliveryAddress') setStep('deliveryType');
   };
 
-  // Pickup confirmation: sends the WhatsApp message AND unlocks in-store QR
-  // payment. We return to the "Tu Pedido" zone (now QR-enabled) instead of
-  // closing — the cart stays so the customer can pay at the counter.
+  // Pickup confirmation: unlocks in-store QR payment and returns to the cart
+  // zone (now QR-enabled). No WhatsApp — the operator is notified via Realtime.
   const handlePickupConfirm = async () => {
     setQrError('');
     setConfirming(true);
@@ -57,8 +52,7 @@ const CheckoutModal = ({
     }
   };
 
-  // Delivery (online) confirmation: captures contact + address/zone for the
-  // remote transaction, then hands off to WhatsApp via onConfirmOrder.
+  // Delivery confirmation: persists the order in Supabase. No WhatsApp.
   const handleDeliveryConfirm = async () => {
     setQrError('');
     setConfirming(true);
@@ -87,19 +81,6 @@ const CheckoutModal = ({
       setQrError(e?.message || 'No se pudo generar el QR. Intenta de nuevo.');
     } finally {
       setPayingAll(false);
-    }
-  };
-
-  const handlePayItem = async (item) => {
-    if (!isAuthenticated) { onRequireAuth?.(); return; }
-    setBusyItemId(item.id);
-    setQrError('');
-    try {
-      await onPayItem(item);
-    } catch (e) {
-      setQrError(e?.message || 'No se pudo generar el QR. Intenta de nuevo.');
-    } finally {
-      setBusyItemId(null);
     }
   };
 
@@ -164,10 +145,10 @@ const CheckoutModal = ({
                   <div className="flex items-start gap-2.5 bg-[var(--verde-menta)] border border-[var(--verde-palido)] rounded-[16px] p-3.5 mb-1">
                     <CheckCircle2 size={18} className="text-[var(--verde-main)] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)]">Pedido confirmado por WhatsApp</p>
+                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)]">¡Pedido listo para pagar!</p>
                       <p className="font-ui text-xs text-[var(--texto-suave)]">
                         {pickupStore?.nombre ? `Recoges en ${pickupStore.nombre}. ` : ''}
-                        Genera un QR y muéstralo en caja para pagar — todo junto o por plato.
+                        Genera el QR del pedido completo y muéstralo en caja.
                       </p>
                     </div>
                   </div>
@@ -200,18 +181,6 @@ const CheckoutModal = ({
                         </button>
                       )}
                     </div>
-
-                    {/* Individual QR button — distinct, smaller, next to each dish */}
-                    {qrUnlocked && (
-                      <button
-                        onClick={() => handlePayItem(item)}
-                        disabled={busyItemId === item.id}
-                        className="w-full mt-3 flex items-center justify-center gap-2 bg-white border-2 border-[var(--verde-palido)] text-[var(--verde-profundo)] font-ui font-bold text-xs py-2.5 rounded-[12px] hover:border-[var(--verde-main)] hover:bg-[var(--verde-menta)] transition-all active:scale-[0.98] disabled:opacity-60"
-                      >
-                        {busyItemId === item.id ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />}
-                        {busyItemId === item.id ? 'Generando…' : 'QR de este plato'}
-                      </button>
-                    )}
 
                     {/* Builder bowls: prominent "Editar pedido" ABOVE a small, muted delete */}
                     {item.esBuilder && (
@@ -375,7 +344,7 @@ const CheckoutModal = ({
                 className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {confirming ? <Loader2 size={18} className="animate-spin" /> : null}
-                {confirming ? 'Confirmando…' : 'Confirmar por WhatsApp'} {!confirming && <ArrowRight size={18} />}
+                {confirming ? 'Confirmando…' : 'Confirmar pedido'} {!confirming && <ArrowRight size={18} />}
               </button>
               {qrError && <p className="font-ui text-xs text-red-500 text-center pt-1">{qrError}</p>}
             </div>
@@ -388,7 +357,7 @@ const CheckoutModal = ({
                 className="w-full bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[18px] hover:bg-[var(--verde-vivo)] transition-all shadow-[0_4px_14px_rgba(18,179,98,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {confirming ? <Loader2 size={18} className="animate-spin" /> : null}
-                {confirming ? 'Confirmando…' : 'Confirmar por WhatsApp'} {!confirming && <ArrowRight size={18} />}
+                {confirming ? 'Confirmando…' : 'Confirmar pedido'} {!confirming && <ArrowRight size={18} />}
               </button>
               {qrError && <p className="font-ui text-xs text-red-500 text-center pt-1">{qrError}</p>}
             </div>

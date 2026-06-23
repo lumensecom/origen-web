@@ -46,6 +46,27 @@ const HomeView = ({ navigate, onOpenSavia }) => {
             <Button onClick={() => navigate('builder')} variant="ghost">Crear Mi Bowl <Sparkles size={16} /></Button>
           </motion.div>
         </motion.div>
+
+        {/* Vita mascot — bottom-right of hero, opens Savia on click */}
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.9, ease: [0.23, 1, 0.32, 1] }}
+          onClick={onOpenSavia}
+          className="absolute bottom-6 right-6 z-20 flex flex-col items-center gap-1 group"
+          aria-label="Hablar con Vita"
+        >
+          <div className="h-[120px] md:h-[180px] drop-shadow-2xl group-hover:scale-105 transition-transform duration-300">
+            <img
+              src="VITA_MASCOT_URL"
+              alt="Vita, asesora nutricional"
+              className="h-full w-auto object-contain"
+            />
+          </div>
+          <span className="font-ui text-[11px] md:text-xs font-bold text-white/80 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm group-hover:text-white transition-colors">
+            ¡Hola! Soy Vita 🥦
+          </span>
+        </motion.button>
       </div>
 
       {/* Widget "¿Cómo te sientes hoy?" */}

@@ -1,13 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ScanLine, Check, RotateCcw, Pencil, CreditCard, MapPin, Clock,
-  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw,
+  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw, Bell, X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { sellerSearchOrder, sellerListOrders, setOrderDelivered } from '../../lib/database';
 import { formatPrice } from '../../utils/format';
 import QRScanner from '../../components/seller/QRScanner';
+
+// Plays a soft two-tone chime using the Web Audio API (no audio file needed).
+const playChime = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const play = (freq, start, dur) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + start + 0.02);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    };
+    play(880, 0, 0.18);
+    play(1100, 0.2, 0.22);
+  } catch { /* audio blocked */ }
+};
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 // Pull a UUID out of the scanned payload if present; otherwise return the raw
@@ -29,13 +52,15 @@ const GateCard = ({ icon, title, body, action }) => (
 );
 
 const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }) => {
-  const { isAuthenticated, isSeller, sellerLocation } = useAuth();
+  const { isAuthenticated, isSeller, sellerLocation, sellerLocalId } = useAuth();
   const [mode, setMode] = useState('scanner');  // scanner | history
   const [view, setView] = useState('scan');     // scan | loading | order | paid
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [newOrderAlerts, setNewOrderAlerts] = useState([]); // [{id, nombre, total, ts}]
+  const alertTimers = useRef({});
 
   // When returning from the builder after a seller edit, resume on the order.
   useEffect(() => {
@@ -46,6 +71,37 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
       onConsumeResume?.();
     }
   }, [resumeOrder, onConsumeResume]);
+
+  // Realtime: subscribe to new orders INSERT for this seller's sede.
+  // When a customer creates an order (pickup QR), notify the operator immediately.
+  useEffect(() => {
+    if (!supabase || !isAuthenticated || !sellerLocalId) return;
+    const filter = `local_id=eq.${sellerLocalId}`;
+    const channel = supabase
+      .channel(`seller-new-orders-${sellerLocalId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter }, (payload) => {
+        const o = payload.new;
+        const alertId = o.id;
+        playChime();
+        setNewOrderAlerts(prev => [...prev, {
+          alertId,
+          orderId: o.id,
+          total: o.total_price,
+          items: Array.isArray(o.items) ? o.items : [],
+          ts: new Date(o.created_at || Date.now()),
+        }]);
+        // Auto-dismiss after 12 s unless manually closed.
+        alertTimers.current[alertId] = setTimeout(() => {
+          setNewOrderAlerts(prev => prev.filter(a => a.alertId !== alertId));
+          delete alertTimers.current[alertId];
+        }, 12000);
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+      Object.values(alertTimers.current).forEach(clearTimeout);
+    };
+  }, [isAuthenticated, sellerLocalId]);
 
   // Resolve a scanned/typed code via the sede-scoped RPC (sanitises "#", matches
   // full UUID or short prefix, and records the scan). Returns the first match.
@@ -134,14 +190,63 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
   const hasBuilderBowl = items.some(it => it.esBuilder);
   const shortId = order ? String(order.id).slice(0, 8).toUpperCase() : '';
 
+  const dismissAlert = (alertId) => {
+    clearTimeout(alertTimers.current[alertId]);
+    delete alertTimers.current[alertId];
+    setNewOrderAlerts(prev => prev.filter(a => a.alertId !== alertId));
+  };
+
   return (
     <div className="pt-28 pb-32 min-h-screen w-full">
+
+      {/* ── Realtime new-order alerts (stacked, fixed top-right) ── */}
+      <div className="fixed top-24 right-4 z-[300] flex flex-col gap-3 max-w-[300px] w-full pointer-events-none">
+        <AnimatePresence>
+          {newOrderAlerts.map(alert => (
+            <motion.div
+              key={alert.alertId}
+              initial={{ opacity: 0, x: 60, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 60, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+              className="pointer-events-auto bg-[var(--verde-profundo)] border border-[var(--verde-main)]/40 rounded-[20px] p-4 shadow-2xl"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 bg-[var(--verde-main)] rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+                  <Bell size={16} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-ui font-bold text-sm text-white leading-tight">¡Nuevo pedido!</p>
+                  <p className="font-ui text-xs text-[var(--verde-palido)] mt-0.5">
+                    {alert.items.length} ítem(s) · {formatPrice(alert.total)}
+                  </p>
+                  <p className="font-ui text-[10px] text-white/40 mt-0.5">
+                    #{String(alert.orderId).slice(0, 8).toUpperCase()} · {alert.ts.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => dismissAlert(alert.alertId)}
+                  className="text-white/40 hover:text-white transition-colors p-1 flex-shrink-0"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       <div className="max-w-md mx-auto px-6">
 
         {/* Header */}
         <div className="mb-5 text-center">
           <span className="inline-flex items-center gap-2 bg-[var(--verde-menta)] text-[var(--verde-main)] px-4 py-1.5 rounded-full font-ui text-xs font-bold uppercase tracking-wider mb-3">
             <ScanLine size={14} /> Caja Origen
+            {newOrderAlerts.length > 0 && (
+              <span className="bg-red-500 text-white text-[9px] font-extrabold rounded-full w-4 h-4 flex items-center justify-center -ml-1">
+                {newOrderAlerts.length}
+              </span>
+            )}
           </span>
           <h1 className="font-display italic text-4xl text-[var(--verde-profundo)]">
             {mode === 'scanner' ? 'Escáner de pedidos' : 'Historial de caja'}
@@ -297,6 +402,7 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
     </div>
   );
 };
+
 
 // --------------------------------------------------------------------------
 // Seller history: only orders this caja has scanned/entered (scanned_at set),

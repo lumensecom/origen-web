@@ -50,7 +50,7 @@ export default function App() {
 
   useLockBodyScroll(isMobileMenuOpen);
 
-  const { cart, checkout, addToCart, updateQty, removeItem, clearCart, replaceItem, confirmOrder, payAll, payItem } = useCart();
+  const { cart, checkout, addToCart, updateQty, removeItem, clearCart, replaceItem, confirmOrder, payAll } = useCart();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -96,12 +96,6 @@ export default function App() {
   // Generate the master QR for the whole order, shown over the open cart.
   const handlePayAll = async () => {
     const order = await payAll();
-    setQrOrder(order);
-  };
-
-  // Generate an individual QR for a single dish/item.
-  const handlePayItem = async (item) => {
-    const order = await payItem(item);
     setQrOrder(order);
   };
 
@@ -286,7 +280,6 @@ export default function App() {
           onConfirmOrder={handleConfirmOrder}
           onEditItem={handleEditCartItem}
           onPayAll={handlePayAll}
-          onPayItem={handlePayItem}
           onClearCart={clearCart}
           qrUnlocked={checkout.unlocked}
           pickupStore={checkout.store}
