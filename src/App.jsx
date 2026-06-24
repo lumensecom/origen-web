@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
 import {
   Leaf, MapPin, ArrowRight, Instagram, Facebook, User,
   Menu as MenuIcon, X, Sparkles, MessageCircle, Navigation,
   Check, ChevronDown, BookOpen, Store, ShoppingBag,
-  Plus, Minus, Trash2, ArrowLeft, Clock, Award
+  Plus, Minus, Trash2, ArrowLeft, Clock, Award, Shield,
 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import AuthModal from './components/AuthModal';
 import SaviaWidget from './components/SaviaWidget';
 import useLockBodyScroll from './hooks/useLockBodyScroll';
 import { createOrder, addLoyaltyPoints, addPointsHistory } from './lib/database';
+
+const AdminModule = lazy(() => import('./pages/Admin'));
 
 const COLORS = {
   verdeProfundo: '#131E14',   // Profundo oliva oscuro
@@ -2182,7 +2184,12 @@ const CuentaView = ({ onAddToCart }) => {
 };
 
 export default function App() {
-  const { user, isAuthenticated, refreshProfile } = useAuth();
+  const { user, isAuthenticated, refreshProfile, isAdmin, isSeller, isStaff } = useAuth();
+
+  // Redirect admin to their panel once identity loads
+  useEffect(() => {
+    if (isAdmin) setActiveTab('admin');
+  }, [isAdmin]);
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -2393,17 +2400,19 @@ export default function App() {
             <button onClick={() => { setActiveTab('cuenta'); setIsMobileMenuOpen(false); }} className="text-white hover:text-[var(--terracota-suave)] transition-colors w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
               <User size={18}/>
             </button>
-            <button
-              onClick={() => setIsCheckoutOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-suave)] transition-colors flex items-center justify-center text-[var(--verde-profundo)]"
-            >
-              <ShoppingBag size={18} />
-              {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center">
-                  {cart.reduce((sum, i) => sum + i.quantity, 0)}
-                </span>
-              )}
-            </button>
+            {!isStaff && (
+              <button
+                onClick={() => setIsCheckoutOpen(true)}
+                className="relative w-10 h-10 rounded-full bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-suave)] transition-colors flex items-center justify-center text-[var(--verde-profundo)]"
+              >
+                <ShoppingBag size={18} />
+                {cart.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center">
+                    {cart.reduce((sum, i) => sum + i.quantity, 0)}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -2457,6 +2466,23 @@ export default function App() {
               </div>
 
               <div className="border-t border-white/10 pt-8 flex flex-col gap-6">
+                {/* Role-based quick links */}
+                {isAdmin && (
+                  <button
+                    onClick={() => { setActiveTab('admin'); setIsMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-ui font-bold text-sm px-4 py-3 rounded-[14px] transition-all text-left"
+                  >
+                    <Shield size={16} /> Panel de Ventas
+                  </button>
+                )}
+                {isAuthenticated && !isStaff && (
+                  <button
+                    onClick={() => { setActiveTab('cuenta'); setIsMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 text-white/60 hover:text-white font-ui text-sm transition-all text-left"
+                  >
+                    <User size={16} /> Mi Cuenta
+                  </button>
+                )}
                 <div className="flex gap-4">
                   <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--terracota-vivo)] hover:text-[var(--verde-profundo)] transition-colors text-white">
                     <Instagram size={18}/>
@@ -2483,6 +2509,18 @@ export default function App() {
           {activeTab === 'blog' && <motion.div key="blog" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><BlogView navigate={setActiveTab}/></motion.div>}
           {activeTab === 'ubicaciones' && <motion.div key="ubicaciones" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><UbicacionesView/></motion.div>}
           {activeTab === 'cuenta' && <motion.div key="cuenta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}><CuentaView onAddToCart={handleAddToCart}/></motion.div>}
+          {activeTab === 'admin' && isAdmin && (
+            <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{duration:0.4}}>
+              <Suspense fallback={
+                <div className="min-h-screen bg-[var(--fondo-crema)] flex items-center justify-center gap-3 text-[var(--texto-suave)]">
+                  <div className="w-6 h-6 border-2 border-[var(--verde-main)] border-t-transparent rounded-full animate-spin" />
+                  <span className="font-ui text-sm">Cargando panel…</span>
+                </div>
+              }>
+                <AdminModule />
+              </Suspense>
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 

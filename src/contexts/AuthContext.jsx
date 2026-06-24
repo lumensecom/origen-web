@@ -1,46 +1,66 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { getProfile } from '../lib/database'
+import { getProfile, getEmpleado } from '../lib/database'
 
 const AuthContext = createContext(null)
 
+// id_local → display name (must match locales.name exactly)
+const LOCAL_NAMES = {
+  1: 'CC salitre Plaza',
+  2: 'CC av chile',
+  3: 'CC Nuestro Bogota',
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const [user, setUser]       = useState(null)
+  const [profile, setProfile] = useState(null)   // clientes row
+  const [empleado, setEmpleado] = useState(null) // empleados row
   const [loading, setLoading] = useState(true)
 
-  const loadProfile = async (userId) => {
+  const loadIdentity = async (userId) => {
     try {
-      const p = await getProfile(userId)
-      setProfile(p)
+      const [prof, emp] = await Promise.all([
+        getProfile(userId),
+        getEmpleado(userId),
+      ])
+      setProfile(prof)
+      setEmpleado(emp)
     } catch {
       setProfile(null)
+      setEmpleado(null)
     }
   }
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
+    if (!supabase) { setLoading(false); return }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) loadProfile(session.user.id)
+      if (session?.user) loadIdentity(session.user.id)
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        loadProfile(session.user.id)
+        loadIdentity(session.user.id)
       } else {
         setProfile(null)
+        setEmpleado(null)
       }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Role derivation — empleados row always wins over clientes row
+  const role          = empleado?.rol ?? profile?.role ?? 'customer'
+  const isStaff       = !!empleado
+  const isAdmin       = role === 'admin'
+  const isSeller      = role === 'seller' || role === 'admin'
+  const isCajaSeller  = role === 'seller'
+  const sellerLocalId = empleado?.id_local ?? null
+  const sellerLocation = sellerLocalId ? LOCAL_NAMES[sellerLocalId] : null
 
   const signIn = async (email, password) => {
     if (!supabase) throw new Error('Supabase no configurado')
@@ -63,6 +83,7 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    setEmpleado(null)
   }
 
   const resetPassword = async (email) => {
@@ -74,15 +95,23 @@ export function AuthProvider({ children }) {
   }
 
   const refreshProfile = async () => {
-    if (user) await loadProfile(user.id)
+    if (user) await loadIdentity(user.id)
   }
 
   return (
     <AuthContext.Provider value={{
       user,
       profile,
+      empleado,
       loading,
       isAuthenticated: !!user,
+      role,
+      isStaff,
+      isAdmin,
+      isSeller,
+      isCajaSeller,
+      sellerLocalId,
+      sellerLocation,
       signIn,
       signUp,
       signOut,
