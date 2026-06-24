@@ -149,6 +149,68 @@ export async function setOrderDelivered(orderId, value) {
   return data
 }
 
+// ---------------------------------------------------------------------------
+// Locations (locales table — public SELECT)
+// ---------------------------------------------------------------------------
+
+export async function getLocales() {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('locales')
+    .select('id, name, direccion')
+    .order('id')
+  if (error) throw error
+  return data ?? []
+}
+
+// ---------------------------------------------------------------------------
+// Admin — user management
+// ---------------------------------------------------------------------------
+
+export async function adminListUsers() {
+  if (!supabase) return []
+  const { data, error } = await supabase.rpc('admin_list_users')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function adminCreateUser({ email, password, fullName, rol, idLocal }) {
+  if (!supabase) throw new Error('Supabase no configurado')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Sesión no encontrada')
+
+  const res = await fetch('/api/admin-users', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ email, password, full_name: fullName, rol, id_local: idLocal ?? null }),
+  })
+  const body = await res.json()
+  if (!res.ok) throw new Error(body.error ?? 'Error al crear usuario')
+  return body
+}
+
+export async function adminDeleteUser(userId) {
+  if (!supabase) throw new Error('Supabase no configurado')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Sesión no encontrada')
+
+  const res = await fetch('/api/admin-users', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ userId }),
+  })
+  const body = await res.json()
+  if (!res.ok) throw new Error(body.error ?? 'Error al eliminar usuario')
+  return body
+}
+
+// ---------------------------------------------------------------------------
 // Admin analytics feed. RLS grants admins global read; filters are applied
 // server-side so the dashboard only pulls what the active filters need.
 export async function getOrdersForAnalytics({ from, to, location } = {}) {
