@@ -1,6 +1,10 @@
 import { MenuIcon, User, ShoppingBag, ArrowRight } from 'lucide-react';
+import NotificationBell from '../seller/NotificationBell';
 
-const Navbar = ({ activeTab, scrolled, cart, showCart = true, onNavigate, onOpenMenu, onOpenCart, onOpenAccount }) => {
+const Navbar = ({
+  activeTab, scrolled, cart, showCart = true, onNavigate, onOpenMenu, onOpenCart, onOpenAccount,
+  showBell = false, notifications = [], unreadCount = 0, onMarkNotificationsRead, onClearNotifications, onOpenNotification,
+}) => {
   return (
     <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled || activeTab !== 'inicio' ? 'bg-[var(--verde-navbar)] border-b border-white/15 shadow-sm py-4' : 'bg-transparent py-6 md:py-8'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative h-16">
@@ -39,6 +43,15 @@ const Navbar = ({ activeTab, scrolled, cart, showCart = true, onNavigate, onOpen
           >
             <User size={18} />
           </button>
+          {showBell && (
+            <NotificationBell
+              notifications={notifications}
+              unreadCount={unreadCount}
+              onMarkRead={onMarkNotificationsRead}
+              onClear={onClearNotifications}
+              onOpen={onOpenNotification}
+            />
+          )}
           {showCart && (
             <button
               onClick={onOpenCart}

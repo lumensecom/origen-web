@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import useLockBodyScroll from './hooks/useLockBodyScroll';
 import { useCart } from './features/cart/useCart';
+import { useOrderNotifications } from './features/notifications/useOrderNotifications';
 import { updateOrder } from './lib/database';
 import { CARTA } from './constants/menu';
 import { formatPrice } from './utils/format';
@@ -16,6 +17,7 @@ import CheckoutModal from './components/CheckoutModal';
 import OrderQRModal from './components/OrderQRModal';
 import VitaWidget from './components/VitaWidget';
 import NotificationBar from './components/NotificationBar';
+import NotificationToasts from './components/seller/NotificationToasts';
 
 import HomeView from './pages/Inicio';
 import CartaView from './pages/Carta';
@@ -37,7 +39,7 @@ const StaffFallback = () => (
 );
 
 export default function App() {
-  const { isAuthenticated, isSeller, isCajaSeller, isRecovery } = useAuth();
+  const { isAuthenticated, isSeller, isCajaSeller, isRecovery, sellerLocalId } = useAuth();
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,10 +50,17 @@ export default function App() {
   const [editingOrder, setEditingOrder] = useState(null);   // { source, ... } while editing a bowl
   const [qrOrder, setQrOrder] = useState(null);             // saved order whose QR is shown
   const [sellerResumeOrder, setSellerResumeOrder] = useState(null); // order to re-show in Caja after edit
+  const [sellerOpenOrder, setSellerOpenOrder] = useState(null);     // { code, token } to load in Caja from an alert
 
   useLockBodyScroll(isMobileMenuOpen);
 
   const { cart, checkout, addToCart, updateQty, removeItem, clearCart, replaceItem, confirmOrder, payAll } = useCart();
+
+  // App-wide Caja alerts: a new pickup order for this seller's sede chimes,
+  // vibrates and feeds the navbar bell + floating toasts on any tab. Only a
+  // sede-bound caja receives them (a global admin has no sede → no alerts).
+  const cajaActive = isSeller && !!sellerLocalId;
+  const orderNotifs = useOrderNotifications({ localId: sellerLocalId, enabled: cajaActive });
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -79,6 +88,13 @@ export default function App() {
   const navigate = (tab) => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
+  };
+
+  // Open a specific order in the Caja from a notification (bell / toast). The
+  // token forces the Seller effect to re-run even for the same order id.
+  const openOrderInCaja = (orderId) => {
+    setSellerOpenOrder({ code: String(orderId), token: Date.now() });
+    navigate('seller');
   };
 
   const handleAddToCart = (product) => {
@@ -206,7 +222,20 @@ export default function App() {
         onOpenMenu={() => setIsMobileMenuOpen(true)}
         onOpenCart={() => setIsCheckoutOpen(true)}
         onOpenAccount={() => navigate('cuenta')}
+        showBell={cajaActive}
+        notifications={orderNotifs.notifications}
+        unreadCount={orderNotifs.unreadCount}
+        onMarkNotificationsRead={orderNotifs.markAllRead}
+        onClearNotifications={orderNotifs.clearAll}
+        onOpenNotification={openOrderInCaja}
       />
+
+      {cajaActive && (
+        <NotificationToasts
+          notifications={orderNotifs.notifications}
+          onOpenOrder={openOrderInCaja}
+        />
+      )}
 
       <SideDrawer
         isOpen={isMobileMenuOpen}
@@ -263,6 +292,8 @@ export default function App() {
                 <SellerView
                   resumeOrder={sellerResumeOrder}
                   onConsumeResume={() => setSellerResumeOrder(null)}
+                  openOrder={sellerOpenOrder}
+                  onConsumeOpenOrder={() => setSellerOpenOrder(null)}
                   onEditOrder={handleEditSellerOrder}
                   onRequireAuth={() => navigate('cuenta')}
                 />
