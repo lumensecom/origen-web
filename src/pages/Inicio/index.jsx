@@ -47,26 +47,6 @@ const HomeView = ({ navigate, onOpenVita }) => {
           </motion.div>
         </motion.div>
 
-        {/* Vita mascot desktop — bottom-right of hero */}
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.9, ease: [0.23, 1, 0.32, 1] }}
-          onClick={onOpenVita}
-          className="hidden md:flex absolute bottom-6 right-6 z-20 flex-col items-center gap-1 group"
-          aria-label="Hablar con Vita"
-        >
-          <div className="h-[180px] drop-shadow-2xl group-hover:scale-105 transition-transform duration-300">
-            <img
-              src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
-              alt="Vita, asesora nutricional"
-              className="h-full w-auto object-contain"
-            />
-          </div>
-          <span className="font-ui text-xs font-bold text-white/80 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm group-hover:text-white transition-colors">
-            ¡Hola! Soy Vita 🥦
-          </span>
-        </motion.button>
       </div>
 
       {/* Widget "¿Cómo te sientes hoy?" */}
@@ -91,10 +71,18 @@ const HomeView = ({ navigate, onOpenVita }) => {
             ))}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
-            <p className="font-display italic text-sm text-[var(--texto-suave)]">¿No sabes qué comer hoy?</p>
-            <button onClick={onOpenVita} className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap">
-              <Sparkles size={14} /> Pregúntale a Vita
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3">
+            <img
+              src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
+              alt="Mr. Sivo"
+              className="h-14 w-auto object-contain flex-shrink-0 drop-shadow-sm"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="font-display italic text-sm text-[var(--verde-profundo)] font-semibold leading-tight">¿No sabes qué comer hoy?</p>
+              <p className="font-ui text-xs text-[var(--texto-suave)]">Mr. Sivo te ayuda a elegir</p>
+            </div>
+            <button onClick={onOpenVita} className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap flex-shrink-0">
+              <Sparkles size={14} /> Pregúntale
             </button>
           </div>
 
@@ -259,21 +247,21 @@ const HomeView = ({ navigate, onOpenVita }) => {
           </div>
         </motion.div>
       </div>
-      {/* Vita mobile FAB — fixed bottom-right, only on small screens */}
+      {/* Mr. Sivo FAB — fixed bottom-right, all screen sizes */}
       <motion.button
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 1.2, ease: [0.23, 1, 0.32, 1] }}
         onClick={onOpenVita}
-        className="md:hidden fixed bottom-6 right-4 z-[100] flex items-center gap-2 bg-[var(--verde-profundo)] text-white font-ui font-bold text-xs px-3 py-2.5 rounded-full shadow-2xl border border-[var(--verde-main)]/30 active:scale-95 transition-transform"
-        aria-label="Hablar con Vita"
+        className="fixed bottom-6 right-4 z-[100] flex items-center gap-2 bg-[var(--verde-profundo)] text-white font-ui font-bold text-xs px-3 py-2.5 rounded-full shadow-2xl border border-[var(--verde-main)]/30 active:scale-95 transition-transform hover:scale-105"
+        aria-label="Hablar con Mr. Sivo"
       >
         <img
           src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
-          alt="Vita"
+          alt="Mr. Sivo"
           className="h-8 w-auto object-contain"
         />
-        <span>Vita 🥦</span>
+        <span>Mr. Sivo 🥦</span>
       </motion.button>
     </div>
   );

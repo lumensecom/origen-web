@@ -25,7 +25,7 @@ const OPTIONS = {
   2: { id: 'frescuras', max: 2, icon: '🥦', title: 'Tus frescuras', sub: 'Elige hasta 2 — frescas y crujientes', items: ['Zuquini', 'Pepino', 'Tomate Cherry', 'Zanahoria', 'Repollo Encurtido', 'Cebolla Encurtida', 'Berenjena', 'Brócoli'] },
   3: { id: 'sabores', max: 2, icon: '✨', title: 'Sabores especiales', sub: 'Lo que hace único a tu bowl — elige hasta 2', items: ['Maíz', 'Mango', 'Manzana', 'Queso parmesano', 'Aguacate', 'Jalapeños', 'Lenteja Crocante', 'Garbanzo Crocante'] },
   4: { id: 'proteina', max: 1, icon: '⚡', title: 'Tu proteína', sub: 'El corazón de tu bowl', items: ['Pechuga de Pollo', 'Huevo Cocido', 'Tofu', 'Carne', 'Lomo de Cerdo'] },
-  5: { id: 'salsa', max: 1, icon: '💚', title: 'El toque final', sub: 'La salsa que lo une todo', items: ['Pesto Natural', 'Yogurt de Casa', 'Mango de Casa', 'Fuego Picante', 'Dulce Balance', 'Vino Mango'] },
+  5: { id: 'salsa', max: 1, icon: '💚', title: 'El toque final', sub: 'La salsa que lo une todo', items: ['Pesto Natural', 'Yogurt de Casa', 'Fuego Picante', 'Dulce Balance', 'Vino Natural'] },
 };
 
 const BASE_PRICE = 24900;

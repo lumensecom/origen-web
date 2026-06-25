@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ScanLine, Check, RotateCcw, Pencil, CreditCard, MapPin, Clock,
-  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw, Bell, X,
+  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw, Bell, X, CheckCheck,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { sellerSearchOrder, sellerListOrders, setOrderDelivered } from '../../lib/database';
+import { sellerSearchOrder, sellerListOrders, setOrderDelivered, recordOrderView, updateOrder } from '../../lib/database';
 import { formatPrice } from '../../utils/format';
 import QRScanner from '../../components/seller/QRScanner';
 
@@ -52,7 +52,7 @@ const GateCard = ({ icon, title, body, action }) => (
 );
 
 const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }) => {
-  const { isAuthenticated, isSeller, sellerLocation, sellerLocalId } = useAuth();
+  const { isAuthenticated, isSeller, sellerLocation, sellerLocalId, user } = useAuth();
   const [mode, setMode] = useState('scanner');  // scanner | history
   const [view, setView] = useState('scan');     // scan | loading | order | paid
   const [order, setOrder] = useState(null);
@@ -111,8 +111,23 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
     try {
       const results = await sellerSearchOrder(extractCode(raw));
       if (results && results.length > 0) {
-        setOrder(results[0]);
+        const loaded = results[0];
+        setOrder(loaded);
         setView('order');
+        // Audit trail: record that this seller opened the order
+        if (user?.id) recordOrderView(loaded.id, user.id);
+        // Confirm the order (first time it's opened) and send customer email
+        if (loaded.status === 'recibido' || !loaded.status) {
+          try {
+            const confirmed = await updateOrder(loaded.id, { status: 'confirmado' });
+            if (confirmed) setOrder(confirmed);
+            fetch('/api/notify-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: loaded.id }),
+            }).catch(() => {}); // fire-and-forget, don't block UI
+          } catch { /* non-critical */ }
+        }
       } else {
         setError('No encontramos un pedido con ese código en tu sede.');
         setView('scan');
@@ -121,6 +136,19 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
       setError(e?.message || 'No se pudo buscar el pedido.');
       setView('scan');
     }
+  };
+
+  // Mark the order as ready for pickup (status → 'listo')
+  const handleListo = async () => {
+    if (!order) return;
+    setProcessing(true);
+    try {
+      const updated = await updateOrder(order.id, { status: 'listo' });
+      setOrder(updated ?? { ...order, status: 'listo' });
+      setToast('Pedido marcado como listo para recoger.');
+      setTimeout(() => setToast(''), 3500);
+    } catch { /* non-critical */ }
+    finally { setProcessing(false); }
   };
 
   const handleScan = (text) => loadOrder(text);
@@ -348,9 +376,16 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
 
               <div className="px-6 pb-6 pt-2 space-y-2.5">
                 {!order.entregado ? (
-                  <button onClick={handlePagar} disabled={processing} className="w-full flex items-center justify-center gap-2 bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[16px] hover:bg-[var(--verde-vivo)] transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(18,179,98,0.3)] disabled:opacity-60">
-                    {processing ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />} Pagar
-                  </button>
+                  <>
+                    {order.status !== 'listo' && (
+                      <button onClick={handleListo} disabled={processing} className="w-full flex items-center justify-center gap-2 bg-[var(--terracota-vivo)] text-[var(--verde-profundo)] font-ui font-bold py-3 rounded-[16px] hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-60 text-sm">
+                        {processing ? <Loader2 size={16} className="animate-spin" /> : <CheckCheck size={16} />} Pedido listo
+                      </button>
+                    )}
+                    <button onClick={handlePagar} disabled={processing} className="w-full flex items-center justify-center gap-2 bg-[var(--verde-main)] text-white font-ui font-bold py-4 rounded-[16px] hover:bg-[var(--verde-vivo)] transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(18,179,98,0.3)] disabled:opacity-60">
+                      {processing ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />} Pagar
+                    </button>
+                  </>
                 ) : (
                   <button onClick={handleUndo} disabled={processing} className="w-full flex items-center justify-center gap-2 bg-white border-2 border-[var(--verde-profundo)] text-[var(--verde-profundo)] font-ui font-bold py-4 rounded-[16px] hover:bg-[var(--fondo-crema)] transition-all active:scale-[0.98] disabled:opacity-60">
                     {processing ? <Loader2 size={18} className="animate-spin" /> : <RotateCcw size={18} />} Deshacer pago

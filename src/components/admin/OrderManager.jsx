@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Loader2, Minus, Plus, Trash2, Save, X, CheckCircle2, Clock, MapPin, AlertTriangle,
+  Search, Loader2, Minus, Plus, Trash2, Save, X, CheckCircle2, Clock, MapPin, AlertTriangle, Eye,
 } from 'lucide-react';
-import { adminSearchOrders, updateOrder, deleteOrder } from '../../lib/database';
+import { adminSearchOrders, updateOrder, deleteOrder, getOrderViews } from '../../lib/database';
 import { formatPrice } from '../../utils/format';
 
 const shortId = (id) => String(id).slice(0, 8).toUpperCase();
@@ -18,6 +18,11 @@ const OrderRow = ({ order, onChanged, onDeleted }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [views, setViews] = useState([]);
+
+  useEffect(() => {
+    getOrderViews(order.id).then(setViews).catch(() => {});
+  }, [order.id]);
 
   const total = itemsTotal(items);
   const dirty = JSON.stringify(items) !== JSON.stringify(Array.isArray(order.items) ? order.items : []);
@@ -95,6 +100,23 @@ const OrderRow = ({ order, onChanged, onDeleted }) => {
 
       {(msg || err) && (
         <p className={`px-5 text-xs font-ui ${err ? 'text-red-500' : 'text-[var(--verde-main)]'}`}>{err || msg}</p>
+      )}
+
+      {views.length > 0 && (
+        <div className="px-5 pb-3">
+          <p className="font-ui text-[10px] font-bold uppercase tracking-wider text-[var(--texto-suave)] mb-1.5 flex items-center gap-1.5">
+            <Eye size={11} /> Visto por
+          </p>
+          <div className="flex flex-col gap-1">
+            {views.map((v, i) => (
+              <p key={i} className="font-ui text-xs text-[var(--texto-suave)]">
+                <span className="font-bold text-[var(--verde-profundo)]">{v.seller_name ?? 'Vendedor'}</span>
+                {' — '}
+                {new Date(v.viewed_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
+              </p>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 mt-1">

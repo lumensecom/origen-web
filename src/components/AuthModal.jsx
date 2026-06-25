@@ -87,7 +87,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className="bg-[var(--fondo-crema)] w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
+          className="bg-[var(--fondo-crema)] w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden max-h-[90svh] flex flex-col"
           onClick={e => e.stopPropagation()}
         >
           {/* Handle móvil */}
@@ -121,7 +121,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = 'login' })
             </AnimatePresence>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain">
           <AnimatePresence mode="wait">
             {done ? (
               /* Pantalla de éxito */

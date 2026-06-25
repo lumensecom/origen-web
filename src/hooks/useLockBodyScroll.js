@@ -1,16 +1,23 @@
 import { useEffect } from 'react';
 
-// Bloquea el scroll del body mientras `locked` sea true.
-// Evita el "scroll chaining" de iOS donde, al llegar al final de un
-// modal/overlay con scroll interno, el dedo sigue arrastrando y mueve
-// la página de fondo en vez de quedarse quieto.
+// iOS Safari requires position:fixed on body (not just overflow:hidden) to
+// truly prevent background scroll while a modal is open. We save and restore
+// the scroll offset so the page doesn't jump on close.
 export default function useLockBodyScroll(locked) {
   useEffect(() => {
     if (!locked) return;
-    const original = document.body.style.overflow;
+    const scrollY = window.scrollY;
+    const { overflow, position, top, width } = document.body.style;
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
     return () => {
-      document.body.style.overflow = original;
+      document.body.style.overflow = overflow;
+      document.body.style.position = position;
+      document.body.style.top = top;
+      document.body.style.width = width;
+      window.scrollTo(0, scrollY);
     };
   }, [locked]);
 }

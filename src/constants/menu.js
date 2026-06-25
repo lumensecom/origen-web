@@ -6,8 +6,8 @@ export const INGREDIENTE_COLORES = {
   'Aguacate': '#80C060', 'Jalapeños': '#40A040', 'Lenteja Crocante': '#C87820', 'Garbanzo Crocante': '#D4A050',
   'Pechuga de Pollo': '#E0A060', 'Huevo Cocido': '#F8D870', 'Tofu': '#F0E8D0', 'Carne': '#8B4020',
   'Lomo de Cerdo': '#A05030', 'Máximo (Doble)': '#E0A060',
-  'Pesto Natural': '#3DB870', 'Yogurt de Casa': '#F8F8F8', 'Mango de Casa': '#F08030',
-  'Fuego Picante': '#E04020', 'Dulce Balance': '#F8D040', 'Vino Mango': '#8040A0',
+  'Pesto Natural': '#3DB870', 'Yogurt de Casa': '#F8F8F8', 'Vino Natural': '#8040A0',
+  'Fuego Picante': '#E04020', 'Dulce Balance': '#F8D040',
 };
 
 export const CARTA = [

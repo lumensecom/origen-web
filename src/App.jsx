@@ -15,6 +15,7 @@ import SideDrawer from './components/layout/SideDrawer';
 import CheckoutModal from './components/CheckoutModal';
 import OrderQRModal from './components/OrderQRModal';
 import VitaWidget from './components/VitaWidget';
+import NotificationBar from './components/NotificationBar';
 
 import HomeView from './pages/Inicio';
 import CartaView from './pages/Carta';
@@ -167,6 +168,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[var(--fondo-crema)] selection:bg-[var(--verde-main)] selection:text-white flex flex-col">
+      <NotificationBar />
 
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&family=Baloo+2:wght@700;800&display=swap');

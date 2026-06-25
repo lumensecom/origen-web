@@ -141,11 +141,21 @@ export async function deleteOrder(orderId) {
 
 // Flip the delivery status (Pagar / Deshacer). Goes through the SECURITY DEFINER
 // RPC so only seller/admin can change it, and only the `entregado` column moves.
+// Also updates status field for the customer NotificationBar.
 export async function setOrderDelivered(orderId, value) {
   if (!supabase) return null
   const { data, error } = await supabase
     .rpc('set_order_delivered', { p_order_id: orderId, p_value: value })
   if (error) throw error
+  // Update status for customer Realtime notifications (non-critical, best-effort)
+  if (value) {
+    supabase
+      .from('orders')
+      .update({ status: 'entregado' })
+      .eq('id', orderId)
+      .then(() => {})
+      .catch(() => {})
+  }
   return data
 }
 
@@ -211,6 +221,38 @@ export async function adminDeleteUser(userId) {
 }
 
 // ---------------------------------------------------------------------------
+// Order views — audit trail for the admin panel
+// ---------------------------------------------------------------------------
+
+// Record that a seller opened an order.
+export async function recordOrderView(orderId, sellerId) {
+  if (!supabase || !orderId || !sellerId) return null
+  const { error } = await supabase
+    .from('order_views')
+    .insert({ order_id: orderId, seller_id: sellerId })
+  if (error) console.error('order_views insert:', error.message)
+  return null
+}
+
+// Fetch all views for a given order (admin only), enriched with seller names.
+export async function getOrderViews(orderId) {
+  if (!supabase) return []
+  const { data: views, error } = await supabase
+    .from('order_views')
+    .select('seller_id, viewed_at')
+    .eq('order_id', orderId)
+    .order('viewed_at', { ascending: false })
+  if (error || !views?.length) return []
+  const sellerIds = [...new Set(views.map(v => v.seller_id))]
+  const { data: sellers } = await supabase
+    .from('empleados')
+    .select('id, nombre')
+    .in('id', sellerIds)
+  const nameMap = Object.fromEntries((sellers ?? []).map(s => [s.id, s.nombre]))
+  return views.map(v => ({ ...v, seller_name: nameMap[v.seller_id] ?? 'Vendedor' }))
+}
+
+
 // Admin analytics feed. RLS grants admins global read; filters are applied
 // server-side so the dashboard only pulls what the active filters need.
 export async function getOrdersForAnalytics({ from, to, location } = {}) {

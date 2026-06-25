@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, ArrowRight, ArrowLeft, ShoppingBag } from 'lucide-react'
 import useLockBodyScroll from '../hooks/useLockBodyScroll'
 
-const VITA_MASCOT = 'https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png';
+const SIVO_MASCOT = 'https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png';
 
 const VITA_QUESTIONS = [
   {
@@ -121,10 +121,10 @@ export default function VitaWidget({ carta, formatPrice, onAddToCart, navigate, 
                 <X size={18} />
               </button>
               <div className="flex items-center gap-3 mb-1">
-                <img src={VITA_MASCOT} alt="Vita" className="w-10 h-10 object-contain drop-shadow-lg" />
+                <img src={SIVO_MASCOT} alt="Mr. Sivo" className="w-10 h-10 object-contain drop-shadow-lg" />
                 <div>
-                  <h2 className="font-display italic text-2xl text-white leading-none">Vita</h2>
-                  <p className="font-ui text-[10px] uppercase tracking-[0.2em] text-[var(--verde-palido)] mt-0.5">Tu asesora nutricional IA 🥦</p>
+                  <h2 className="font-display italic text-2xl text-white leading-none">Mr. Sivo</h2>
+                  <p className="font-ui text-[10px] uppercase tracking-[0.2em] text-[var(--verde-palido)] mt-0.5">Tu asesor nutricional IA 🥦</p>
                 </div>
               </div>
 
@@ -181,8 +181,8 @@ export default function VitaWidget({ carta, formatPrice, onAddToCart, navigate, 
                     exit={{ opacity: 0 }}
                     className="flex flex-col items-center text-center"
                   >
-                    <img src={VITA_MASCOT} alt="Vita" className="w-16 h-16 object-contain mb-2 drop-shadow-md" />
-                    <p className="font-ui text-[11px] font-bold uppercase tracking-wider text-[var(--verde-main)] mb-3">Vita recomienda para ti</p>
+                    <img src={SIVO_MASCOT} alt="Mr. Sivo" className="w-16 h-16 object-contain mb-2 drop-shadow-md" />
+                    <p className="font-ui text-[11px] font-bold uppercase tracking-wider text-[var(--verde-main)] mb-3">Mr. Sivo recomienda para ti</p>
                     <div className="w-28 h-28 rounded-full overflow-hidden bg-[var(--verde-menta)] border border-[var(--verde-palido)] mb-4 shadow-md">
                       {recommended.imagen
                         ? <img src={recommended.imagen} alt={recommended.nombre} className="w-full h-full object-cover" />
