@@ -12,7 +12,8 @@ Web app for **ORIGEN**, a healthy bowl restaurant in Bogotá ([soyorigen.co](htt
 - **Loyalty points** — earned automatically on every confirmed order
 - **Order history** — authenticated customers view their full order history with item breakdown
 - **Seller (Caja) module** — role-gated QR scanner + manual code search; sellers log straight into it and have no shopping cart. Includes a sede-scoped order history with status (all / scanned / scanned+paid) and timeframe (today / 1h / 3h / 12h) filters
-- **Admin dashboard** — realtime KPIs, on-brand SVG charts, sales filters, and order management
+- **Admin dashboard** — realtime KPIs, on-brand SVG charts (histogram with dynamic Y-axis, semantic rank gradients on all ranking panels), sales filters, and order management
+- **Caja accordion** — builder-bowl detail collapses behind a large ChevronDown; tap to expand Base → Frescuras → Sabores → Proteína → Salsa
 
 ## Stack
 
@@ -125,6 +126,25 @@ src/
 | `ANTHROPIC_API_KEY` | Vercel serverless (`api/chat.js`) | Claude API key — never exposed to the browser |
 
 **Never commit `.env`** — only `.env.example` is tracked.
+
+## Offline Testing Checklist (Fase 2 — Visual & Métricas)
+
+Para probar localmente sin Vercel dev:
+
+```bash
+npm run dev   # http://localhost:5173
+```
+
+Las serverless functions (`/api/chat`, `/api/admin-users`, `/api/notify-order`) requieren `vercel dev`.
+
+| Check | Módulo | Qué verificar |
+|---|---|---|
+| Histograma horas pico | Admin → Panel de Ventas | Barra más alta ocupa ~67 % del contenedor (techo = max × 1.5) |
+| Degradado verde | Admin → Ingredientes / Platos más vendidos | Rank 1 = verde vibrante `hsl(145, 72%, 30%)`, rank N = verde apagado |
+| Degradado terracota | Admin → Ingredientes / Platos menos vendidos | Rank 1 = terracota vivo, rank N = terracota muted |
+| Accordion Caja | Seller → Escáner → escanea un bowl builder | ChevronDown grande; toca → expande con secciones Base, Frescuras, Sabores, Proteína, Salsa |
+| Reset accordion | Seller | Cargar otro pedido colapsa todos los items del anterior |
+| Items simples | Seller | Bebidas y bowls premade muestran fila plana sin chevron |
 
 ## Deployment
 

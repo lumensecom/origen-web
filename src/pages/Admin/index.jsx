@@ -9,7 +9,6 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useAnalytics } from '../../features/admin/useAnalytics';
 import { formatPrice } from '../../utils/format';
-import { INGREDIENTE_COLORES } from '../../constants/menu';
 import KpiCard from '../../components/admin/KpiCard';
 import BarChart from '../../components/admin/BarChart';
 import Histogram from '../../components/admin/Histogram';
@@ -32,6 +31,16 @@ const formatCompact = (v) => {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
   if (v >= 1_000) return `$${Math.round(v / 1000)}k`;
   return `$${v}`;
+};
+
+// Semantic rank gradients: rank 1 (i=0) = most vibrant, last = most muted
+const greenRankColor = (i, n) => {
+  const t = n <= 1 ? 0 : i / (n - 1);
+  return `hsl(145, ${Math.round(72 - t * 38)}%, ${Math.round(30 + t * 32)}%)`;
+};
+const terracotaRankColor = (i, n) => {
+  const t = n <= 1 ? 0 : i / (n - 1);
+  return `hsl(18, ${Math.round(62 - t * 32)}%, ${Math.round(42 + t * 26)}%)`;
 };
 
 const Panel = ({ title, icon, children, accent }) => (
@@ -138,19 +147,19 @@ function VentasTab({ onRequireAuth }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Panel title="Platos más vendidos" icon={<TrendingUp size={18} />}>
-          <BarChart data={metrics.topDishes} color="var(--verde-main)" />
+          <BarChart data={metrics.topDishes} colorByRank={greenRankColor} />
         </Panel>
         <Panel title="Platos menos vendidos" icon={<TrendingDown size={18} />} accent="var(--terracota-quemado)">
-          <BarChart data={metrics.bottomDishes} color="var(--terracota-vivo)" />
+          <BarChart data={metrics.bottomDishes} colorByRank={terracotaRankColor} />
         </Panel>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Panel title="Ingredientes más usados" icon={<Salad size={18} />}>
-          <BarChart data={metrics.topIngredients} colorFor={(label) => INGREDIENTE_COLORES[label] || 'var(--verde-main)'} />
+          <BarChart data={metrics.topIngredients} colorByRank={greenRankColor} />
         </Panel>
         <Panel title="Ingredientes menos usados" icon={<TrendingDown size={18} />} accent="var(--terracota-quemado)">
-          <BarChart data={metrics.bottomIngredients} colorFor={(label) => INGREDIENTE_COLORES[label] || 'var(--terracota-vivo)'} />
+          <BarChart data={metrics.bottomIngredients} colorByRank={terracotaRankColor} />
         </Panel>
       </div>
 

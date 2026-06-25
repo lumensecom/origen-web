@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ScanLine, Check, RotateCcw, Pencil, CreditCard, MapPin, Clock,
-  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw, CheckCheck,
+  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw, CheckCheck, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { sellerSearchOrder, sellerListOrders, setOrderDelivered, recordOrderView, updateOrder } from '../../lib/database';
@@ -36,6 +36,11 @@ const SellerView = ({ resumeOrder, onConsumeResume, openOrder, onConsumeOpenOrde
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [openItems, setOpenItems] = useState({});
+
+  // Reset accordion state when a new order loads
+  useEffect(() => { setOpenItems({}); }, [order?.id]);
+  const toggleItem = (idx) => setOpenItems(prev => ({ ...prev, [idx]: !prev[idx] }));
 
   // When returning from the builder after a seller edit, resume on the order.
   useEffect(() => {
@@ -259,30 +264,85 @@ const SellerView = ({ resumeOrder, onConsumeResume, openOrder, onConsumeOpenOrde
                 </div>
               </div>
 
-              <div className="px-6 py-4 space-y-3 max-h-[40vh] overflow-y-auto scrollbar-hide">
-                {items.map((it, i) => (
-                  <div key={`${it.id ?? i}`} className="flex items-start gap-3">
-                    <span className="font-display font-bold text-[var(--verde-main)] text-sm w-7 flex-shrink-0">{it.quantity}×</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)]">{it.nombre}</p>
-                      {it.esBuilder && (
-                        <div className="font-ui text-[11px] text-[var(--texto-suave)] leading-relaxed mt-0.5 space-y-0.5">
-                          {it.base && <p><span className="font-semibold text-[var(--verde-oliva)]">Base:</span> {it.base}</p>}
-                          {it.proteina && <p><span className="font-semibold text-[var(--verde-oliva)]">Proteína:</span> {it.proteina}</p>}
-                          {Array.isArray(it.frescuras) && it.frescuras.length > 0 && (
-                            <p><span className="font-semibold text-[var(--verde-oliva)]">Frescuras:</span> {it.frescuras.join(', ')}</p>
+              <div className="px-4 py-4 space-y-2 max-h-[40vh] overflow-y-auto scrollbar-hide">
+                {items.map((it, i) => {
+                  const hasDetail = it.esBuilder && (it.base || it.proteina || it.frescuras?.length || it.sabores?.length || it.salsa);
+                  const isOpen = !!openItems[i];
+                  if (hasDetail) {
+                    return (
+                      <div key={`${it.id ?? i}`} className="border border-[var(--verde-palido)] rounded-[14px] overflow-hidden bg-white">
+                        <button
+                          onClick={() => toggleItem(i)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--verde-menta)]/40 transition-colors active:bg-[var(--verde-menta)]"
+                        >
+                          <span className="font-display font-bold text-[var(--verde-main)] text-sm w-7 flex-shrink-0">{it.quantity}×</span>
+                          <p className="font-ui font-bold text-sm text-[var(--verde-profundo)] flex-1 text-left leading-snug">{it.nombre}</p>
+                          <span className="font-ui text-sm text-[var(--texto-suave)] flex-shrink-0 mr-1">{formatPrice((it.precio ?? 0) * (it.quantity ?? 1))}</span>
+                          <motion.div
+                            animate={{ rotate: isOpen ? 180 : 0 }}
+                            transition={{ duration: 0.22 }}
+                            className="flex-shrink-0 text-[var(--verde-main)]"
+                          >
+                            <ChevronDown size={26} strokeWidth={2.5} />
+                          </motion.div>
+                        </button>
+                        <AnimatePresence>
+                          {isOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25, ease: 'easeInOut' }}
+                              className="overflow-hidden"
+                            >
+                              <div className="border-t border-[var(--verde-palido)] px-4 pt-3 pb-4 space-y-2.5">
+                                {it.base && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Base</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.base}</span>
+                                  </div>
+                                )}
+                                {Array.isArray(it.frescuras) && it.frescuras.length > 0 && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Frescuras</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.frescuras.join(', ')}</span>
+                                  </div>
+                                )}
+                                {Array.isArray(it.sabores) && it.sabores.length > 0 && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Sabores</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.sabores.join(', ')}</span>
+                                  </div>
+                                )}
+                                {it.proteina && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Proteína</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.proteina}</span>
+                                  </div>
+                                )}
+                                {it.salsa && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Salsa</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.salsa}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
                           )}
-                          {Array.isArray(it.sabores) && it.sabores.length > 0 && (
-                            <p><span className="font-semibold text-[var(--verde-oliva)]">Sabores:</span> {it.sabores.join(', ')}</p>
-                          )}
-                          {it.salsa && <p><span className="font-semibold text-[var(--verde-oliva)]">Salsa:</span> {it.salsa}</p>}
-                        </div>
-                      )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+                  // Non-builder items: simple flat row
+                  return (
+                    <div key={`${it.id ?? i}`} className="flex items-center gap-3 px-2 py-2">
+                      <span className="font-display font-bold text-[var(--verde-main)] text-sm w-7 flex-shrink-0">{it.quantity}×</span>
+                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)] flex-1 min-w-0">{it.nombre}</p>
+                      <span className="font-ui text-sm text-[var(--texto-suave)] flex-shrink-0">{formatPrice((it.precio ?? 0) * (it.quantity ?? 1))}</span>
                     </div>
-                    <span className="font-ui text-sm text-[var(--texto-suave)] flex-shrink-0">{formatPrice((it.precio ?? 0) * (it.quantity ?? 1))}</span>
-                  </div>
-                ))}
-                {items.length === 0 && <p className="font-ui text-sm text-[var(--texto-suave)] flex items-center gap-2"><Package size={14} /> Pedido sin artículos.</p>}
+                  );
+                })}
+                {items.length === 0 && <p className="font-ui text-sm text-[var(--texto-suave)] flex items-center gap-2 px-2"><Package size={14} /> Pedido sin artículos.</p>}
               </div>
 
               <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
