@@ -60,6 +60,8 @@ origen-web/src/
 │   ├── cart/
 │   │   └── useCart.js             # Cart state; addToCart/updateQty/removeItem/replaceItem,
 │   │                              #   saveOrderForPickup (QR), confirmOrder (WhatsApp)
+│   ├── notifications/
+│   │   └── useOrderNotifications.js  # Global caja alerts: broadcast+CDC sub, chime, guarded vibrate, bell/toast state
 │   └── admin/
 │       └── useAnalytics.js        # Analytics data + filters; live-refresh on orders changes
 ├── pages/
@@ -78,7 +80,7 @@ origen-web/src/
 │   └── Admin/index.jsx            # ROLE-GATED, LAZY. Realtime KPIs + SVG charts + filters + order management
 ├── components/
 │   ├── layout/
-│   │   ├── Navbar.jsx             # Fixed top nav (logo centered, hamburger, cart badge; cart hidden for staff)
+│   │   ├── Navbar.jsx             # Fixed top nav (logo, hamburger, cart badge — or caja notification bell for staff)
 │   │   ├── Footer.jsx             # Dark footer with links
 │   │   └── SideDrawer.jsx         # Slide-in nav drawer; surfaces Caja/Panel links by role
 │   ├── ui/
@@ -95,7 +97,9 @@ origen-web/src/
 │   │   ├── FilterBar.jsx          # Date / hour / location filter controls
 │   │   └── OrderManager.jsx       # Search order by ID → edit dish quantities / delete order / "Visto por" audit trail (admin)
 │   ├── seller/
-│   │   └── QRScanner.jsx          # Live camera scanner (html5-qrcode, iOS-safe) + manual fallback
+│   │   ├── QRScanner.jsx          # Live camera scanner (html5-qrcode, iOS-safe) + manual fallback
+│   │   ├── NotificationBell.jsx   # Navbar bell for the caja: unread badge + recent-orders dropdown
+│   │   └── NotificationToasts.jsx # Global stacked new-order toasts (auto-dismiss 12 s)
 │   ├── CheckoutModal.jsx          # Checkout: cart→deliveryType→store/address→confirm; QR + Editar/Eliminar
 │   ├── OrderQRModal.jsx           # Shows QR encoding a persisted order's UUID for in-store payment
 │   ├── AuthModal.jsx              # Login/register/forgot-password (Supabase Auth)
@@ -117,6 +121,7 @@ origen-web/src/
 - **AuthContext** (`useAuth()`): Supabase session + identity. Loads the customer's `clientes` row **and** any `empleados` row in parallel, then derives `role` (`customer`/`seller`/`admin`), `isStaff`, `isSeller` (seller **or** admin), `isAdmin`, `isCajaSeller` (a pure seller), `sellerLocalId`, and `sellerLocation` (resolved from `LOCALES` by sede id). Staff (`empleados`) always win over the customer fallback — an account is one or the other.
 - **useCart** (`features/cart/useCart.js`): Cart state + all order logic — Supabase persistence, QR generation, and WhatsApp message generation.
 - **useAnalytics** (`features/admin/useAnalytics.js`): Admin dashboard data + filter state, with live refresh.
+- **useOrderNotifications** (`features/notifications/useOrderNotifications.js`): App-wide caja new-order alerts — subscribes to the sede broadcast + a `postgres_changes` safety net (deduped), plays a chime, fires a guarded `navigator.vibrate()`, and owns the bell/toast state. Mounted in `App.jsx`.
 - **Local `useState` in App.jsx**: Active tab, scroll position, modal flags, and edit/seller-resume orchestration (`editingOrder`, `sellerResumeOrder`) — UI-only.
 
 ### Routing
@@ -168,7 +173,7 @@ Role-gated (`isSeller`) and lazy-loaded. A segmented control switches between tw
   - **Estado:** Todos (default) · Solo escaneados (`scanned`, pending) · Escaneados y pagados (`paid`).
   - **Periodo:** Hoy (default) · Última hora · Últimas 3 h · Últimas 12 h.
 
-**Realtime new-order alerts:** when a customer creates a pickup order for this sede (Supabase realtime INSERT on `orders` filtered by `local_id`), the seller immediately gets a stacked in-app alert with a two-tone audio chime (Web Audio API, no audio file). Alerts auto-dismiss after 12 s or can be manually closed.
+**Realtime new-order alerts (global, app-wide):** when a customer creates a pickup order for a sede, the DB trigger `broadcast_new_order` (`trg_orders_broadcast_new`, `AFTER INSERT`) dispatches a Supabase Realtime **broadcast** to the private topic `sede:<local_id>`; the `realtime.messages` RLS policy `caja_recibe_pedidos_de_su_sede` routes it only to that sede's caja (admins see all). The `useOrderNotifications` hook — mounted in `App.jsx`, enabled for a sede-bound seller (`isSeller && sellerLocalId`) — subscribes to that broadcast **and** keeps a `postgres_changes` INSERT subscription as a safety net, **deduplicated by order id**. On a new order it plays a two-tone Web Audio chime, fires `navigator.vibrate()` (guarded — silently skipped on iOS Safari, no crash), and feeds two surfaces: the Navbar **bell** (`NotificationBell` — unread badge + recent-orders dropdown) and stacked floating **toasts** (`NotificationToasts` — auto-dismiss after 12 s). Clicking either opens that order in the Caja scanner. This works on **any tab**, not just the Seller module (which no longer owns the subscription).
 
 **Order-search input sanitation (the 400 fix):** the short order code is shown as `#XXXXXXXX`, but the `#` is display-only. Sending it into a REST filter produced `GET …/orders?id=eq.%230B591428` → **400 Bad Request** (and short codes aren't valid UUIDs). All search now strips `#` (and whitespace) client-side in `database.js` (`cleanOrderNumber`) **and** the RPCs sanitise `#`/`-`/spaces server-side. Sellers never query `orders.id` directly — they go through `seller_get_order`, which matches a full UUID **or** a short prefix, scopes the result to the seller's own sede (location), and records the scan. Admin search goes through `admin_get_order` (also `#`-sanitised). So order lookup is, effectively, **location + order number** only.
 
@@ -237,9 +242,9 @@ The baseline lives in `supabase-setup.sql`; the live DB has since applied the **
 - **order_views** — audit trail: `order_id` (FK → `orders`), `seller_id` (FK → `empleados`), `viewed_at`. Inserted by `recordOrderView` each time a seller opens an order in the Caja. Read by `getOrderViews` for the admin OrderManager's "Visto por" panel.
 - **points_history**.
 
-Functions/RPCs: `handle_new_user()` (seeds a `clientes` row with `role='customer'`), `add_loyalty_points(user_id, points)` (atomic; updates `clientes`; **gated to seller/admin** — see "Known issue"), `is_admin(uid)` / `is_seller(uid)` (read `empleados`; admin also passes `is_seller`), `set_order_delivered(order_id, value)` (SECURITY DEFINER; sets `entregado`/`status` + `confirmado_por`/`confirmado_at`, reads the seller's `id_local` from `empleados`, **scoped to the seller's own sede**), `admin_get_order(query)` (SECURITY DEFINER, admin-gated), `seller_get_order(query)` (SECURITY DEFINER, seller-gated; sanitises `#`/`-`/spaces, matches full UUID or short prefix, **scoped to the seller's sede**, and records `scanned_at`/`scanned_por`), and `seller_list_orders(status, since)` (SECURITY DEFINER, seller-gated; sede-scoped history of scanned orders). The `orders_seller_guard` trigger (`trg_orders_seller_guard`) restricts a non-admin seller to delivery-state/attribution columns only (it does **not** protect `entregado`/`status`/`confirmado_*`/`scanned_*`, so Pagar and scan-marking pass); **admins bypass the guard**.
+Functions/RPCs: `handle_new_user()` (seeds a `clientes` row with `role='customer'`), `add_loyalty_points(user_id, points)` (atomic; updates `clientes`; **gated to seller/admin** — see "Known issue"), `is_admin(uid)` / `is_seller(uid)` (read `empleados`; admin also passes `is_seller`), `set_order_delivered(order_id, value)` (SECURITY DEFINER; sets `entregado`/`status` + `confirmado_por`/`confirmado_at`, reads the seller's `id_local` from `empleados`, **scoped to the seller's own sede**), `admin_get_order(query)` (SECURITY DEFINER, admin-gated), `seller_get_order(query)` (SECURITY DEFINER, seller-gated; sanitises `#`/`-`/spaces, matches full UUID or short prefix, **scoped to the seller's sede**, and records `scanned_at`/`scanned_por`), and `seller_list_orders(status, since)` (SECURITY DEFINER, seller-gated; sede-scoped history of scanned orders). The `orders_seller_guard` trigger (`trg_orders_seller_guard`) restricts a non-admin seller to delivery-state/attribution columns only (it does **not** protect `entregado`/`status`/`confirmado_*`/`scanned_*`, so Pagar and scan-marking pass); **admins bypass the guard**. The `broadcast_new_order()` trigger (`trg_orders_broadcast_new`, `AFTER INSERT`) dispatches a Realtime **broadcast** of each new pickup order to the private topic `sede:<local_id>` via `realtime.send` (SECURITY DEFINER; EXECUTE revoked from `anon`/`authenticated`); the `realtime.messages` RLS policy `caja_recibe_pedidos_de_su_sede` scopes receipt to that sede's caja (admins see all). Applied as migrations `realtime_new_order_alerts` + `revoke_broadcast_new_order_execute`.
 
-**RLS:** each user reads/writes their own rows; customers may update their own orders only while `entregado = false`; **sellers may SELECT/UPDATE only orders for their own sede** (`orders.local_id` = their `empleados.id_local`; admins pass globally via `is_admin`; the guard further limits non-admin sellers to delivery state); admins get global SELECT on orders, UPDATE on orders, and **DELETE on orders** (`orders_delete_admin`). `empleados` has own-row SELECT + admin-manage policies. `orders` is in the realtime publication for the live dashboard and cart/history sync. The `seller_*` RPCs are granted to `authenticated` only (EXECUTE revoked from `anon`/`public`).
+**RLS:** each user reads/writes their own rows; customers may update their own orders only while `entregado = false`; **sellers may SELECT/UPDATE only orders for their own sede** (`orders.local_id` = their `empleados.id_local`; admins pass globally via `is_admin`; the guard further limits non-admin sellers to delivery state); admins get global SELECT on orders, UPDATE on orders, and **DELETE on orders** (`orders_delete_admin`). `empleados` has own-row SELECT + admin-manage policies. `orders` is in the realtime publication for the live dashboard, cart/history sync, and the caja new-order CDC safety net (the primary new-order alert is the broadcast above). The `seller_*` RPCs are granted to `authenticated` only (EXECUTE revoked from `anon`/`public`).
 
 > **Known issue (loyalty):** `confirmOrder` still calls `add_loyalty_points` as the *customer*, but the RPC is restricted to seller/admin, so the 50-pt award **silently no-ops** for customers (the error is caught). Fix forward by awarding points server-side on payment (e.g., inside `set_order_delivered`) rather than from the client.
 
