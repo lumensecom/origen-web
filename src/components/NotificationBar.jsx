@@ -66,7 +66,7 @@ export default function NotificationBar() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[500] flex flex-col items-center gap-2 pt-2 px-3 pointer-events-none">
+    <div className="fixed top-[72px] left-0 right-0 z-[90] flex flex-col items-center gap-2 px-3 pointer-events-none">
       <AnimatePresence>
         {notifications.map((n) => (
           <motion.div
