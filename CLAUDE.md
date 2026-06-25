@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**ORIGEN** is a React SPA for a healthy bowl restaurant in Bogotá (soyorigen.co). It handles online ordering, a custom bowl builder, an AI nutritional advisor ("Savia"), a loyalty points program, an in-store **QR pay/pickup** flow, a role-gated **Seller (Caja)** module, and a role-gated realtime **Admin** analytics dashboard. Deployed on Vercel with Supabase as the backend and Anthropic's Claude API for the AI advisor.
+**ORIGEN** is a React SPA for a healthy bowl restaurant in Bogotá (soyorigen.co). It handles online ordering, a custom bowl builder, an AI nutritional advisor ("Vita"), a loyalty points program, an in-store **QR pay/pickup** flow, a role-gated **Seller (Caja)** module, and a role-gated realtime **Admin** analytics dashboard. Deployed on Vercel with Supabase as the backend and Anthropic's Claude API for the AI advisor.
 
 ## Commands
 
@@ -34,6 +34,13 @@ ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 `VITE_*` vars are exposed to the browser; `ANTHROPIC_API_KEY` is only used in the Vercel serverless function (`api/chat.js`). **Never commit `.env`** — only `.env.example` is tracked (see `.gitignore`).
+
+**Additional Vercel-only env vars (server-side, never exposed to the browser):**
+```
+SUPABASE_SERVICE_ROLE_KEY=<service_role key from Supabase → Project Settings → API>
+RESEND_API_KEY=<Resend API key for transactional email>
+```
+`SUPABASE_SERVICE_ROLE_KEY` is required by `api/admin-users.js`. `RESEND_API_KEY` is required by `api/notify-order.js` (order confirmation emails). For local testing use `vercel dev`.
 
 ## Directory Structure
 
@@ -65,7 +72,7 @@ origen-web/src/
 │   │   └── BowlSVG.jsx            # Animated SVG bowl preview
 │   ├── Blog/index.jsx             # Blog posts + slide-in article reader
 │   ├── Ubicaciones/index.jsx      # Store selector + Google Maps embed
-│   ├── Cuenta/index.jsx           # Auth gate, user profile, Savia chatbot (decision tree)
+│   ├── Cuenta/index.jsx           # Auth gate, user profile, Vita chatbot (decision tree)
 │   ├── Historial/index.jsx        # Auth-gated CUSTOMER order history (list + expandable item breakdown)
 │   ├── Seller/index.jsx           # ROLE-GATED, LAZY. Caja: Escáner (scan/manual search) + Historial (sede, filtered)
 │   └── Admin/index.jsx            # ROLE-GATED, LAZY. Realtime KPIs + SVG charts + filters + order management
@@ -86,13 +93,14 @@ origen-web/src/
 │   │   ├── BarChart.jsx           # Hand-built on-brand SVG bar chart (no chart lib)
 │   │   ├── Histogram.jsx          # Peak-hour SVG histogram
 │   │   ├── FilterBar.jsx          # Date / hour / location filter controls
-│   │   └── OrderManager.jsx       # Search order by ID → edit dish quantities / delete order (admin)
+│   │   └── OrderManager.jsx       # Search order by ID → edit dish quantities / delete order / "Visto por" audit trail (admin)
 │   ├── seller/
 │   │   └── QRScanner.jsx          # Live camera scanner (html5-qrcode, iOS-safe) + manual fallback
 │   ├── CheckoutModal.jsx          # Checkout: cart→deliveryType→store/address→confirm; QR + Editar/Eliminar
 │   ├── OrderQRModal.jsx           # Shows QR encoding a persisted order's UUID for in-store payment
 │   ├── AuthModal.jsx              # Login/register/forgot-password (Supabase Auth)
-│   └── SaviaWidget.jsx            # AI bowl advisor (calls /api/chat)
+│   ├── VitaWidget.jsx             # Vita AI bowl advisor floating button (calls /api/chat)
+│   └── NotificationBar.jsx        # Realtime in-app order-status toasts for customers (confirmado/listo/entregado)
 ├── contexts/
 │   └── AuthContext.jsx            # Session + clientes/empleados; exposes role/isStaff/isSeller/isAdmin/isCajaSeller/sellerLocation
 ├── hooks/
@@ -155,10 +163,12 @@ For delivery orders, Checkout (`CheckoutModal`) collects address, a **required c
 
 Role-gated (`isSeller`) and lazy-loaded. A segmented control switches between two modes:
 
-- **Escáner** — the live camera scanner (`components/seller/QRScanner.jsx`, html5-qrcode, iOS-compatible) with a manual-code fallback. Scan or type a code → `seller_get_order` RPC → full breakdown → **Pagar** / **Editar pedido**. Pagar calls `setOrderDelivered` (the `set_order_delivered` RPC). Edits route through the builder and return here.
+- **Escáner** — the live camera scanner (`components/seller/QRScanner.jsx`, html5-qrcode, iOS-compatible) with a manual-code fallback. Scan or type a code → `seller_get_order` RPC → full breakdown → **Listo** (marks `status = 'listo'`) / **Pagar** (flips `entregado = true` via RPC) / **Editar pedido**. On first open (`status = recibido`), the order is auto-advanced to `confirmado` **and** a confirmation email is sent to the customer via `POST /api/notify-order` (fire-and-forget). Pagar calls `setOrderDelivered`. Edits route through the builder and return here. Seller's view of the order also calls `recordOrderView` for the admin audit trail.
 - **Historial** — the sede's order history (`sellerListOrders` → `seller_list_orders` RPC), showing only orders this caja has **scanned/entered** (`scanned_at` set), with two filter rows:
   - **Estado:** Todos (default) · Solo escaneados (`scanned`, pending) · Escaneados y pagados (`paid`).
   - **Periodo:** Hoy (default) · Última hora · Últimas 3 h · Últimas 12 h.
+
+**Realtime new-order alerts:** when a customer creates a pickup order for this sede (Supabase realtime INSERT on `orders` filtered by `local_id`), the seller immediately gets a stacked in-app alert with a two-tone audio chime (Web Audio API, no audio file). Alerts auto-dismiss after 12 s or can be manually closed.
 
 **Order-search input sanitation (the 400 fix):** the short order code is shown as `#XXXXXXXX`, but the `#` is display-only. Sending it into a REST filter produced `GET …/orders?id=eq.%230B591428` → **400 Bad Request** (and short codes aren't valid UUIDs). All search now strips `#` (and whitespace) client-side in `database.js` (`cleanOrderNumber`) **and** the RPCs sanitise `#`/`-`/spaces server-side. Sellers never query `orders.id` directly — they go through `seller_get_order`, which matches a full UUID **or** a short prefix, scopes the result to the seller's own sede (location), and records the scan. Admin search goes through `admin_get_order` (also `#`-sanitised). So order lookup is, effectively, **location + order number** only.
 
@@ -166,7 +176,7 @@ Role-gated (`isSeller`) and lazy-loaded. A segmented control switches between tw
 
 Role-gated (`isAdmin`), lazy-loaded, and **realtime** (re-refreshes on any `orders` change via Supabase realtime). KPIs plus hand-built on-brand **SVG charts** (zero chart-lib): sales by location, peak-hour histogram, best/least dishes, best/least ingredients (from builder orders). Interactive date / hour / location filters via `components/admin/FilterBar.jsx` and `useAnalytics`.
 
-**Order management** (`components/admin/OrderManager.jsx`): a search bar resolves an order by ID (short `#XXXXXXXX` code or full UUID) through the `admin_get_order` RPC, then lets the admin edit each dish's quantity (the multiplier), remove a line, **save** (`updateOrder` → items + recomputed `total_price`), or **delete the whole order** (`deleteOrder`, gated by the `orders_delete_admin` RLS policy).
+**Order management** (`components/admin/OrderManager.jsx`): a search bar resolves an order by ID (short `#XXXXXXXX` code or full UUID) through the `admin_get_order` RPC, then lets the admin edit each dish's quantity (the multiplier), remove a line, **save** (`updateOrder` → items + recomputed `total_price`), or **delete the whole order** (`deleteOrder`, gated by the `orders_delete_admin` RLS policy). Each order card also shows a **"Visto por"** panel listing which sellers opened the order (from `order_views`) with timestamps.
 
 ### Roles & Staff Access
 
@@ -191,16 +201,16 @@ The admin account (`rol='admin'`, `id_local=NULL`) sees every sede. All staff lo
 
 ### Data Access Layer — `lib/database.js`
 
-`getProfile` (reads `clientes`, `maybeSingle`), `getEmpleado` (reads `empleados`, `maybeSingle`), `addLoyaltyPoints`, `addPointsHistory`, `createOrder`, `getOrderHistory`, `getOrderById`, `updateOrder`, `setOrderDelivered` (`set_order_delivered` RPC), `adminSearchOrders` (`admin_get_order` RPC, `#`-sanitised), `sellerSearchOrder` (`seller_get_order` RPC, `#`-sanitised, sede-scoped, records the scan), `sellerListOrders` (`seller_list_orders` RPC, status + `since` filters), `deleteOrder` (admin-only), and `getOrdersForAnalytics({ from, to, location })`. The shared `cleanOrderNumber` helper strips `#`/whitespace before any search hits the API.
+`getProfile` (reads `clientes`, `maybeSingle`), `getEmpleado` (reads `empleados`, `maybeSingle`), `addLoyaltyPoints`, `addPointsHistory`, `createOrder`, `getOrderHistory`, `getOrderById`, `updateOrder`, `setOrderDelivered` (`set_order_delivered` RPC; also best-effort updates `status = 'entregado'` for customer `NotificationBar`), `adminSearchOrders` (`admin_get_order` RPC, `#`-sanitised), `sellerSearchOrder` (`seller_get_order` RPC, `#`-sanitised, sede-scoped, records the scan), `sellerListOrders` (`seller_list_orders` RPC, status + `since` filters), `deleteOrder` (admin-only), `recordOrderView(orderId, sellerId)` (inserts into `order_views`; called by the Caja when a seller opens an order), `getOrderViews(orderId)` (fetches all view records enriched with seller names; used by the admin `OrderManager`), and `getOrdersForAnalytics({ from, to, location })`. The shared `cleanOrderNumber` helper strips `#`/whitespace before any search hits the API.
 
 ### Menu Data
 
-All bowl and drink data is **hardcoded** in `constants/menu.js` as `CARTA` and `BEBIDAS`. Bowl IDs (`tierra`, `fuego`, `agua`, `raiz`, `aire`, `brasa`, `dulce`, `cosecha`, `paraiso`, `natural`, `vital`, `maximo`) are referenced in the Savia AI system prompt in `api/chat.js` — keep both in sync if the menu changes.
+All bowl and drink data is **hardcoded** in `constants/menu.js` as `CARTA` and `BEBIDAS`. Bowl IDs (`tierra`, `fuego`, `agua`, `raiz`, `aire`, `brasa`, `dulce`, `cosecha`, `paraiso`, `natural`, `vital`, `maximo`) are referenced in the Vita AI system prompt in `api/chat.js` — keep both in sync if the menu changes.
 
-### Savia AI
+### Vita AI
 
 Two implementations exist:
-1. **SaviaWidget** — full AI chat via `/api/chat` (Claude Haiku), floating button.
+1. **VitaWidget** (`components/VitaWidget.jsx`) — full AI chat via `/api/chat` (Claude Haiku), floating button with Vita mascot.
 2. **CuentaView chatbot** — local decision-tree (no API call), embedded in the account page.
 
 `/api/chat.js` is a Vercel serverless function; its system prompt contains the full menu. Bowl recommendations use the `[BOWL:id]` tag that the widget parses to render a bowl card.
@@ -214,7 +224,7 @@ Two implementations exist:
 
 ### Key Dependencies
 
-`react`/`react-dom` 18, `@supabase/supabase-js`, `@anthropic-ai/sdk`, `framer-motion`, `lucide-react`, `html5-qrcode` (camera QR scanning), `qrcode` (QR image generation), Tailwind/PostCSS/Autoprefixer, Vite.
+`react`/`react-dom` 18, `@supabase/supabase-js`, `@anthropic-ai/sdk`, `framer-motion`, `lucide-react`, `html5-qrcode` (camera QR scanning), `qrcode` (QR image generation), `resend` (transactional email in `api/notify-order.js`), Tailwind/PostCSS/Autoprefixer, Vite.
 
 ### Database (Supabase PostgreSQL)
 
@@ -224,6 +234,7 @@ The baseline lives in `supabase-setup.sql`; the live DB has since applied the **
 - **empleados** — staff identity: `id` (PK → `auth.users`), `id_local` (FK → `locales`; **NULL = global admin**), `rol` (`seller`/`admin`, CHECK), `fecha_creacion`. RLS: a staff member reads their own row; admins manage all.
 - **orders** — `items` JSON, `total_price`, `status` (lifecycle CHECK: `recibido`/`confirmado`/`en_preparacion`/`listo`/`entregado`/`cancelado`), `entregado` (boolean delivery flag). **Multichannel columns:** `channel` (`pickup`|`delivery`, NOT NULL), `local_id` (FK → `locales`; required for pickup), `source`, `customer_name`, `customer_phone`, `delivery_zone`, `external_ref`, `channel_meta` (JSONB). **Caja-activity:** `scanned_at` / `scanned_por` (FK → `empleados`; set when a seller scans/searches the order). Plus legacy/display `delivery_type`/`store_location`/`delivery_address`/`delivery_details` and audit `square_order_id`/`confirmado_por` (FK → `empleados`)/`confirmado_at`/`updated_at`. (`confirmado_por`/`scanned_por` reference **`empleados`** — staff, not customers.)
 - **locales** — physical stores (`id` smallint, `name`, `direccion`), seeded with the 3 sedes: `1 = CC salitre Plaza`, `2 = CC av chile`, `3 = CC Nuestro Bogota` (ids ↔ `constants/locations.js` `localId`). Public SELECT RLS.
+- **order_views** — audit trail: `order_id` (FK → `orders`), `seller_id` (FK → `empleados`), `viewed_at`. Inserted by `recordOrderView` each time a seller opens an order in the Caja. Read by `getOrderViews` for the admin OrderManager's "Visto por" panel.
 - **points_history**.
 
 Functions/RPCs: `handle_new_user()` (seeds a `clientes` row with `role='customer'`), `add_loyalty_points(user_id, points)` (atomic; updates `clientes`; **gated to seller/admin** — see "Known issue"), `is_admin(uid)` / `is_seller(uid)` (read `empleados`; admin also passes `is_seller`), `set_order_delivered(order_id, value)` (SECURITY DEFINER; sets `entregado`/`status` + `confirmado_por`/`confirmado_at`, reads the seller's `id_local` from `empleados`, **scoped to the seller's own sede**), `admin_get_order(query)` (SECURITY DEFINER, admin-gated), `seller_get_order(query)` (SECURITY DEFINER, seller-gated; sanitises `#`/`-`/spaces, matches full UUID or short prefix, **scoped to the seller's sede**, and records `scanned_at`/`scanned_por`), and `seller_list_orders(status, since)` (SECURITY DEFINER, seller-gated; sede-scoped history of scanned orders). The `orders_seller_guard` trigger (`trg_orders_seller_guard`) restricts a non-admin seller to delivery-state/attribution columns only (it does **not** protect `entregado`/`status`/`confirmado_*`/`scanned_*`, so Pagar and scan-marking pass); **admins bypass the guard**.
@@ -233,6 +244,17 @@ Functions/RPCs: `handle_new_user()` (seeds a `clientes` row with `role='customer
 > **Known issue (loyalty):** `confirmOrder` still calls `add_loyalty_points` as the *customer*, but the RPC is restricted to seller/admin, so the 50-pt award **silently no-ops** for customers (the error is caught). Fix forward by awarding points server-side on payment (e.g., inside `set_order_delivered`) rather than from the client.
 
 **Migration strategy:** `supabase-setup.sql` is the idempotent baseline; identity/role changes after it are applied as named Supabase migrations via MCP (see the three named above). Apply baseline by pasting into Supabase → SQL Editor → Run; apply incremental schema work as migrations and reload the PostgREST cache (`NOTIFY pgrst, 'reload schema';`).
+
+### API Serverless Functions
+
+| File | Method | Purpose |
+|---|---|---|
+| `api/chat.js` | POST | Vita AI (Anthropic Claude Haiku) |
+| `api/admin-users.js` | POST | Create new auth user + seed empleados if staff |
+| `api/admin-users.js` | DELETE | Delete auth user (cascades to clientes/empleados) |
+| `api/notify-order.js` | POST | Send order confirmation email via Resend to the customer |
+
+`api/admin-users.js` requires `SUPABASE_SERVICE_ROLE_KEY`. `api/notify-order.js` requires both `SUPABASE_SERVICE_ROLE_KEY` and `RESEND_API_KEY`; it fetches the order + customer email and sends a branded HTML email from `noreply@soyorigen.co`.
 
 ### Deployment
 
