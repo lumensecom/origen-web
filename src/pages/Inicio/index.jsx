@@ -74,12 +74,12 @@ const HomeView = ({ navigate, onOpenVita }) => {
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3">
             <img
               src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
-              alt="Mr. Sivo"
+              alt="Mr. Sivio"
               className="h-14 w-auto object-contain flex-shrink-0 drop-shadow-sm"
             />
             <div className="flex-1 min-w-0">
               <p className="font-display italic text-sm text-[var(--verde-profundo)] font-semibold leading-tight">¿No sabes qué comer hoy?</p>
-              <p className="font-ui text-xs text-[var(--texto-suave)]">Mr. Sivo te ayuda a elegir</p>
+              <p className="font-ui text-xs text-[var(--texto-suave)]">Mr. Sivio te ayuda a elegir</p>
             </div>
             <button onClick={onOpenVita} className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap flex-shrink-0">
               <Sparkles size={14} /> Pregúntale

@@ -1,4 +1,5 @@
 import { Instagram, MessageCircle, ArrowRight } from 'lucide-react';
+import { MR_SIVIO_URL } from '../../constants/media';
 
 const TikTokIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -26,7 +27,10 @@ const Footer = ({ navigate }) => {
     <footer className="w-full bg-[#050505] pt-20 pb-12 border-t border-white/5 text-white relative z-20">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-1 md:col-span-1">
-          <h2 className="font-logo text-3xl tracking-wide mb-4">ORIGEN</h2>
+          <div className="flex items-center gap-3 mb-4">
+            <img src={MR_SIVIO_URL} alt="Mr. Sivio" className="h-12 w-auto object-contain drop-shadow-md" />
+            <h2 className="font-logo text-3xl tracking-wide">ORIGEN</h2>
+          </div>
           <p className="font-ui text-white/50 text-sm mb-6 max-w-sm">
             Comida saludable, rápida y de verdad. Preparada al instante para nutrir tu cuerpo sin aburrir tu paladar.
           </p>
