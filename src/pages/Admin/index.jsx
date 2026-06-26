@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DollarSign, ShoppingBag, Receipt, CheckCircle2, TrendingUp, TrendingDown,
-  MapPin, Clock, Salad, ShieldAlert, RefreshCw, Loader2, ArrowRight,
+  MapPin, Salad, ShieldAlert, RefreshCw, Loader2, ArrowRight,
   Users, UserPlus, Search, Trash2, ChevronDown, X,
   Shield, Calendar, AlertCircle, Check, Loader, Eye, EyeOff,
 } from 'lucide-react';
@@ -11,7 +11,7 @@ import { useAnalytics } from '../../features/admin/useAnalytics';
 import { formatPrice } from '../../utils/format';
 import KpiCard from '../../components/admin/KpiCard';
 import BarChart from '../../components/admin/BarChart';
-import Histogram from '../../components/admin/Histogram';
+import SalesTrendPanel from '../../components/admin/SalesTrendPanel';
 import FilterBar from '../../components/admin/FilterBar';
 import OrderManager from '../../components/admin/OrderManager';
 import {
@@ -106,7 +106,7 @@ function RoleBadge({ rol }) {
 function VentasTab({ onRequireAuth }) {
   const { isAuthenticated } = useAuth();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const { loading, error, metrics, refresh } = useAnalytics(filters);
+  const { loading, error, metrics, orders, refresh } = useAnalytics(filters);
 
   return (
     <div className="space-y-6">
@@ -140,9 +140,7 @@ function VentasTab({ onRequireAuth }) {
         <Panel title="Ventas por sede" icon={<MapPin size={18} />}>
           <BarChart data={metrics.locations} formatValue={formatCompact} color="var(--verde-main)" />
         </Panel>
-        <Panel title="Horas pico de venta" icon={<Clock size={18} />}>
-          <Histogram data={metrics.hours} formatValue={(v) => `${v} ped.`} />
-        </Panel>
+        <SalesTrendPanel orders={orders} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
