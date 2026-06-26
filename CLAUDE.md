@@ -93,7 +93,8 @@ origen-web/src/
 │   ├── admin/
 │   │   ├── KpiCard.jsx            # Single KPI tile
 │   │   ├── BarChart.jsx           # Hand-built on-brand SVG bar chart (no chart lib)
-│   │   ├── Histogram.jsx          # Peak-hour SVG histogram
+│   │   ├── Histogram.jsx          # Peak-hour SVG histogram (kept for reference, no longer rendered)
+│   │   ├── SalesTrendPanel.jsx    # Paid-orders chart with Hora/Semana/Mes/Año toggle; counts entregado=true orders aggregated from created_at
 │   │   ├── FilterBar.jsx          # Date / hour / location filter controls
 │   │   └── OrderManager.jsx       # Search order by ID → edit dish quantities / delete order / "Visto por" audit trail (admin)
 │   ├── seller/
@@ -119,7 +120,7 @@ origen-web/src/
 ### State Management
 
 - **AuthContext** (`useAuth()`): Supabase session + identity. Loads the customer's `clientes` row **and** any `empleados` row in parallel, then derives `role` (`customer`/`seller`/`admin`), `isStaff`, `isSeller` (seller **or** admin), `isAdmin`, `isCajaSeller` (a pure seller), `sellerLocalId`, and `sellerLocation` (resolved from `LOCALES` by sede id). Staff (`empleados`) always win over the customer fallback — an account is one or the other.
-- **useCart** (`features/cart/useCart.js`): Cart state + all order logic — Supabase persistence, QR generation, and WhatsApp message generation.
+- **useCart** (`features/cart/useCart.js`): Cart state + all order logic — Supabase persistence, QR generation (whole-cart only via `payAll`), and order confirmation. Pickup orders are persisted **in `confirmOrder`** (not `payAll`) so the DB trigger notifies the caja immediately; `payAll` reuses the cached row via `masterOrderId`/`masterSig`.
 - **useAnalytics** (`features/admin/useAnalytics.js`): Admin dashboard data + filter state, with live refresh.
 - **useOrderNotifications** (`features/notifications/useOrderNotifications.js`): App-wide caja new-order alerts — subscribes to the sede broadcast + a `postgres_changes` safety net (deduped), plays a chime, fires a guarded `navigator.vibrate()`, and owns the bell/toast state. Mounted in `App.jsx`.
 - **Local `useState` in App.jsx**: Active tab, scroll position, modal flags, and edit/seller-resume orchestration (`editingOrder`, `sellerResumeOrder`) — UI-only.
@@ -142,11 +143,13 @@ Condition (B) is synced live: `useCart` subscribes to Supabase realtime on the u
 
 ### In-Store QR Pay/Pickup Flow
 
-QR generation is **gated** behind the pickup sequence and is **not** offered in the initial "Tu Pedido" view. The customer must: pick **Recoger en local** → choose a specific store → click **Confirmar por WhatsApp**. That confirmation (`useCart.confirmOrder`) sends the WhatsApp message, awards points, and sets `checkout.unlocked = true` (persisted) — it does **not** persist an order or clear the cart. The cart then stays visible as a pay-in-store zone exposing two QR paths:
-- **Pagar todo** (master QR) — `useCart.payAll()` persists the whole cart as one `orders` row and shows its QR.
-- **Per-item QR** — `useCart.payItem(line)` persists a single line as its own `orders` row and shows that item's QR.
+QR generation is **gated** behind the pickup sequence. The customer must: pick **Recoger en local** → choose a specific store → click **Confirmar**. That confirmation (`useCart.confirmOrder`) **immediately persists the order** in Supabase (`channel='pickup'`, `status='recibido'`) so the `broadcast_new_order` DB trigger fires and the caja is notified at once — staff can start preparing before the customer arrives. `confirmOrder` also sets `checkout.unlocked = true` and caches `masterOrderId`/`masterSig`. The cart then stays visible as a pay-in-store zone with one QR path:
 
-Both reuse an existing pending order while the cart/line is unchanged (signature check) to avoid duplicate rows; a quantity/edit change invalidates the cached QR. `OrderQRModal` renders the QR encoding the order UUID. Requires the customer to be **logged in** (RLS owns-row insert); guests are routed to login. In the Caja, a seller scans the QR → fetches the order (via `seller_get_order`) → reviews the breakdown → **Pagar** (flips `entregado = true` via RPC) or **Editar pedido**. Paying removes the corresponding line(s) from the customer's cart in realtime. The Pagar success screen offers **Deshacer** (revert) and **Escanear nuevo QR**.
+- **Pagar todo** (master QR) — `useCart.payAll()` reuses the already-persisted order if the cart hasn't changed (via the `masterSig` signature check); only creates a new row if the cart was edited after confirmation. Shows the QR via `OrderQRModal`.
+
+> **`payItem` (per-item QR) was removed.** The QR is always for the whole cart. This keeps the caja flow simple: one QR → one order → one Pagar.
+
+A quantity/edit change invalidates the cached QR (`paidSig` on the line). Requires the customer to be **logged in** (RLS owns-row insert); guests are routed to login. In the Caja, a seller scans the QR → fetches the order (via `seller_get_order`) → reviews the breakdown → **Pagar** (flips `entregado = true` via RPC) or **Editar pedido**. Paying clears the customer's cart in realtime. The Pagar success screen offers **Deshacer** (revert) and **Escanear nuevo QR**.
 
 ### User Order History — `pages/Historial`
 
@@ -158,11 +161,11 @@ Orders are differentiated on a **single `orders` table** by a `channel` discrimi
 - **`pickup`** — physical sede order (Recoger en local / in-store QR). **Requires a valid `local_id`** (FK → `locales`), enforced by the `orders_pickup_requires_local` CHECK and in the UI (a sede must be chosen). Functionally required too: the seller's RLS only exposes orders for their own `local_id`, so a pickup order without one is invisible in the Caja.
 - **`delivery`** — online/remote order (domicilio today; Rappi/Didi/web later). Captures `customer_name`/`customer_phone`, `delivery_address`/`delivery_zone`, and `source`; enforced by `orders_delivery_requires_contact` (address + phone).
 
-**Third-party extensibility:** `source` identifies the origin, `external_ref` holds the provider's order id, and `channel_meta` (JSONB) absorbs provider-specific payloads with no schema migration. `CheckoutModal` collects the channel-specific data; `useCart` writes the typed columns (`payAll`/`payItem` → pickup, `confirmOrder` → delivery).
+**Third-party extensibility:** `source` identifies the origin, `external_ref` holds the provider's order id, and `channel_meta` (JSONB) absorbs provider-specific payloads with no schema migration. `CheckoutModal` collects the channel-specific data; `useCart` writes the typed columns (`confirmOrder` → both pickup and delivery; `payAll` → reuses/recreates the pickup row for QR display).
 
 ### Order Flow → WhatsApp
 
-For delivery orders, Checkout (`CheckoutModal`) collects address, a **required contact phone**, and optional zone/notes. `useCart.confirmOrder()` validates the channel selection, persists the order as `channel='delivery'` (if authenticated), formats a WhatsApp message (with contact + zone), and opens `wa.me/573103112799`. No payment gateway. (Pickup orders persist later, at QR generation.)
+For delivery orders, Checkout (`CheckoutModal`) collects address, a **required contact phone**, and optional zone/notes. `useCart.confirmOrder()` validates the channel selection, persists the order as `channel='delivery'` (if authenticated), formats a WhatsApp message (with contact + zone), and opens `wa.me/573103112799`. No payment gateway. Pickup orders are also persisted in `confirmOrder` (see QR flow above) — not deferred to QR generation.
 
 ### Seller (Caja) Module — `pages/Seller`
 
@@ -179,7 +182,15 @@ Role-gated (`isSeller`) and lazy-loaded. A segmented control switches between tw
 
 ### Admin Dashboard — `pages/Admin`
 
-Role-gated (`isAdmin`), lazy-loaded, and **realtime** (re-refreshes on any `orders` change via Supabase realtime). KPIs plus hand-built on-brand **SVG charts** (zero chart-lib): sales by location, peak-hour histogram, best/least dishes, best/least ingredients (from builder orders). Interactive date / hour / location filters via `components/admin/FilterBar.jsx` and `useAnalytics`.
+Role-gated (`isAdmin`), lazy-loaded, and **realtime** (re-refreshes on any `orders` change via Supabase realtime). KPIs plus hand-built on-brand **SVG charts** (zero chart-lib): sales by location, paid-orders trend panel, best/least dishes, best/least ingredients (from builder orders). Interactive date / hour / location filters via `components/admin/FilterBar.jsx` and `useAnalytics`.
+
+**Sales trend panel (`SalesTrendPanel`):** replaced the fixed peak-hour histogram. Counts only **paid orders** (`entregado = true`) and lets the admin toggle granularity:
+- **Hora** — 24 bars, one per hour of the day.
+- **Semana** — 7 bars Mon–Sun scoped to the current calendar week (auto-resets).
+- **Mes** — 12 bars Jan–Dec for a selectable year (dropdown shows years with data + current year).
+- **Año** — one bar per year with data.
+
+Aggregates on the client from `created_at` timestamps in the `orders` array returned by `useAnalytics`, so it stays live-reactive with no separate counters or localStorage state.
 
 **Order management** (`components/admin/OrderManager.jsx`): a search bar resolves an order by ID (short `#XXXXXXXX` code or full UUID) through the `admin_get_order` RPC, then lets the admin edit each dish's quantity (the multiplier), remove a line, **save** (`updateOrder` → items + recomputed `total_price`), or **delete the whole order** (`deleteOrder`, gated by the `orders_delete_admin` RLS policy). Each order card also shows a **"Visto por"** panel listing which sellers opened the order (from `order_views`) with timestamps.
 
