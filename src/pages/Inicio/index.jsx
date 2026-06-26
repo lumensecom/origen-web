@@ -247,22 +247,6 @@ const HomeView = ({ navigate, onOpenVita }) => {
           </div>
         </motion.div>
       </div>
-      {/* Mr. Sivo FAB — fixed bottom-right, all screen sizes */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 1.2, ease: [0.23, 1, 0.32, 1] }}
-        onClick={onOpenVita}
-        className="fixed bottom-6 right-4 z-[100] flex items-center gap-2 bg-[var(--verde-profundo)] text-white font-ui font-bold text-xs px-3 py-2.5 rounded-full shadow-2xl border border-[var(--verde-main)]/30 active:scale-95 transition-transform hover:scale-105"
-        aria-label="Hablar con Mr. Sivo"
-      >
-        <img
-          src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
-          alt="Mr. Sivo"
-          className="h-8 w-auto object-contain"
-        />
-        <span>Mr. Sivo 🥦</span>
-      </motion.button>
     </div>
   );
 };

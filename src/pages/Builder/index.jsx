@@ -347,6 +347,12 @@ const BuilderView = ({ onAddToCart, editingOrder = null, onSaveEdit, onCancelEdi
                 <span className="font-ui text-base text-[var(--verde-palido)]">Total del combo</span>
                 <span className={`font-display font-bold text-3xl ${isMaximo ? 'text-[var(--maximo-amber)]' : 'text-[var(--verde-main)]'}`}>{formatPrice(totalPrice)}</span>
               </div>
+              <div className="flex items-center gap-2 bg-[var(--verde-main)]/15 border border-[var(--verde-main)]/30 rounded-[14px] px-4 py-3">
+                <span className="text-lg shrink-0">🥛</span>
+                <p className="font-ui text-xs text-[var(--verde-palido)] leading-relaxed">
+                  <strong className="text-white">Todos los bowls armados incluyen</strong> crema de la casa y limonada natural
+                </p>
+              </div>
             </motion.div>
           )}
         </div>

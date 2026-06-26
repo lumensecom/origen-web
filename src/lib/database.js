@@ -253,6 +253,31 @@ export async function getOrderViews(orderId) {
 }
 
 
+// ---------------------------------------------------------------------------
+// Menu items — dynamic menu from Supabase (falls back to static constants)
+// ---------------------------------------------------------------------------
+
+export async function getMenuItems() {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .eq('active', true)
+    .order('sort_order')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getAllMenuItems() {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .order('sort_order')
+  if (error) throw error
+  return data ?? []
+}
+
 // Admin analytics feed. RLS grants admins global read; filters are applied
 // server-side so the dashboard only pulls what the active filters need.
 export async function getOrdersForAnalytics({ from, to, location } = {}) {

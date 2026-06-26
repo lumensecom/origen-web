@@ -1,6 +1,8 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import MiCuentaView from './pages/MiCuenta';
+import PQRView from './pages/PQR';
 
 import { useAuth } from './contexts/AuthContext';
 import useLockBodyScroll from './hooks/useLockBodyScroll';
@@ -29,6 +31,7 @@ import HistorialView from './pages/Historial';
 // library or the dashboard charts.
 const SellerView = lazy(() => import('./pages/Seller'));
 const AdminView = lazy(() => import('./pages/Admin'));
+const AdminMenuView = lazy(() => import('./pages/Admin/MenuAdmin'));
 
 const StaffFallback = () => (
   <div className="pt-40 pb-40 flex items-center justify-center">
@@ -37,7 +40,7 @@ const StaffFallback = () => (
 );
 
 export default function App() {
-  const { isAuthenticated, isSeller, isCajaSeller, isRecovery } = useAuth();
+  const { isAuthenticated, isSeller, isCajaSeller, isRecovery, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState('inicio');
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -257,6 +260,16 @@ export default function App() {
               <HistorialView onRequireAuth={() => navigate('cuenta')} onNavigate={navigate} />
             </motion.div>
           )}
+          {activeTab === 'micuenta' && (
+            <motion.div key="micuenta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+              {isAuthenticated ? <MiCuentaView /> : <CuentaView onAddToCart={handleAddToCart} />}
+            </motion.div>
+          )}
+          {activeTab === 'pqr' && (
+            <motion.div key="pqr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+              <PQRView />
+            </motion.div>
+          )}
           {activeTab === 'seller' && (
             <motion.div key="seller" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
               <Suspense fallback={<StaffFallback />}>
@@ -273,6 +286,13 @@ export default function App() {
             <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
               <Suspense fallback={<StaffFallback />}>
                 <AdminView onRequireAuth={() => navigate('cuenta')} />
+              </Suspense>
+            </motion.div>
+          )}
+          {activeTab === 'adminmenu' && (
+            <motion.div key="adminmenu" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+              <Suspense fallback={<StaffFallback />}>
+                {isAdmin ? <AdminMenuView /> : <CuentaView onAddToCart={handleAddToCart} />}
               </Suspense>
             </motion.div>
           )}
@@ -297,6 +317,31 @@ export default function App() {
       )}
 
       {qrOrder && <OrderQRModal order={qrOrder} onClose={() => setQrOrder(null)} />}
+
+      {/* Mr. Sivo FAB — all tabs on desktop, only inicio on mobile */}
+      <motion.div
+        className={`fixed bottom-6 right-4 z-[95] group ${activeTab !== 'inicio' ? 'hidden md:block' : 'block'}`}
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1.5, ease: [0.23, 1, 0.32, 1] }}
+      >
+        <motion.button
+          onClick={() => setVitaOpen(true)}
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          className="relative flex flex-col items-center active:scale-95 transition-transform"
+          aria-label="Hablar con Mr. Sivo"
+        >
+          <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-[var(--verde-profundo)] text-white font-ui font-semibold text-xs px-3 py-1.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+            ¡Hola! Soy Mr. Sivo 🥦
+          </span>
+          <img
+            src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
+            alt="Mr. Sivo"
+            className="h-20 md:h-[120px] w-auto object-contain drop-shadow-2xl"
+          />
+        </motion.button>
+      </motion.div>
 
       <VitaWidget
         carta={CARTA}
