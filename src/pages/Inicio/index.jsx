@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { HERO_IMAGE, REAL_MEDIA } from '../../constants/media';
+import { HERO_IMAGE, REAL_MEDIA, MR_SIVIO_URL } from '../../constants/media';
 import { CARTA } from '../../constants/menu';
 import { BRAND_PHRASES, FEELINGS } from '../../constants/brand';
 import { formatPrice } from '../../utils/format';
@@ -18,10 +18,27 @@ const HomeView = ({ navigate, onOpenVita }) => {
   const [feeling, setFeeling] = useState(null);
   const selectedBowl = useMemo(() => (feeling ? CARTA.find(b => b.id === feeling.bowlId) : null), [feeling]);
   const [phraseIdx, setPhraseIdx] = useState(0);
+  const [showBubble, setShowBubble] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setPhraseIdx(i => (i + 1) % BRAND_PHRASES.length), 3500);
     return () => clearInterval(t);
+  }, []);
+
+  // Speech bubble cycle: appears at 1.8s, shows 3.2s, hides 7s, repeats
+  useEffect(() => {
+    let timer;
+    const cycle = (delay) => {
+      timer = setTimeout(() => {
+        setShowBubble(true);
+        timer = setTimeout(() => {
+          setShowBubble(false);
+          cycle(7000);
+        }, 3200);
+      }, delay);
+    };
+    cycle(1800);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -72,11 +89,31 @@ const HomeView = ({ navigate, onOpenVita }) => {
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3">
-            <img
-              src="https://res.cloudinary.com/dfj0ckm10/image/upload/v1782245400/Take_this_exact_broccoli_mascot_202606231508-removebg-preview_mwknja.png"
-              alt="Mr. Sivio"
-              className="h-14 w-auto object-contain flex-shrink-0 drop-shadow-sm"
-            />
+            <motion.div
+              className="relative flex-shrink-0"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <AnimatePresence>
+                {showBubble && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, y: 4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: 4 }}
+                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 bg-[var(--verde-profundo)] text-white rounded-[12px] px-3 py-2 whitespace-nowrap shadow-lg z-10 pointer-events-none"
+                  >
+                    <p className="font-ui text-[11px] font-bold leading-none">¿Sin ideas? ¡Yo te ayudo! 🥦</p>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-[var(--verde-profundo)]" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <img
+                src={MR_SIVIO_URL}
+                alt="Mr. Sivio"
+                className="h-16 w-auto object-contain drop-shadow-sm"
+              />
+            </motion.div>
             <div className="flex-1 min-w-0">
               <p className="font-display italic text-sm text-[var(--verde-profundo)] font-semibold leading-tight">¿No sabes qué comer hoy?</p>
               <p className="font-ui text-xs text-[var(--texto-suave)]">Mr. Sivio te ayuda a elegir</p>
