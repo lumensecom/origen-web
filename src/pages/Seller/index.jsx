@@ -1,36 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ScanLine, Check, RotateCcw, Pencil, CreditCard, MapPin, Clock,
-  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw, Bell, X, CheckCheck,
+  Loader2, ShieldAlert, ArrowRight, Hash, Package, History, RefreshCw, CheckCheck, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
 import { sellerSearchOrder, sellerListOrders, setOrderDelivered, recordOrderView, updateOrder } from '../../lib/database';
 import { formatPrice } from '../../utils/format';
 import QRScanner from '../../components/seller/QRScanner';
-
-// Plays a soft two-tone chime using the Web Audio API (no audio file needed).
-const playChime = () => {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const play = (freq, start, dur) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime + start);
-      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + start + 0.02);
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + dur);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + dur + 0.05);
-    };
-    play(880, 0, 0.18);
-    play(1100, 0.2, 0.22);
-  } catch { /* audio blocked */ }
-};
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 // Pull a UUID out of the scanned payload if present; otherwise return the raw
@@ -51,16 +28,19 @@ const GateCard = ({ icon, title, body, action }) => (
   </div>
 );
 
-const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }) => {
-  const { isAuthenticated, isSeller, sellerLocation, sellerLocalId, user } = useAuth();
+const SellerView = ({ resumeOrder, onConsumeResume, openOrder, onConsumeOpenOrder, onEditOrder, onRequireAuth }) => {
+  const { isAuthenticated, isSeller, sellerLocation, user } = useAuth();
   const [mode, setMode] = useState('scanner');  // scanner | history
   const [view, setView] = useState('scan');     // scan | loading | order | paid
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [processing, setProcessing] = useState(false);
-  const [newOrderAlerts, setNewOrderAlerts] = useState([]); // [{id, nombre, total, ts}]
-  const alertTimers = useRef({});
+  const [openItems, setOpenItems] = useState({});
+
+  // Reset accordion state when a new order loads
+  useEffect(() => { setOpenItems({}); }, [order?.id]);
+  const toggleItem = (idx) => setOpenItems(prev => ({ ...prev, [idx]: !prev[idx] }));
 
   // When returning from the builder after a seller edit, resume on the order.
   useEffect(() => {
@@ -71,37 +51,6 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
       onConsumeResume?.();
     }
   }, [resumeOrder, onConsumeResume]);
-
-  // Realtime: subscribe to new orders INSERT for this seller's sede.
-  // When a customer creates an order (pickup QR), notify the operator immediately.
-  useEffect(() => {
-    if (!supabase || !isAuthenticated || !sellerLocalId) return;
-    const filter = `local_id=eq.${sellerLocalId}`;
-    const channel = supabase
-      .channel(`seller-new-orders-${sellerLocalId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter }, (payload) => {
-        const o = payload.new;
-        const alertId = o.id;
-        playChime();
-        setNewOrderAlerts(prev => [...prev, {
-          alertId,
-          orderId: o.id,
-          total: o.total_price,
-          items: Array.isArray(o.items) ? o.items : [],
-          ts: new Date(o.created_at || Date.now()),
-        }]);
-        // Auto-dismiss after 12 s unless manually closed.
-        alertTimers.current[alertId] = setTimeout(() => {
-          setNewOrderAlerts(prev => prev.filter(a => a.alertId !== alertId));
-          delete alertTimers.current[alertId];
-        }, 12000);
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-      Object.values(alertTimers.current).forEach(clearTimeout);
-    };
-  }, [isAuthenticated, sellerLocalId]);
 
   // Resolve a scanned/typed code via the sede-scoped RPC (sanitises "#", matches
   // full UUID or short prefix, and records the scan). Returns the first match.
@@ -137,6 +86,18 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
       setView('scan');
     }
   };
+
+  // Open an order pushed from a notification (bell / toast). Keyed on the token
+  // so the same order id can be re-opened. Goes through the scan path so the
+  // sede scope + scan record apply.
+  useEffect(() => {
+    if (openOrder?.code) {
+      setMode('scanner');
+      loadOrder(openOrder.code);
+      onConsumeOpenOrder?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openOrder?.token]);
 
   // Mark the order as ready for pickup (status → 'listo')
   const handleListo = async () => {
@@ -218,51 +179,11 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
   const hasBuilderBowl = items.some(it => it.esBuilder);
   const shortId = order ? String(order.id).slice(0, 8).toUpperCase() : '';
 
-  const dismissAlert = (alertId) => {
-    clearTimeout(alertTimers.current[alertId]);
-    delete alertTimers.current[alertId];
-    setNewOrderAlerts(prev => prev.filter(a => a.alertId !== alertId));
-  };
-
   return (
     <div className="pt-28 pb-32 min-h-screen w-full">
 
-      {/* ── Realtime new-order alerts (stacked, fixed top-right) ── */}
-      <div className="fixed top-24 right-4 z-[300] flex flex-col gap-3 max-w-[300px] w-full pointer-events-none">
-        <AnimatePresence>
-          {newOrderAlerts.map(alert => (
-            <motion.div
-              key={alert.alertId}
-              initial={{ opacity: 0, x: 60, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 60, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 22, stiffness: 260 }}
-              className="pointer-events-auto bg-[var(--verde-profundo)] border border-[var(--verde-main)]/40 rounded-[20px] p-4 shadow-2xl"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-[var(--verde-main)] rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
-                  <Bell size={16} className="text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-ui font-bold text-sm text-white leading-tight">¡Nuevo pedido!</p>
-                  <p className="font-ui text-xs text-[var(--verde-palido)] mt-0.5">
-                    {alert.items.length} ítem(s) · {formatPrice(alert.total)}
-                  </p>
-                  <p className="font-ui text-[10px] text-white/40 mt-0.5">
-                    #{String(alert.orderId).slice(0, 8).toUpperCase()} · {alert.ts.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-                <button
-                  onClick={() => dismissAlert(alert.alertId)}
-                  className="text-white/40 hover:text-white transition-colors p-1 flex-shrink-0"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      {/* New-order alerts (sound, vibration, toasts + navbar bell) are global —
+          see App.jsx → useOrderNotifications + NotificationToasts / NotificationBell. */}
 
       <div className="max-w-md mx-auto px-6">
 
@@ -270,11 +191,6 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
         <div className="mb-5 text-center">
           <span className="inline-flex items-center gap-2 bg-[var(--verde-menta)] text-[var(--verde-main)] px-4 py-1.5 rounded-full font-ui text-xs font-bold uppercase tracking-wider mb-3">
             <ScanLine size={14} /> Caja Origen
-            {newOrderAlerts.length > 0 && (
-              <span className="bg-red-500 text-white text-[9px] font-extrabold rounded-full w-4 h-4 flex items-center justify-center -ml-1">
-                {newOrderAlerts.length}
-              </span>
-            )}
           </span>
           <h1 className="font-display italic text-4xl text-[var(--verde-profundo)]">
             {mode === 'scanner' ? 'Escáner de pedidos' : 'Historial de caja'}
@@ -348,23 +264,85 @@ const SellerView = ({ resumeOrder, onConsumeResume, onEditOrder, onRequireAuth }
                 </div>
               </div>
 
-              <div className="px-6 py-4 space-y-3 max-h-[40vh] overflow-y-auto scrollbar-hide">
-                {items.map((it, i) => (
-                  <div key={`${it.id ?? i}`} className="flex items-start gap-3">
-                    <span className="font-display font-bold text-[var(--verde-main)] text-sm w-7 flex-shrink-0">{it.quantity}×</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)]">{it.nombre}</p>
-                      {it.esBuilder && (
-                        <p className="font-ui text-[11px] text-[var(--texto-suave)] leading-relaxed">
-                          {[it.base, it.proteina, it.salsa].filter(Boolean).join(' · ')}
-                          {Array.isArray(it.frescuras) && it.frescuras.length > 0 && ` · ${it.frescuras.join(', ')}`}
-                        </p>
-                      )}
+              <div className="px-4 py-4 space-y-2 max-h-[40vh] overflow-y-auto scrollbar-hide">
+                {items.map((it, i) => {
+                  const hasDetail = it.esBuilder && (it.base || it.proteina || it.frescuras?.length || it.sabores?.length || it.salsa);
+                  const isOpen = !!openItems[i];
+                  if (hasDetail) {
+                    return (
+                      <div key={`${it.id ?? i}`} className="border border-[var(--verde-palido)] rounded-[14px] overflow-hidden bg-white">
+                        <button
+                          onClick={() => toggleItem(i)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--verde-menta)]/40 transition-colors active:bg-[var(--verde-menta)]"
+                        >
+                          <span className="font-display font-bold text-[var(--verde-main)] text-sm w-7 flex-shrink-0">{it.quantity}×</span>
+                          <p className="font-ui font-bold text-sm text-[var(--verde-profundo)] flex-1 text-left leading-snug">{it.nombre}</p>
+                          <span className="font-ui text-sm text-[var(--texto-suave)] flex-shrink-0 mr-1">{formatPrice((it.precio ?? 0) * (it.quantity ?? 1))}</span>
+                          <motion.div
+                            animate={{ rotate: isOpen ? 180 : 0 }}
+                            transition={{ duration: 0.22 }}
+                            className="flex-shrink-0 text-[var(--verde-main)]"
+                          >
+                            <ChevronDown size={26} strokeWidth={2.5} />
+                          </motion.div>
+                        </button>
+                        <AnimatePresence>
+                          {isOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25, ease: 'easeInOut' }}
+                              className="overflow-hidden"
+                            >
+                              <div className="border-t border-[var(--verde-palido)] px-4 pt-3 pb-4 space-y-2.5">
+                                {it.base && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Base</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.base}</span>
+                                  </div>
+                                )}
+                                {Array.isArray(it.frescuras) && it.frescuras.length > 0 && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Frescuras</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.frescuras.join(', ')}</span>
+                                  </div>
+                                )}
+                                {Array.isArray(it.sabores) && it.sabores.length > 0 && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Sabores</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.sabores.join(', ')}</span>
+                                  </div>
+                                )}
+                                {it.proteina && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Proteína</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.proteina}</span>
+                                  </div>
+                                )}
+                                {it.salsa && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="font-ui text-[11px] font-bold uppercase tracking-wide text-[var(--verde-main)] w-16 flex-shrink-0 pt-0.5">Salsa</span>
+                                    <span className="font-ui text-[12px] text-[var(--verde-profundo)]">{it.salsa}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+                  // Non-builder items: simple flat row
+                  return (
+                    <div key={`${it.id ?? i}`} className="flex items-center gap-3 px-2 py-2">
+                      <span className="font-display font-bold text-[var(--verde-main)] text-sm w-7 flex-shrink-0">{it.quantity}×</span>
+                      <p className="font-ui font-bold text-sm text-[var(--verde-profundo)] flex-1 min-w-0">{it.nombre}</p>
+                      <span className="font-ui text-sm text-[var(--texto-suave)] flex-shrink-0">{formatPrice((it.precio ?? 0) * (it.quantity ?? 1))}</span>
                     </div>
-                    <span className="font-ui text-sm text-[var(--texto-suave)] flex-shrink-0">{formatPrice((it.precio ?? 0) * (it.quantity ?? 1))}</span>
-                  </div>
-                ))}
-                {items.length === 0 && <p className="font-ui text-sm text-[var(--texto-suave)] flex items-center gap-2"><Package size={14} /> Pedido sin artículos.</p>}
+                  );
+                })}
+                {items.length === 0 && <p className="font-ui text-sm text-[var(--texto-suave)] flex items-center gap-2 px-2"><Package size={14} /> Pedido sin artículos.</p>}
               </div>
 
               <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">

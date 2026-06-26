@@ -212,10 +212,11 @@ export const useCart = () => {
   };
 
   // -------------------------------------------------------------------------
-  // Order confirmation. For pickup this UNLOCKS in-store QR payment and keeps
-  // the cart intact so the customer can generate the master QR at the counter.
-  // For delivery it persists the order directly. No WhatsApp — operators are
-  // notified via Supabase Realtime on the Seller dashboard.
+  // Order confirmation. For pickup: persists the order immediately so the
+  // broadcast_new_order DB trigger fires and the caja is notified right away
+  // (staff can start preparing before the customer arrives). The masterOrderId
+  // is cached so payAll can reuse the same row instead of creating a duplicate.
+  // For delivery: persists the order directly the same way.
   // -------------------------------------------------------------------------
   const confirmOrder = async (deliveryData) => {
     const cartTotal = cart.reduce((acc, item) => acc + item.precio * item.quantity, 0);
@@ -228,9 +229,31 @@ export const useCart = () => {
       throw new Error('Para domicilio necesitamos dirección y teléfono de contacto.');
     }
 
+    // Unlock immediately so the UI isn't blocked if the DB call is slow.
+    if (isPickup) {
+      setCheckout(prev => ({ ...prev, unlocked: true, store: deliveryData.store ?? null }));
+    }
+
     if (isAuthenticated && user) {
       try {
-        if (!isPickup) {
+        if (isPickup) {
+          const sig = cartSig(cart);
+          const order = await createOrder({
+            user_id: user.id,
+            items: buildItemsData(cart),
+            total_price: cartTotal,
+            channel: 'pickup',
+            source: 'app',
+            status: 'recibido',
+            local_id: deliveryData.store.localId,
+            delivery_type: 'En Local (QR)',
+            store_location: deliveryData.store?.nombre ?? null,
+            delivery_address: null,
+            delivery_details: null,
+          });
+          // Cache so payAll reuses this row without a second INSERT / notification.
+          setCheckout(prev => ({ ...prev, masterOrderId: order.id, masterSig: sig }));
+        } else {
           await createOrder({
             user_id: user.id,
             items: buildItemsData(cart),
@@ -254,10 +277,6 @@ export const useCart = () => {
       } catch (err) {
         console.error('Error guardando pedido en Supabase:', err);
       }
-    }
-
-    if (isPickup) {
-      setCheckout(prev => ({ ...prev, unlocked: true, store: deliveryData.store ?? null }));
     }
   };
 
