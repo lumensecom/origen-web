@@ -60,7 +60,7 @@ const Footer = ({ navigate }) => {
           <h4 className="font-ui font-bold text-lg mb-6 text-white">Explorar</h4>
           <ul className="space-y-4 font-ui text-sm text-white/50">
             <li><button onClick={() => handleNav('menu')} className="hover:text-[var(--verde-main)] transition-colors">Carta Origen</button></li>
-            <li><button onClick={() => handleNav('builder')} className="hover:text-[var(--verde-main)] transition-colors">Arma tu Bowl</button></li>
+            <li><button onClick={() => handleNav('builder')} className="hover:text-[var(--verde-main)] transition-colors">Crea tu Origen</button></li>
             <li><button onClick={() => handleNav('blog')} className="hover:text-[var(--verde-main)] transition-colors">Historias / Blog</button></li>
           </ul>
         </div>

@@ -17,7 +17,7 @@ const WhatsAppIcon = ({ size = 18 }) => (
 const NAV_LINKS = [
   { id: 'inicio', label: 'Inicio' },
   { id: 'menu', label: 'Carta Origen' },
-  { id: 'builder', label: 'Arma tu Bowl' },
+  { id: 'builder', label: 'Crea tu Origen' },
   { id: 'blog', label: 'Historias / Blog' },
   { id: 'ubicaciones', label: 'Ubicaciones' },
 ];
