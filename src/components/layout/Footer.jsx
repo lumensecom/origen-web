@@ -46,7 +46,8 @@ const Footer = ({ navigate }) => {
               </a>
             ))}
           </div>
-          <a href="#google-review" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[14px] px-4 py-3 transition-all group w-full max-w-[220px]">
+          {/* TODO: reemplazar href por la URL real del perfil de Google Business de ORIGEN */}
+          <a href="#google-review-pendiente" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[14px] px-4 py-3 transition-all group w-full max-w-[220px]">
             <span className="text-xl">⭐</span>
             <div className="flex-1 min-w-0">
               <p className="font-ui text-xs font-bold text-white leading-none mb-0.5">Califícanos en Google</p>

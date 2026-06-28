@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import MiCuentaView from './pages/MiCuenta';
 import PQRView from './pages/PQR';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { useAuth } from './contexts/AuthContext';
 import useLockBodyScroll from './hooks/useLockBodyScroll';
@@ -301,23 +302,27 @@ export default function App() {
           )}
           {activeTab === 'seller' && (
             <motion.div key="seller" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <Suspense fallback={<StaffFallback />}>
-                <SellerView
-                  resumeOrder={sellerResumeOrder}
-                  onConsumeResume={() => setSellerResumeOrder(null)}
-                  openOrder={sellerOpenOrder}
-                  onConsumeOpenOrder={() => setSellerOpenOrder(null)}
-                  onEditOrder={handleEditSellerOrder}
-                  onRequireAuth={() => navigate('cuenta')}
-                />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<StaffFallback />}>
+                  <SellerView
+                    resumeOrder={sellerResumeOrder}
+                    onConsumeResume={() => setSellerResumeOrder(null)}
+                    openOrder={sellerOpenOrder}
+                    onConsumeOpenOrder={() => setSellerOpenOrder(null)}
+                    onEditOrder={handleEditSellerOrder}
+                    onRequireAuth={() => navigate('cuenta')}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </motion.div>
           )}
           {activeTab === 'admin' && (
             <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <Suspense fallback={<StaffFallback />}>
-                <AdminView onRequireAuth={() => navigate('cuenta')} />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<StaffFallback />}>
+                  <AdminView onRequireAuth={() => navigate('cuenta')} />
+                </Suspense>
+              </ErrorBoundary>
             </motion.div>
           )}
           {activeTab === 'adminmenu' && (

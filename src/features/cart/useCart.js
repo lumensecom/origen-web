@@ -28,7 +28,8 @@ const loadJSON = (key, fallback) => {
 
 // Lightweight signature so we can reuse an already-generated QR/order when the
 // underlying cart hasn't changed, instead of spawning a duplicate order row.
-const lineSig = (l) => `${l.id}:${l.quantity}:${l.precio}`;
+// Includes builder ingredients so editing selections invalidates the cached QR.
+const lineSig = (l) => `${l.id}:${l.quantity}:${l.precio}:${l.base ?? ''}:${(l.frescuras ?? []).join(',')}:${l.salsa ?? ''}`;
 const cartSig = (lines) => lines.map(lineSig).join('|');
 
 // Normalises a cart line into the shape we persist in orders.items (jsonb).
@@ -182,8 +183,14 @@ export const useCart = () => {
     }
   };
 
+  // Guard against concurrent payAll calls (double-tap on mobile).
+  const payAllInFlight = useRef(false);
+
   // Master QR: one order for the entire cart. Reused while the cart is unchanged.
   const payAll = async () => {
+    if (payAllInFlight.current) return;
+    payAllInFlight.current = true;
+    try {
     requireAuth();
     requirePickupStore();
     const sig = cartSig(cart);
@@ -209,6 +216,9 @@ export const useCart = () => {
     });
     setCheckout(prev => ({ ...prev, masterOrderId: order.id, masterSig: sig }));
     return order;
+    } finally {
+      payAllInFlight.current = false;
+    }
   };
 
   // -------------------------------------------------------------------------
@@ -229,11 +239,6 @@ export const useCart = () => {
       throw new Error('Para domicilio necesitamos dirección y teléfono de contacto.');
     }
 
-    // Unlock immediately so the UI isn't blocked if the DB call is slow.
-    if (isPickup) {
-      setCheckout(prev => ({ ...prev, unlocked: true, store: deliveryData.store ?? null }));
-    }
-
     if (isAuthenticated && user) {
       try {
         if (isPickup) {
@@ -251,8 +256,9 @@ export const useCart = () => {
             delivery_address: null,
             delivery_details: null,
           });
-          // Cache so payAll reuses this row without a second INSERT / notification.
-          setCheckout(prev => ({ ...prev, masterOrderId: order.id, masterSig: sig }));
+          // Unlock only after Supabase confirms the row — prevents the QR button
+          // from appearing enabled when no order exists in the DB yet.
+          setCheckout(prev => ({ ...prev, unlocked: true, store: deliveryData.store ?? null, masterOrderId: order.id, masterSig: sig }));
         } else {
           await createOrder({
             user_id: user.id,
