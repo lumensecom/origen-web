@@ -60,7 +60,11 @@ export default function MiCuentaView() {
     setResendLoading(true);
     setResendMsg(null);
     try {
-      const { error } = await supabase.auth.resend({ type: 'signup', email: user.email });
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+        options: { emailRedirectTo: 'https://soyorigen.co/micuenta/seguridad' },
+      });
       if (error) throw error;
       setResendMsg({ type: 'ok', text: `Correo de confirmación reenviado a ${user.email}` });
     } catch (err) {

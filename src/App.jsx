@@ -281,7 +281,7 @@ export default function App() {
           )}
           {activeTab === 'cuenta' && (
             <motion.div key="cuenta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <CuentaView onAddToCart={handleAddToCart} />
+              <CuentaView onAddToCart={handleAddToCart} navigate={navigate} />
             </motion.div>
           )}
           {activeTab === 'historial' && (
@@ -291,7 +291,7 @@ export default function App() {
           )}
           {activeTab === 'micuenta' && (
             <motion.div key="micuenta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              {isAuthenticated ? <MiCuentaView /> : <CuentaView onAddToCart={handleAddToCart} />}
+              {isAuthenticated ? <MiCuentaView /> : <CuentaView onAddToCart={handleAddToCart} navigate={navigate} />}
             </motion.div>
           )}
           {activeTab === 'pqr' && (

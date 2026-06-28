@@ -23,14 +23,14 @@ const NAV_LINKS = [
 ];
 
 const SideDrawer = ({ isOpen, activeTab, onNavigate, onClose }) => {
-  const { isSeller, isAdmin, isStaff, isAuthenticated } = useAuth();
+  const { isSeller, isAdmin, isStaff, isAuthenticated, user } = useAuth();
 
   // Order history is for logged-in customers only (staff have no purchase
   // history); staff get their Caja / Panel entries instead.
   const links = [
     ...NAV_LINKS,
     ...(isAuthenticated && !isStaff ? [{ id: 'historial', label: 'Historial de pedidos' }] : []),
-    ...(isAuthenticated && !isStaff ? [{ id: 'micuenta', label: 'Seguridad / Cuenta' }] : []),
+    ...(isAuthenticated && !isStaff ? [{ id: 'micuenta', label: 'Seguridad de cuenta' }] : []),
     ...(isSeller ? [{ id: 'seller', label: 'Caja / Escáner', staff: true }] : []),
     ...(isAdmin ? [{ id: 'admin', label: 'Panel de Ventas', staff: true }] : []),
     ...(isAdmin ? [{ id: 'adminmenu', label: 'Gestionar Menú', staff: true }] : []),
@@ -98,7 +98,21 @@ const SideDrawer = ({ isOpen, activeTab, onNavigate, onClose }) => {
                   </a>
                 ))}
               </div>
-              <div className="font-ui text-xs text-white/50">
+              {isAuthenticated && user?.email && (
+              <button
+                onClick={() => { onNavigate('micuenta'); onClose(); }}
+                className="flex items-center gap-2 text-left group"
+              >
+                <div className="w-7 h-7 rounded-full bg-[var(--verde-main)]/20 flex items-center justify-center text-[var(--verde-main)] text-xs font-bold font-ui flex-shrink-0">
+                  {user.email[0].toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-ui text-xs text-white/70 truncate group-hover:text-white transition-colors">{user.email}</p>
+                  <p className="font-ui text-[9px] text-[var(--verde-main)] uppercase tracking-wider">Seguridad de cuenta →</p>
+                </div>
+              </button>
+            )}
+            <div className="font-ui text-xs text-white/50">
                 Bogotá, Colombia • Comida saludable
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Award, ArrowRight, ShoppingBag } from 'lucide-react';
+import { User, Award, ArrowRight, ShoppingBag, Lock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { CARTA } from '../../constants/menu';
 import { formatPrice } from '../../utils/format';
@@ -32,7 +32,7 @@ const calculateRecommendation = (choices) => {
   return CARTA.find(b => b.id === 'dulce');
 };
 
-const CuentaView = ({ onAddToCart }) => {
+const CuentaView = ({ onAddToCart, navigate }) => {
   const { user, profile, isAuthenticated, signOut, isRecovery } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -143,9 +143,19 @@ const CuentaView = ({ onAddToCart }) => {
                 <Award size={16} /> {puntos} Puntos Origen
               </div>
             </div>
-            <button onClick={signOut} className="font-ui text-xs text-[var(--texto-suave)] hover:text-red-500 transition-colors border border-[var(--verde-palido)] px-3 py-1.5 rounded-[10px] flex-shrink-0">
-              Salir
-            </button>
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              {navigate && (
+                <button
+                  onClick={() => navigate('micuenta')}
+                  className="font-ui text-xs text-[var(--verde-profundo)] hover:text-[var(--verde-main)] transition-colors border border-[var(--verde-palido)] hover:border-[var(--verde-main)] px-3 py-1.5 rounded-[10px] flex items-center gap-1.5"
+                >
+                  <Lock size={12} /> Cambiar contraseña
+                </button>
+              )}
+              <button onClick={signOut} className="font-ui text-xs text-[var(--texto-suave)] hover:text-red-500 transition-colors border border-[var(--verde-palido)] px-3 py-1.5 rounded-[10px]">
+                Salir
+              </button>
+            </div>
           </div>
 
           {/* Chatbot Mr. Sivio */}
