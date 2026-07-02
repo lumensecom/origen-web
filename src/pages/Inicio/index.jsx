@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { HERO_IMAGE, REAL_MEDIA, MR_SIVIO_URL } from '../../constants/media';
+import { HERO_IMAGE, REAL_MEDIA, MR_SIVO_URL } from '../../constants/media';
 import { CARTA } from '../../constants/menu';
 import { BRAND_PHRASES, FEELINGS } from '../../constants/brand';
 import { formatPrice } from '../../utils/format';
@@ -109,14 +109,14 @@ const HomeView = ({ navigate, onOpenVita }) => {
                 )}
               </AnimatePresence>
               <img
-                src={MR_SIVIO_URL}
-                alt="Mr. Sivio"
+                src={MR_SIVO_URL}
+                alt="Mr. Sivo"
                 className="h-16 w-auto object-contain drop-shadow-sm"
               />
             </motion.div>
             <div className="flex-1 min-w-0">
               <p className="font-display italic text-sm text-[var(--verde-profundo)] font-semibold leading-tight">¿No sabes qué comer hoy?</p>
-              <p className="font-ui text-xs text-[var(--texto-suave)]">Mr. Sivio te ayuda a elegir</p>
+              <p className="font-ui text-xs text-[var(--texto-suave)]">Mr. Sivo te ayuda a elegir</p>
             </div>
             <button onClick={onOpenVita} className="flex items-center gap-2 bg-[var(--terracota-vivo)] hover:bg-[var(--terracota-quemado)] text-white font-ui font-bold text-xs px-4 py-2.5 rounded-full transition-all shadow-md whitespace-nowrap flex-shrink-0">
               <Sparkles size={14} /> Pregúntale

@@ -116,7 +116,7 @@ const BlogView = ({ navigate }) => {
             <span className="font-ui text-[var(--terracota-suave)] font-bold tracking-[0.2em] uppercase text-xs mb-4 inline-block">¿Dudas sobre tu dieta?</span>
             <h2 className="font-display italic text-4xl md:text-5xl mb-6">Tu nutrición es única y personal.</h2>
             <p className="font-ui text-[var(--verde-palido)] mb-8 leading-relaxed text-base md:text-lg">
-              Pregúntale a Mr. Sivio, nuestro asesor nutricional con IA, o agenda un diagnóstico con nuestro equipo para encontrar tu balance idóneo.
+              Pregúntale a Mr. Sivo, nuestro asesor nutricional con IA, o agenda un diagnóstico con nuestro equipo para encontrar tu balance idóneo.
             </p>
             <Button onClick={() => { navigate('cuenta'); window.scrollTo(0, 0); }} className="mx-auto rounded-[16px] bg-[var(--verde-main)] text-white hover:bg-[var(--verde-vivo)] border-0">
               <Sparkles size={18} /> Hablar con Asesor Nutricional

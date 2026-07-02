@@ -354,7 +354,7 @@ export default function App() {
 
       {qrOrder && <OrderQRModal order={qrOrder} onClose={() => setQrOrder(null)} />}
 
-      {/* Mr. Sivio FAB — all tabs on desktop, only inicio on mobile */}
+      {/* Mr. Sivo FAB — all tabs on desktop, only inicio on mobile */}
       <motion.div
         className={`fixed bottom-6 right-4 z-[95] group ${activeTab !== 'inicio' ? 'hidden md:block' : 'block'}`}
         initial={{ opacity: 0, y: 32 }}
@@ -366,14 +366,14 @@ export default function App() {
           animate={{ y: [0, -8, 0] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
           className="relative flex flex-col items-center active:scale-95 transition-transform"
-          aria-label="Hablar con Mr. Sivio"
+          aria-label="Hablar con Mr. Sivo"
         >
           <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-[var(--verde-profundo)] text-white font-ui font-semibold text-xs px-3 py-1.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-            ¡Hola! Soy Mr. Sivio 🥦
+            ¡Hola! Soy Mr. Sivo 🥦
           </span>
           <img
             src="https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto,f_auto,w_240/v1782441292/A_friendly_muscular_broccoli_character_202606252134-removebg-preview_vjtmnk.png"
-            alt="Mr. Sivio"
+            alt="Mr. Sivo"
             className="h-[90px] md:h-[140px] w-auto object-contain drop-shadow-2xl"
           />
         </motion.button>

@@ -1,6 +1,6 @@
 export const HERO_IMAGE = 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781670895/A_hand_with_warm_natural_202606162334_lkkmhb.jpg';
 
-export const MR_SIVIO_URL = 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto,f_auto,w_240/v1782441292/A_friendly_muscular_broccoli_character_202606252134-removebg-preview_vjtmnk.png';
+export const MR_SIVO_URL = 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto,f_auto,w_240/v1782441292/A_friendly_muscular_broccoli_character_202606252134-removebg-preview_vjtmnk.png';
 
 export const REAL_MEDIA = {
   platoMano: 'https://res.cloudinary.com/dfj0ckm10/image/upload/q_auto/f_auto/v1781635341/9O4A5606_x9ut96.jpg',

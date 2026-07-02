@@ -1,5 +1,5 @@
 import { Instagram, MessageCircle, ArrowRight } from 'lucide-react';
-import { MR_SIVIO_URL } from '../../constants/media';
+import { MR_SIVO_URL } from '../../constants/media';
 
 const TikTokIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -28,7 +28,7 @@ const Footer = ({ navigate }) => {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-1 md:col-span-1">
           <div className="flex items-center gap-3 mb-4">
-            <img src={MR_SIVIO_URL} alt="Mr. Sivio" className="h-12 w-auto object-contain drop-shadow-md" />
+            <img src={MR_SIVO_URL} alt="Mr. Sivo" className="h-12 w-auto object-contain drop-shadow-md" />
             <h2 className="font-logo text-3xl tracking-wide">ORIGEN</h2>
           </div>
           <p className="font-ui text-white/50 text-sm mb-6 max-w-sm">
